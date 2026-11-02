@@ -1,16 +1,30 @@
 import type { Brick } from './types'
 import type { ExtractResult } from './extract'
 
-/** Make the photo upright and at most 2048 px on the long side, as JPEG, before it leaves the browser. Same prep as the gate harness. */
+/** Formats the file picker accepts. Never list heic and never use a bare image/*: iOS converts library HEICs to JPEG only when heic is absent, and Safari 17+ turns jpeg/png picks into .heic when it is present. */
+export const ACCEPT = 'image/jpeg,image/png,image/webp'
+
+/** Make the photo upright and at most 2048 px on the long side, as JPEG, before it leaves the browser. Same prep as the gate harness.
+ *  Decodes through an <img> element rather than createImageBitmap: WebKit drops EXIF orientation when decoding a Blob with
+ *  createImageBitmap (bug 237895) and ignores it again when drawing the bitmap (242137); <img> is upright in every modern browser. */
 export async function prepareImage(file: File, maxSide = 2048): Promise<{ dataUrl: string; width: number; height: number }> {
-  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
-  const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height))
-  const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale)
-  const canvas = document.createElement('canvas')
-  canvas.width = w; canvas.height = h
-  canvas.getContext('2d')!.drawImage(bmp, 0, 0, w, h)
-  bmp.close()
-  return { dataUrl: canvas.toDataURL('image/jpeg', 0.9), width: w, height: h }
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image()
+      el.onload = () => resolve(el)
+      el.onerror = () => reject(new Error(`could not decode ${file.name}`))
+      el.src = url
+    })
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight))
+    const w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = w; canvas.height = h
+    canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+    return { dataUrl: canvas.toDataURL('image/jpeg', 0.9), width: w, height: h }
+  } finally {
+    URL.revokeObjectURL(url)
+  }
 }
 
 export async function extractBrick(prepared: { dataUrl: string; width: number; height: number }, dry = false): Promise<{ brick?: Brick; result: ExtractResult | { dry: true; request: unknown } }> {

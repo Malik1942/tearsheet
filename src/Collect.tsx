@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from './lib/store'
-import { extractBrick, prepareImage } from './lib/client'
+import { ACCEPT, extractBrick, prepareImage } from './lib/client'
 import { BrickCard } from './bricks/BrickCard'
 
 type Job = { name: string; state: 'preparing' | 'extracting' | 'done' | 'failed'; note?: string }
@@ -40,7 +40,7 @@ export function CollectPage() {
           <div className="text-sm font-semibold">Drop a photo of something you like</div>
           <div className="text-[12px] text-stone-600">It is made upright, downscaled to 2048 px and sent once to Muse Spark with the product-agnostic prompt. The brick persists in this browser. No product needs to exist yet.</div>
         </div>
-        <label className="cursor-pointer rounded bg-stone-800 px-3 py-1.5 text-sm text-white">Choose photos<input type="file" accept="image/*" multiple className="hidden" onChange={e => onFiles(e.target.files)} /></label>
+        <label className="cursor-pointer rounded bg-stone-800 px-3 py-1.5 text-sm text-white">Choose photos<input type="file" accept={ACCEPT} multiple className="hidden" onChange={e => onFiles(e.target.files)} /></label>
         <label className="flex items-center gap-1 text-[11px] text-stone-500"><input type="checkbox" checked={dry} onChange={e => setDry(e.target.checked)} /> dry run (build the request, send nothing)</label>
       </div>
       {jobs.length > 0 && (
