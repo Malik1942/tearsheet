@@ -26,3 +26,4 @@ public/fixtures/*.jpg
 docs/screens/*.jpg
 !public/fixtures/g1.jpg
 !public/fixtures/g2.jpg
+!public/fixtures/c1.jpg

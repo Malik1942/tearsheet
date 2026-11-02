@@ -58,7 +58,7 @@ function Column({ slot, compId, onChange, showPhoto, screen }: { slot: number; c
 
 /** Step 2: three shells side by side, each next to its reference photo. Swap the assignment and see whether you can still tell which is which. */
 export function Compare() {
-  const [slots, setSlots] = useState<string[]>(IDS)
+  const [slots, setSlots] = useState<string[]>(['g1', 'g2', 'c1'])
   const [showPhoto, setShowPhoto] = useState(true)
   const [screen, setScreen] = useState<'list' | 'review'>('list')
   const rotate = () => setSlots(s => [s[1], s[2], s[0]])

@@ -1,5 +1,8 @@
-import type { Composition, DisabledRelation } from '../lib/types'
+import type { Brick, Composition, DisabledRelation } from '../lib/types'
 import { INTENT } from '../shell/content'
+import { candidatesOf, skinOf } from '../lib/mapRelations'
+import { RELATIONSHIP_KEYS } from '../shell/params'
+import bricksJson from './bricks.json'
 
 /**
  * Step-2 fixtures: the three gate bricks applied to the concert-log shell, three relationship parameters per brick
@@ -13,7 +16,24 @@ const skin = (brickId: string, bg: string, fg: string, accent: string, bgProv: '
   color_accent: { key: 'color_accent' as const, value: accent, provenance: 'measured' as const, locked: false, source: { brickId, note: 'median of the most saturated pixels inside the cited region box (harness)' } },
 })
 
+/** A composition derived by the real mapping code, not by hand: up to three relationship parameters from the brick's own relations, plus measured skin. */
+export function autoComposition(brick: Brick, title: string): Composition & { disabled: DisabledRelation[]; title: string } {
+  const { candidates, unexpressed } = candidatesOf(brick)
+  const parameters: Composition['parameters'] = {}
+  let n = 0
+  for (const c of candidates) {
+    if (!(RELATIONSHIP_KEYS as readonly string[]).includes(c.key) || parameters[c.key] || n >= 3) continue
+    parameters[c.key] = { key: c.key, value: c.value, provenance: c.provenance, locked: false, source: c.source }
+    n++
+  }
+  Object.assign(parameters, skinOf(brick))
+  return { id: brick.id, title, intent: INTENT, brickIds: [brick.id], parameters, unexpressed, disabled: [] }
+}
+
+const COUPE = (bricksJson as unknown as Brick[]).find(b => b.id === 'c1')!
+
 export const COMPOSITIONS: Record<string, Composition & { disabled: DisabledRelation[]; title: string }> = {
+  c1: autoComposition(COUPE, 'Dark coupe (auto-mapped)'),
   g1: {
     id: 'g1', title: 'Blossoms', intent: INTENT, brickIds: ['g1'],
     parameters: {

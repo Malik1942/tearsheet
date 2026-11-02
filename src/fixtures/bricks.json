@@ -364,7 +364,7 @@
         "how_measured": "compared cap-height of cropped C/E on left edge to cap-height of top cast list by visual stacking",
         "id": "m2",
         "statement": "largest display letter height : smallest credit text height is very large",
-        "value": "≈10:1"
+        "value": "\u224810:1"
       },
       {
         "how_measured": "scanned whole frame for hues other than yellow, black, and white; estimated area of red word versus frame",
@@ -529,6 +529,196 @@
       "color_fg": "#000000",
       "color_accent": "#E3271C",
       "how_measured": "k-means (6 clusters) on the exact pixels sent to Spark for bg/fg; accent = mean of the top-10%-saturation pixels inside the named region box"
+    }
+  },
+  {
+    "id": "c1",
+    "photo": {
+      "url": "/fixtures/c1.jpg",
+      "width": 2048,
+      "height": 1084
+    },
+    "saved_at": "2025-08-16",
+    "measurements": [
+      {
+        "how_measured": "compared car extents to frame edges and vertical thirds",
+        "id": "m1",
+        "statement": "one dark coupe dominates the lower-middle in three-quarter front view",
+        "value": "spans ~85% of frame width from hugging left edge to right ~9/10, roof near vertical middle, base in bottom quarter"
+      },
+      {
+        "how_measured": "estimated vertical fraction from top edge to car rooflines versus total height",
+        "id": "m2",
+        "statement": "overcast grey sky fills the upper half above the cars",
+        "value": "about 45-55% of frame height is empty sky"
+      },
+      {
+        "how_measured": "estimated vertical fraction from bottom edge to tire contact versus total height",
+        "id": "m3",
+        "statement": "brick-paved ground fills the full-width foreground below the cars",
+        "value": "about 35% of frame height is pavement"
+      },
+      {
+        "how_measured": "counted distinct cars and compared width fraction and overlap",
+        "id": "m4",
+        "statement": "a single contrasting yellow car sits behind to the left of the main car",
+        "value": "1 secondary car in left quarter, about half occluded by main car"
+      },
+      {
+        "how_measured": "grouped visible hues and estimated area coverage in frame fractions",
+        "id": "m5",
+        "statement": "palette is near-monochrome desaturated greys with very small warm accents",
+        "value": "exactly 2 saturated hues (mustard yellow, amber orange) each covering <10% of frame, ~85% desaturated"
+      },
+      {
+        "how_measured": "counted figures and estimated horizontal fraction inward from right edge",
+        "id": "m6",
+        "statement": "people and dark canopy cluster hug the right edge behind the main car",
+        "value": "5-6 figures in right ~1/5 of width under canopy"
+      }
+    ],
+    "hypotheses": [
+      {
+        "confidence": 0.88,
+        "id": "h1",
+        "rests_on": [
+          "m1",
+          "m4",
+          "m5"
+        ],
+        "statement": "A single-hero hierarchy works because the dark coupe dominates scale and sharpness while the yellow car provides a smaller, saturated counterpoint for depth and tension."
+      },
+      {
+        "confidence": 0.82,
+        "id": "h2",
+        "rests_on": [
+          "m1",
+          "m3"
+        ],
+        "statement": "The low wheel-height three-quarter view emphasizes length, stance and presence, making the car feel grounded on the pavement."
+      },
+      {
+        "confidence": 0.78,
+        "id": "h3",
+        "rests_on": [
+          "m2",
+          "m3",
+          "m5",
+          "m6"
+        ],
+        "statement": "The vast desaturated sky and pavement envelope creates a muted, overcast meet mood that lets tiny warm accents carry emphasis."
+      }
+    ],
+    "relations": [
+      {
+        "id": "r1",
+        "parameter": "image_text_dominance",
+        "rule": "Keep one hero object spanning >3/4 width in the lower two-thirds with secondary objects partially occluded behind it.",
+        "source_hypothesis": "h1",
+        "target": "hero composition"
+      },
+      {
+        "id": "r2",
+        "parameter": "palette_hue_count",
+        "rule": "Restrict base to desaturated neutrals plus maximum two warm accent hues.",
+        "source_hypothesis": "h3",
+        "target": "color system"
+      },
+      {
+        "id": "r3",
+        "parameter": "accent_coverage",
+        "rule": "Confine all saturated color to <10% total area in secondary or detail zones, never in sky or ground base.",
+        "source_hypothesis": "h3",
+        "target": "accent zones"
+      }
+    ],
+    "fragile_if_changed": "Raising the viewpoint to high eye-level and brightening the overcast sky to sunny high-key would destroy the low, grounded, moody hero-car character.",
+    "regions": [
+      {
+        "box_1000": [
+          50,
+          255,
+          895,
+          875
+        ],
+        "label": "main dark coupe",
+        "measurement_ids": [
+          "m1"
+        ]
+      },
+      {
+        "box_1000": [
+          0,
+          0,
+          1000,
+          380
+        ],
+        "label": "overcast sky",
+        "measurement_ids": [
+          "m2"
+        ]
+      },
+      {
+        "box_1000": [
+          0,
+          620,
+          1000,
+          1000
+        ],
+        "label": "brick pavement foreground",
+        "measurement_ids": [
+          "m3"
+        ]
+      },
+      {
+        "box_1000": [
+          5,
+          308,
+          282,
+          700
+        ],
+        "label": "yellow secondary car left",
+        "measurement_ids": [
+          "m4"
+        ]
+      },
+      {
+        "box_1000": [
+          5,
+          308,
+          385,
+          700
+        ],
+        "label": "warm accent areas",
+        "measurement_ids": [
+          "m5"
+        ]
+      },
+      {
+        "box_1000": [
+          805,
+          200,
+          1000,
+          655
+        ],
+        "label": "right-edge crowd and canopy",
+        "measurement_ids": [
+          "m6"
+        ]
+      }
+    ],
+    "model": {
+      "id": "muse-spark-1.3",
+      "effort": "medium",
+      "latency_ms": 15296,
+      "input_tokens": 3381,
+      "output_tokens": 3098
+    },
+    "skin_measured": {
+      "color_bg": "#43403E",
+      "color_fg": "#CAD0D0",
+      "color_accent": "#D8B68E",
+      "how_measured": "k-means (6 clusters) on the exact pixels sent to Spark for bg/fg; accent = median of the top-10%-saturation pixels with lightness above 0.35 inside the 'warm accent areas' region box"
     }
   }
 ]
