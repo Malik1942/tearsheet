@@ -7,6 +7,7 @@ import { RELATIONSHIP_KEYS, SKIN_KEYS } from './shell/params'
 import { Shell } from './shell/Shell'
 import { ProvenanceChip } from './compose/ProvenanceChip'
 import { UnexpressedStrip } from './compose/UnexpressedStrip'
+import { Photo } from './bricks/Photo'
 
 const BRICKS = bricksJson as unknown as Brick[]
 const IDS = Object.keys(COMPOSITIONS)
@@ -29,7 +30,7 @@ function Column({ slot, compId, onChange, showPhoto, screen }: { slot: number; c
       {showPhoto && (
         <div className="flex h-56 justify-center overflow-hidden rounded-md bg-stone-900">
           <div className="relative h-full" style={{ aspectRatio: `${brick.photo.width} / ${brick.photo.height}` }}>
-            <img src={brick.photo.url} alt="" className="h-full w-full object-cover" />
+            <Photo src={brick.photo.url} className="h-full w-full object-cover" />
             {regions.map(r => (
               <div key={r.label} className="absolute border-2 border-emerald-400 bg-emerald-300/20" title={r.label}
                 style={{ left: `${r.box_1000[0] / 10}%`, top: `${r.box_1000[1] / 10}%`, width: `${(r.box_1000[2] - r.box_1000[0]) / 10}%`, height: `${(r.box_1000[3] - r.box_1000[1]) / 10}%` }} />

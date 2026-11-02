@@ -7,6 +7,7 @@ import { ParameterPanel } from './compose/ParameterPanel'
 import { RelationList } from './compose/RelationList'
 import { UnexpressedStrip } from './compose/UnexpressedStrip'
 import { RegionOverlay } from './bricks/RegionOverlay'
+import { Photo } from './bricks/Photo'
 import { download, exportCss, exportHandoff, exportJson } from './export'
 
 function NewProject({ onCreate }: { onCreate: (intent: string) => void }) {
@@ -62,7 +63,7 @@ export function ProjectPage() {
               return (
                 <div key={b.id} className={`rounded border p-1.5 ${on ? 'border-stone-800' : 'border-stone-200'}`}>
                   <label className="flex cursor-pointer items-center gap-2 text-[12px]"><input type="checkbox" checked={on} onChange={() => toggleBrick(b.id)} /><b>{b.id}</b><span className="text-stone-500">{b.saved_at}</span></label>
-                  <img src={b.photo.url} alt="" className="mt-1 h-20 w-full rounded object-cover" />
+                  <Photo src={b.photo.url} className="mt-1 h-20 w-full rounded object-cover" />
                   {on && store.bricks.length > project.brickIds.length && (
                     <select className="mt-1 w-full rounded border border-stone-300 text-[11px]" value="" onChange={e => e.target.value && swap(b.id, e.target.value)}>
                       <option value="">Swap for…</option>

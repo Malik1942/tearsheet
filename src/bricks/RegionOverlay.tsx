@@ -1,11 +1,12 @@
 import type { Brick } from '../lib/types'
+import { Photo } from './Photo'
 
 /** The photo with the model's region boxes drawn on it. `highlight` = measurement ids or region labels to emphasize. */
 export function RegionOverlay({ brick, highlight = [], showAll = false, className = '' }: { brick: Brick; highlight?: string[]; showAll?: boolean; className?: string }) {
   const hl = new Set(highlight)
   return (
     <div className={`relative overflow-hidden rounded-md bg-stone-900 ${className}`} style={{ aspectRatio: `${brick.photo.width} / ${brick.photo.height}` }}>
-      <img src={brick.photo.url} alt="" className="h-full w-full object-cover" />
+      <Photo src={brick.photo.url} className="h-full w-full object-cover" />
       {brick.regions.map(r => {
         const on = hl.has(r.label) || r.measurement_ids.some(id => hl.has(id))
         if (!on && !showAll) return null
