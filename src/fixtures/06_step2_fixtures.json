@@ -1,0 +1,48 @@
+{
+  "_note": "Step 2 fixtures for the two-screen shell. Max three shell parameters per reference (03_shell_dimensions.md). provenance: measured = read from a measurement id; interpreted = from a transferable relation or hypothesis; adapted = remapped by Malik because the model's parameter choice was wrong or the shell's vocabulary differs. unexpressed = features that no shell parameter can carry; the shell shows them as 'could not be expressed'.",
+  "g1": {
+    "source": "g1.jpg (blossoms, tower behind)",
+    "parameters": {
+      "density": { "value": "low", "detail": "~40% negative space, upper area", "provenance": "measured", "from": "m3" },
+      "palette_hue_count": { "value": 3, "detail": "low saturation, light base", "provenance": "measured", "from": "m5" },
+      "image_text_dominance": { "value": "image 65 / text 35, image on the left", "provenance": "adapted", "from": "m1, relation 1 (model said grouping; remapped)" }
+    },
+    "skin": { "base": "pale, near-white", "accent": "none", "provenance": "interpreted", "from": "m5, h3" },
+    "unexpressed": [
+      "shallow focus: sharp foreground, blurred backdrop (m4). The model's own fragile_if_changed names this as the defining feature, and no shell parameter can carry it",
+      "diagonal branch lines entering from the left edge (m6)"
+    ]
+  },
+  "g2": {
+    "source": "g2.jpg (silver car, dark garage)",
+    "parameters": {
+      "image_text_dominance": { "value": "hero 70-80% of width, dark surround", "provenance": "measured", "from": "m1, m2" },
+      "accent_coverage": { "value": "< 6%, warm, placed on the hero", "provenance": "interpreted", "from": "relation 2, m3" },
+      "palette_hue_count": { "value": "1 near-monochrome base + 2 small accents (warm, cool)", "provenance": "interpreted", "from": "relation 3, m3" }
+    },
+    "skin": { "base": "near-black", "foreground": "silver / light gray", "accent": "red", "provenance": "measured", "from": "m2, m3, m4" },
+    "unexpressed": [
+      "light from one side only (sealed feature; model only implied it via m4's highlight location)",
+      "diagonal recession to the upper left (m5)",
+      "foreground out-of-focus occluder bottom-right (m6): verify on the overlay before trusting"
+    ]
+  },
+  "g3": {
+    "source": "g3.jpg (yellow/black poster)",
+    "parameters": {
+      "type_scale_ratio": { "value": "largest : smallest >= 8:1 (per-step ~2.0 over three steps)", "provenance": "measured", "from": "m2, relation 2" },
+      "image_text_dominance": { "value": "field 40 / figure 60, display type cropped by the frame edge", "provenance": "measured", "from": "m1, m6, relation 1" },
+      "accent_coverage": { "value": "<= 3%, one word, bottom of the text column", "provenance": "measured", "from": "m3, relation 3" }
+    },
+    "skin": { "base": "high-chroma yellow", "foreground": "black", "accent": "red-orange", "provenance": "measured", "from": "m1, m3" },
+    "spilled_to_skin_or_dropped": [
+      "alignment_edge: left, all text in the left third (m4). Fourth parameter; cap is three. Keep as skin hint or drop",
+      "hierarchy_mode: two-level, impact first (h2). Covered by type_scale_ratio in practice"
+    ],
+    "unexpressed": [
+      "silhouette overlapping and partially covering the display letters (relation 1)",
+      "four letters stacked vertically along the left edge (m6)",
+      "white shapes sitting exactly on the yellow/black seam (m5, h4)"
+    ]
+  }
+}

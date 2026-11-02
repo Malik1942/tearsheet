@@ -1,0 +1,534 @@
+[
+  {
+    "id": "g1",
+    "photo": {
+      "url": "/fixtures/g1.jpg",
+      "width": 2048,
+      "height": 1365
+    },
+    "saved_at": "2025-04-06",
+    "measurements": [
+      {
+        "how_measured": "visually estimated horizontal extent of in-focus blossom mass versus total frame width",
+        "id": "m1",
+        "statement": "sharp white blossom mass occupies left ~two-thirds of frame width and full height from top to bottom",
+        "value": "left ~65-75% width, ~100% height"
+      },
+      {
+        "how_measured": "visually estimated horizontal extent and vertical span of blurred building and tower on right",
+        "id": "m2",
+        "statement": "blurred dark building with tower hugs the right edge, occupying about right one-third of frame from top to bottom",
+        "value": "right ~30-35% width, ~100% height"
+      },
+      {
+        "how_measured": "visually estimated proportion of unobstructed pale sky in upper center-right without branches or building",
+        "id": "m3",
+        "statement": "about 40% of the frame is empty pale blue sky in the top center to top right",
+        "value": "~40% empty sky"
+      },
+      {
+        "how_measured": "compared edge sharpness of foreground branches versus background building edges",
+        "id": "m4",
+        "statement": "focus fall-off is strong: foreground branches sharp, background building heavily blurred with no readable detail",
+        "value": "sharp-to-blurred ratio ~ foreground only"
+      },
+      {
+        "how_measured": "counted distinct dominant hues ignoring subtle shading variations",
+        "id": "m5",
+        "statement": "palette limited to about three low-saturation hues: white-pink blossoms, pale cyan-blue sky, dark taupe-gray building",
+        "value": "3 hues, low saturation"
+      },
+      {
+        "how_measured": "traced main branch lines from left edge origin toward rightward tips",
+        "id": "m6",
+        "statement": "branches enter from left edge and extend diagonally to mid-right, tips reaching past center",
+        "value": "left-to-center-right diagonal"
+      }
+    ],
+    "hypotheses": [
+      {
+        "confidence": 0.9,
+        "id": "h1",
+        "rests_on": [
+          "m1",
+          "m2",
+          "m4"
+        ],
+        "statement": "Shallow focus isolates delicate blossoms against a soft architectural backdrop, creating intimate foreground emphasis with dreamy context."
+      },
+      {
+        "confidence": 0.8,
+        "id": "h2",
+        "rests_on": [
+          "m1",
+          "m2",
+          "m6"
+        ],
+        "statement": "Left-heavy organic mass balanced against a dark vertical tower on the right edge creates tension between nature and architecture."
+      },
+      {
+        "confidence": 0.85,
+        "id": "h3",
+        "rests_on": [
+          "m3",
+          "m5"
+        ],
+        "statement": "Large pale sky void and limited low-saturation palette produce a light, calm, airy spring mood."
+      }
+    ],
+    "relations": [
+      {
+        "id": "r1",
+        "parameter": "grouping",
+        "rule": "Keep one sharp organic subject filling the left two-thirds with a heavily blurred contextual backdrop confined to the right third.",
+        "source_hypothesis": "h1",
+        "target": "new design with different content"
+      },
+      {
+        "id": "r2",
+        "parameter": "density",
+        "rule": "Preserve ~40% pale negative space in the upper center-right to keep the composition airy and uncluttered.",
+        "source_hypothesis": "h3",
+        "target": "new design with different content"
+      },
+      {
+        "id": "r3",
+        "parameter": "palette_hue_count",
+        "rule": "Restrict palette to ~3 low-saturation hues with light dominant tones.",
+        "source_hypothesis": "h3",
+        "target": "new design with different content"
+      }
+    ],
+    "fragile_if_changed": "Bringing the background building into sharp focus would destroy the soft foreground isolation and airy spring calm that defines the image.",
+    "regions": [
+      {
+        "box_1000": [
+          0,
+          0,
+          790,
+          998
+        ],
+        "label": "sharp blossom foreground mass",
+        "measurement_ids": [
+          "m1",
+          "m4",
+          "m6"
+        ]
+      },
+      {
+        "box_1000": [
+          555,
+          20,
+          1000,
+          999
+        ],
+        "label": "blurred background building and tower",
+        "measurement_ids": [
+          "m2",
+          "m4"
+        ]
+      },
+      {
+        "box_1000": [
+          295,
+          0,
+          895,
+          430
+        ],
+        "label": "empty pale sky negative space",
+        "measurement_ids": [
+          "m3",
+          "m5"
+        ]
+      }
+    ],
+    "model": {
+      "id": "muse-spark-1.3",
+      "effort": "medium",
+      "latency_ms": 11323,
+      "input_tokens": 4121,
+      "output_tokens": 1784
+    },
+    "skin_measured": {
+      "color_bg": "#D4DFE0",
+      "color_fg": "#171818",
+      "color_accent": "#C2E0E9",
+      "how_measured": "k-means (6 clusters) on the exact pixels sent to Spark for bg/fg; accent = mean of the top-10%-saturation pixels inside the named region box"
+    }
+  },
+  {
+    "id": "g2",
+    "photo": {
+      "url": "/fixtures/g2.jpg",
+      "width": 2048,
+      "height": 1365
+    },
+    "saved_at": "2025-06-21",
+    "measurements": [
+      {
+        "how_measured": "visually compared car extreme left/right/top/bottom edges to frame edges",
+        "id": "m1",
+        "statement": "hero car extent across frame",
+        "value": "width ~75% of frame width from left quarter to right 85% mark, height ~70% of frame height, centered slightly left"
+      },
+      {
+        "how_measured": "estimated area of right-side curtain plus dark carpet and foreground versus illuminated car and distant background",
+        "id": "m2",
+        "statement": "share of frame that is near-black shadow, curtain and carpet",
+        "value": "about 55-65% of the frame is near-black"
+      },
+      {
+        "how_measured": "identified non-gray color patches and visually estimated their frame share and count",
+        "id": "m3",
+        "statement": "count and coverage of saturated hues",
+        "value": "exactly 2 saturated hues: red on two taillights covering ~4% of frame, blue in distant background covering ~10% of frame"
+      },
+      {
+        "how_measured": "compared luminance of highlight on fender and deck to shadow under bumper and curtain",
+        "id": "m4",
+        "statement": "brightest specular zone on body versus deepest shadow",
+        "value": "brightest ~15% of car surface on left rear fender and decklid reads several times brighter than lower bumper and sets the exposure anchor"
+      },
+      {
+        "how_measured": "traced line through rear bumper center to front wheel and estimated camera height relative to roofline and deck",
+        "id": "m5",
+        "statement": "car long-axis orientation and viewpoint",
+        "value": "long axis runs diagonally from bottom-center to upper-left, viewed from low rear three-quarter just above deck height"
+      },
+      {
+        "how_measured": "estimated extent of blurred dark shape versus frame corner and its overlap with bumper",
+        "id": "m6",
+        "statement": "foreground out-of-focus occluder in bottom-right",
+        "value": "covers ~25% of frame in bottom-right corner, overlapping the rear edge of the subject"
+      }
+    ],
+    "hypotheses": [
+      {
+        "confidence": 0.88,
+        "id": "h1",
+        "rests_on": [
+          "m1",
+          "m2",
+          "m4"
+        ],
+        "statement": "Low-key surrounding darkness isolates the large bright silver mass, creating a gallery-spotlight hierarchy and premium moody emphasis."
+      },
+      {
+        "confidence": 0.78,
+        "id": "h2",
+        "rests_on": [
+          "m3"
+        ],
+        "statement": "Tiny complementary red-on-car versus distant blue-in-background accents create color tension and depth that prevents the monochrome silver-black field from feeling flat."
+      },
+      {
+        "confidence": 0.82,
+        "id": "h3",
+        "rests_on": [
+          "m1",
+          "m5",
+          "m6"
+        ],
+        "statement": "Diagonal recession to the upper left plus bottom-right foreground occlusion creates immersive show-floor depth and forward motion."
+      }
+    ],
+    "relations": [
+      {
+        "id": "r1",
+        "parameter": "image_text_dominance",
+        "rule": "Keep a single hero subject covering ~65-80% of frame width with dark negative space surrounding it to preserve spotlight hierarchy.",
+        "source_hypothesis": "h1",
+        "target": "hero product area"
+      },
+      {
+        "id": "r2",
+        "parameter": "accent_coverage",
+        "rule": "Restrict saturated warm accent to <6% of frame placed directly on the hero to anchor focus.",
+        "source_hypothesis": "h2",
+        "target": "detail accent"
+      },
+      {
+        "id": "r3",
+        "parameter": "palette_hue_count",
+        "rule": "Limit palette to near-monochrome base plus at most two small complementary warm and cool accents.",
+        "source_hypothesis": "h2",
+        "target": "overall color system"
+      }
+    ],
+    "fragile_if_changed": "Lifting the surrounding near-black shadows to bright even light would collapse the low-key spotlight isolation that makes the silver body read as sculpted and heroic.",
+    "regions": [
+      {
+        "box_1000": [
+          110,
+          138,
+          865,
+          850
+        ],
+        "label": "hero car body",
+        "measurement_ids": [
+          "m1",
+          "m5"
+        ]
+      },
+      {
+        "box_1000": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "label": "overall low-key field",
+        "measurement_ids": [
+          "m2"
+        ]
+      },
+      {
+        "box_1000": [
+          318,
+          422,
+          815,
+          613
+        ],
+        "label": "red taillight accents",
+        "measurement_ids": [
+          "m3"
+        ]
+      },
+      {
+        "box_1000": [
+          150,
+          0,
+          485,
+          242
+        ],
+        "label": "blue background glow",
+        "measurement_ids": [
+          "m3"
+        ]
+      },
+      {
+        "box_1000": [
+          195,
+          283,
+          686,
+          516
+        ],
+        "label": "specular highlight on fender deck",
+        "measurement_ids": [
+          "m4"
+        ]
+      },
+      {
+        "box_1000": [
+          528,
+          650,
+          1000,
+          1000
+        ],
+        "label": "foreground blur intrusion",
+        "measurement_ids": [
+          "m6"
+        ]
+      }
+    ],
+    "model": {
+      "id": "muse-spark-1.3",
+      "effort": "medium",
+      "latency_ms": 24599,
+      "input_tokens": 4121,
+      "output_tokens": 4105
+    },
+    "skin_measured": {
+      "color_bg": "#060605",
+      "color_fg": "#E5DFD7",
+      "color_accent": "#A32420",
+      "how_measured": "k-means (6 clusters) on the exact pixels sent to Spark for bg/fg; accent = mean of the top-10%-saturation pixels inside the named region box"
+    }
+  },
+  {
+    "id": "g3",
+    "photo": {
+      "url": "/fixtures/g3.jpg",
+      "width": 1374,
+      "height": 2048
+    },
+    "saved_at": "2025-09-14",
+    "measurements": [
+      {
+        "how_measured": "estimated by eye where the profile contour divides the frame from top to bottom",
+        "id": "m1",
+        "statement": "solid black profile silhouette fills the right ~60% of the frame width, flat yellow field fills the left ~40%",
+        "value": "60:40 right-black to left-yellow split"
+      },
+      {
+        "how_measured": "compared cap-height of cropped C/E on left edge to cap-height of top cast list by visual stacking",
+        "id": "m2",
+        "statement": "largest display letter height : smallest credit text height is very large",
+        "value": "≈10:1"
+      },
+      {
+        "how_measured": "scanned whole frame for hues other than yellow, black, and white; estimated area of red word versus frame",
+        "id": "m3",
+        "statement": "exactly one saturated warm hue (red-orange) covering ~2% of the frame, used only on the word CHRISTMAS hugging bottom-left",
+        "value": "1 hue, ~2% coverage, bottom-left only"
+      },
+      {
+        "how_measured": "checked horizontal extent of all headline and explanatory text versus empty silhouette area",
+        "id": "m4",
+        "statement": "all primary text is confined to the left third on yellow; the right ~60% over the silhouette has no headline text except tiny bottom-right micro-credits",
+        "value": "text in left 0-35% width; right 60% text-free"
+      },
+      {
+        "how_measured": "traced white shapes relative to the yellow-black edge at center",
+        "id": "m5",
+        "statement": "two small white shapes - spectacles near middle and shirt collar near bottom-right - sit exactly on and cross the yellow-black boundary",
+        "value": "2 white shapes crossing center seam, ~5% combined coverage"
+      },
+      {
+        "how_measured": "counted large letterforms along left edge and estimated vertical span from top of V to bottom of E",
+        "id": "m6",
+        "statement": "four massive display letters stacked vertically along and cropped by the left edge, spanning ~70% of frame height",
+        "value": "4 glyphs, ~70% vertical span, cropped"
+      }
+    ],
+    "hypotheses": [
+      {
+        "confidence": 0.9,
+        "id": "h1",
+        "rests_on": [
+          "m1",
+          "m5"
+        ],
+        "statement": "The hard vertical yellow-versus-black split creates bold, confrontational tension and makes the profile read instantly at distance."
+      },
+      {
+        "confidence": 0.85,
+        "id": "h2",
+        "rests_on": [
+          "m2",
+          "m4",
+          "m6"
+        ],
+        "statement": "Extreme scale contrast with giant cropped letters as background texture versus tiny left-column text establishes a two-level hierarchy: impact first, information second."
+      },
+      {
+        "confidence": 0.8,
+        "id": "h3",
+        "rests_on": [
+          "m3",
+          "m4"
+        ],
+        "statement": "A single tiny warm accent at the bottom anchors the eye after scanning down the left column and marks release information without competing with the main contrast."
+      },
+      {
+        "confidence": 0.75,
+        "id": "h4",
+        "rests_on": [
+          "m1",
+          "m5"
+        ],
+        "statement": "Bright white spectacles placed exactly on the yellow-black seam act as a bridge and focal point, humanizing the solid silhouette and linking the two halves."
+      }
+    ],
+    "relations": [
+      {
+        "id": "r1",
+        "parameter": "image_text_dominance",
+        "rule": "Keep a ~50/50 flat-color field versus solid silhouette split, with giant display type cropped by the frame edge and partially overlapped by the silhouette.",
+        "source_hypothesis": "h1",
+        "target": "any portrait-plus-headline layout"
+      },
+      {
+        "id": "r2",
+        "parameter": "type_scale_ratio",
+        "rule": "Maintain display cap-height to body cap-height ratio >=8:1, with display used as cropped background texture and body confined to a narrow column.",
+        "source_hypothesis": "h2",
+        "target": "any poster with title and credits"
+      },
+      {
+        "id": "r3",
+        "parameter": "accent_coverage",
+        "rule": "Restrict saturated accent to a single word covering <=3% of frame at the bottom of the text column.",
+        "source_hypothesis": "h3",
+        "target": "any layout needing date or release callout"
+      }
+    ],
+    "fragile_if_changed": "Replacing the flat high-chroma yellow field with a gradient, texture, or muted tone would collapse the hard yellow-black-white confrontation that defines the image.",
+    "regions": [
+      {
+        "box_1000": [
+          313,
+          0,
+          1000,
+          1000
+        ],
+        "label": "black silhouette on right versus yellow field",
+        "measurement_ids": [
+          "m1"
+        ]
+      },
+      {
+        "box_1000": [
+          0,
+          10,
+          340,
+          810
+        ],
+        "label": "giant cropped letters versus small top text",
+        "measurement_ids": [
+          "m2",
+          "m6"
+        ]
+      },
+      {
+        "box_1000": [
+          55,
+          940,
+          250,
+          970
+        ],
+        "label": "red CHRISTMAS accent at bottom-left",
+        "measurement_ids": [
+          "m3"
+        ]
+      },
+      {
+        "box_1000": [
+          30,
+          10,
+          340,
+          970
+        ],
+        "label": "left text column containing all primary text",
+        "measurement_ids": [
+          "m4"
+        ]
+      },
+      {
+        "box_1000": [
+          285,
+          275,
+          1000,
+          512
+        ],
+        "label": "white spectacles crossing the seam",
+        "measurement_ids": [
+          "m5"
+        ]
+      }
+    ],
+    "model": {
+      "id": "muse-spark-1.3",
+      "effort": "medium",
+      "latency_ms": 21092,
+      "input_tokens": 4072,
+      "output_tokens": 3738
+    },
+    "skin_measured": {
+      "color_bg": "#EFD92E",
+      "color_fg": "#000000",
+      "color_accent": "#E3271C",
+      "how_measured": "k-means (6 clusters) on the exact pixels sent to Spark for bg/fg; accent = mean of the top-10%-saturation pixels inside the named region box"
+    }
+  }
+]
