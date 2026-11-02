@@ -8,7 +8,7 @@ import { resolve } from 'node:path'
 function devApi(): Plugin {
   const readKey = (): string | undefined => {
     if (process.env.META_API_KEY) return process.env.META_API_KEY
-    const envFile = resolve(__dirname, '../meta-eval/.env')
+    const envFile = resolve(import.meta.dirname, '../meta-eval/.env')
     if (!existsSync(envFile)) return undefined
     const line = readFileSync(envFile, 'utf8').split('\n').find(l => l.startsWith('META_API_KEY='))
     return line?.slice('META_API_KEY='.length).trim().replace(/^['"]|['"]$/g, '')

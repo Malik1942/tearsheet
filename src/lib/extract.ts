@@ -1,7 +1,7 @@
 /** Shared by the Vercel function (api/extract.ts) and the Vite dev middleware. Runs on the server only; the key never reaches the browser. */
-import schema from './brick.schema.json'
-import { EXTRACT_PROMPT } from './extractPrompt'
-import { BrickExtractionSchema, type BrickExtraction } from './schema'
+import { BRICK_SCHEMA as schema } from './brick.schema.js'
+import { EXTRACT_PROMPT } from './extractPrompt.js'
+import { BrickExtractionSchema, type BrickExtraction } from './schema.js'
 
 export const MODEL = 'muse-spark-1.3'
 export const EFFORT = 'medium'

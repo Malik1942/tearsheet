@@ -1,4 +1,5 @@
-{
+/** The schema Muse Spark is constrained to. Mirror of meta-eval/fixtures/schemas/brick.json (sealed 2026-11-02); a module rather than JSON so the serverless function can import it without bundling. */
+export const BRICK_SCHEMA = {
   "title": "BrickExtraction",
   "type": "object",
   "additionalProperties": false,

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleExtract } from '../src/lib/extract'
+import { handleExtract } from '../src/lib/extract.js'
 
 export const maxDuration = 120
 
