@@ -39,6 +39,7 @@
 .chip-measured { background: var(--measured); color: #fff; }
 .chip-interpreted { border: 1px dotted var(--interpreted); color: var(--ink); }
 .chip-adapted { border: 1px solid var(--adapted); color: var(--ink-2); }
+.chip-proposed { border: 1px solid var(--ink-2); color: var(--ink); background: var(--paper); } /* P3: how a brick got into a project, not a value */
 .chip .src { opacity: 0.75; text-decoration: underline dotted; cursor: pointer; }
 .chip > span:last-of-type { overflow: hidden; text-overflow: ellipsis; }
 

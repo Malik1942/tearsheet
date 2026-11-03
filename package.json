@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:prompts": "tsx scripts/check-prompt-sha.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.4",

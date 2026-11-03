@@ -1,5 +1,6 @@
 /** Browser side of Sync (PRD 7.3). The code lives in localStorage; the server holds the library under `libraries/<code>/`. */
 import type { Brick } from './types'
+import type { Project } from './mapRelations'
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 export const CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
@@ -8,7 +9,7 @@ const KEY = 'tearsheet.sync'
 const BATCH_BYTES = 3 * 1024 * 1024
 
 export type SyncInfo = { code: string; last_synced?: string; server_count?: number }
-export type Manifest = { code: string; updated_at: string; bricks: Brick[]; bytes: number }
+export type Manifest = { code: string; updated_at: string; bricks: Brick[]; projects?: Project[]; bytes: number }
 
 export function readSync(): SyncInfo | null {
   try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null } catch { return null }
@@ -34,8 +35,11 @@ async function call(method: string, code: string, body?: unknown): Promise<Manif
 export const pull = (code: string) => call('GET', code)
 export const forget = (code: string) => call('DELETE', code)
 
-/** S2: upload in batches sized by JSON length. Only bricks the server does not already hold at this version are sent. */
-export async function push(code: string, bricks: Brick[], onProgress?: (sent: number, total: number) => void): Promise<Manifest> {
+/** S2: upload in batches sized by JSON length. Only bricks the server does not already hold at this version are sent; the projects
+ *  (small JSON) go with the first batch, or alone when every brick is already there. */
+export async function push(code: string, bricks: Brick[], allProjects: Project[], onProgress?: (sent: number, total: number) => void): Promise<Manifest> {
+  // the server holds at most 50 projects per code: send the most recently edited
+  const projects = [...allProjects].sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)).slice(0, 50)
   let manifest = await pull(code)
   const held = new Map(manifest.bricks.map(b => [b.id, b]))
   const todo = bricks.filter(b => {
@@ -46,15 +50,49 @@ export async function push(code: string, bricks: Brick[], onProgress?: (sent: nu
   })
   let sent = 0
   onProgress?.(0, todo.length)
-  let batch: Brick[] = [], size = 2
-  const flush = async () => { if (!batch.length) return; manifest = await call('POST', code, { bricks: batch }); sent += batch.length; onProgress?.(sent, todo.length); batch = []; size = 2 }
+  let batch: Brick[] = [], size = 2, projectsSent = false
+  const flush = async () => {
+    if (!batch.length) return
+    manifest = await call('POST', code, { bricks: batch, ...(projectsSent ? {} : { projects }) }); projectsSent = true
+    sent += batch.length; onProgress?.(sent, todo.length); batch = []; size = 2
+  }
   for (const b of todo) {
     const len = JSON.stringify(b).length + 1
     if (batch.length && size + len > BATCH_BYTES) await flush()
     batch.push(b); size += len
   }
   await flush()
+  if (!projectsSent && projects.length) manifest = await call('POST', code, { bricks: [], projects })
   return manifest
+}
+
+export type SyncStore = { bricks: Brick[]; projects: Project[]; mergeBricks: (b: Brick[]) => number; mergeProjects: (p: Project[]) => number }
+
+/** One sync, used by /sync, /open and the project footer: pull and merge, push what the store lacks, merge the answer, remember the code.
+ *  Returns how many bricks the code holds and how many items changed on this device. */
+export async function runSync(code: string, store: SyncStore, onProgress?: (sent: number, total: number) => void): Promise<{ info: SyncInfo; live: number; got: number; projects: Project[] }> {
+  const before = await pull(code)
+  let got = store.mergeBricks(before.bricks) + store.mergeProjects(before.projects ?? [])
+  const local = store.bricks.filter(b => b.status !== 'extracting')
+  const after = await push(code, local, store.projects, onProgress)
+  got += store.mergeBricks(after.bricks) + store.mergeProjects(after.projects ?? [])
+  const live = after.bricks.filter(b => !b.superseded_by).length
+  const info: SyncInfo = { code, last_synced: new Date().toISOString(), server_count: live }
+  writeSync(info)
+  return { info, live, got, projects: after.projects ?? [] }
+}
+
+/** S4: the deep link a phone hands to a desktop. Opens the library under the code and, when given, lands in that project. */
+export const openLink = (code: string, projectId?: string) => `${location.origin}/open?code=${code}${projectId ? `&project=${encodeURIComponent(projectId)}` : ''}`
+
+export const canShare = () => typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+
+/** S5: the system share sheet where there is one (phones), the clipboard elsewhere. */
+export async function shareLink(url: string): Promise<'shared' | 'copied' | 'cancelled' | 'failed'> {
+  if (canShare()) {
+    try { await navigator.share({ url }); return 'shared' } catch (e) { if ((e as Error).name === 'AbortError') return 'cancelled' }
+  }
+  try { await navigator.clipboard.writeText(url); return 'copied' } catch { return 'failed' }
 }
 
 const isBlobUrl = (u: string) => /^https:\/\/[^/]+\.public\.blob\.vercel-storage\.com\//.test(u)

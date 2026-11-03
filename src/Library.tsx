@@ -12,6 +12,7 @@ const COPY = {
   queued: 'Queued',
   unparsed: "Couldn't read this one.",
   composePhone: 'Open on a larger screen to compose.',
+  phoneProjects: 'Projects open here as preview and instructions.',
   full: `The library holds ${LIBRARY_CAP} bricks. Remove one to add another.`,
 }
 
@@ -58,7 +59,7 @@ export function Library() {
           <input ref={pick} type="file" accept={ACCEPT} multiple className="hidden" onChange={e => { onFiles(e.target.files); e.target.value = '' }} />
         </div>
       </header>
-      <div className="sm:hidden px-4 py-1 text-[12px] ink-2" style={{ borderBottom: '1px solid var(--line)' }}>{COPY.composePhone}</div>
+      <div className="sm:hidden px-4 py-1 text-[12px] ink-2" style={{ borderBottom: '1px solid var(--line)' }}>{COPY.composePhone} <Link href="/projects">{COPY.phoneProjects}</Link></div>
 
       {notice && <div className="mx-4 mt-3 rounded px-3 py-2 text-[12px]" style={{ background: 'var(--panel)', border: '1px solid var(--accent)' }}>{notice}</div>}
 

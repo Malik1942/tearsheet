@@ -3,6 +3,7 @@
  *  plus BLOB_STORE_ID (no long-lived token anywhere). No listing endpoint, no index: a code that nobody enters is unreachable. */
 import { del, list, put } from '@vercel/blob'
 import type { Brick } from './types.js'
+import type { Project } from './mapRelations.js'
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 export const CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
@@ -10,7 +11,9 @@ export const CAP_BRICKS = 60
 export const CAP_BYTES = 40 * 1024 * 1024
 export const MAX_BODY = 4 * 1024 * 1024
 
-export type Manifest = { code: string; updated_at: string; bricks: Brick[]; bytes: number }
+export type Manifest = { code: string; updated_at: string; bricks: Brick[]; projects: Project[]; bytes: number }
+export const CAP_PROJECTS = 50
+const MAX_PROJECT_JSON = 64 * 1024
 
 const prefix = (code: string) => `libraries/${code}/`
 const manifestPath = (code: string) => `${prefix(code)}manifest.json`
@@ -30,7 +33,7 @@ async function held(code: string): Promise<{ bytes: number; urls: string[]; mani
 /** The manifest is fetched by its listed URL with the ETag as a cache-buster, so an overwrite or a delete is seen at once
  *  instead of after the CDN's 60 s. */
 async function readManifest(code: string, h?: Awaited<ReturnType<typeof held>>): Promise<Manifest> {
-  const empty: Manifest = { code, updated_at: '', bricks: [], bytes: 0 }
+  const empty: Manifest = { code, updated_at: '', bricks: [], projects: [], bytes: 0 }
   const got = h ?? await held(code)
   if (!got.manifest) return empty
   const res = await fetch(`${got.manifest.url}?e=${encodeURIComponent(got.manifest.etag)}`, { cache: 'no-store' })
@@ -55,6 +58,16 @@ export function mergeBricks(existing: Brick[], incoming: Brick[]): Brick[] {
   return [...byId.values()]
 }
 
+/** Projects ride along with the bricks they point at (small JSON, no photo): merge by id, the newest `updatedAt` wins. */
+export function mergeProjects(existing: Project[], incoming: Project[]): Project[] {
+  const byId = new Map(existing.map(p => [p.id, p]))
+  for (const inc of incoming) {
+    const cur = byId.get(inc.id)
+    if (!cur || (inc.updatedAt ?? inc.createdAt ?? '') >= (cur.updatedAt ?? cur.createdAt ?? '')) byId.set(inc.id, inc)
+  }
+  return [...byId.values()]
+}
+
 const isDataJpeg = (u: string) => u.startsWith('data:image/jpeg;base64,')
 
 export async function handleSync(method: string, code: string, body: unknown): Promise<{ code: number; body: unknown }> {
@@ -74,8 +87,16 @@ export async function handleSync(method: string, code: string, body: unknown): P
     if (!/^[\w.-]{1,80}$/.test(b.id)) return { code: 400, body: { error: `Brick id not allowed: ${b.id.slice(0, 20)}` } }
   }
 
+  const projects = ((body as { projects?: unknown })?.projects ?? []) as Project[]
+  if (!Array.isArray(projects) || projects.length > CAP_PROJECTS) return { code: 400, body: { error: `projects must be a list of at most ${CAP_PROJECTS}.` } }
+  for (const p of projects) {
+    if (!p || typeof p.id !== 'string' || !/^[\w.-]{1,80}$/.test(p.id) || typeof p.intent !== 'string' || !Array.isArray(p.brickIds)) return { code: 400, body: { error: 'Each project needs an id, an intent and brickIds.' } }
+    if (JSON.stringify(p).length > MAX_PROJECT_JSON) return { code: 400, body: { error: `Project ${p.id} is larger than ${MAX_PROJECT_JSON / 1024} KB.` } }
+  }
+
   const h = await held(code)
   const manifest = await readManifest(code, h)
+  if (bricks.length === 0 && projects.length === 0) return { code: 200, body: manifest }
   let bytes = h.bytes
   const uploaded: Brick[] = []
   for (const b of bricks as Brick[]) {
@@ -94,7 +115,7 @@ export async function handleSync(method: string, code: string, body: unknown): P
   const merged = mergeBricks(manifest.bricks, uploaded)
   const live = merged.filter(b => !b.superseded_by).length
   if (live > CAP_BRICKS) return { code: 409, body: { error: `This code holds ${CAP_BRICKS} bricks. Remove some before adding more.`, live } }
-  const next: Manifest = { code, updated_at: new Date().toISOString(), bricks: merged, bytes }
+  const next: Manifest = { code, updated_at: new Date().toISOString(), bricks: merged, projects: mergeProjects(manifest.projects ?? [], projects), bytes }
   await put(manifestPath(code), JSON.stringify(next), { access: 'public', addRandomSuffix: false, allowOverwrite: true, contentType: 'application/json', cacheControlMaxAge: 60 })
   return { code: 200, body: next }
 }

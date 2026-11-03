@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { createHash } from 'node:crypto'
 
 /** Dev-only stand-in for the Vercel function: same handler, key from META_API_KEY or ../meta-eval/.env. The key is never logged. */
 function devApi(): Plugin {
@@ -21,6 +22,14 @@ function devApi(): Plugin {
       const m = line.match(/^(BLOB_STORE_ID|VERCEL_OIDC_TOKEN)=(.*)$/)
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim().replace(/^['"]|['"]$/g, '')
     }
+  }
+  /** Live proposals in dev only once the proposal set is sealed (PRD 10.2): meta-eval/fixtures/propose_notes.md with a matching
+   *  .sha256 beside it, or PROPOSE_ENABLED=1 as on Vercel. Otherwise /api/propose answers 503 and the app picks by hand. */
+  const proposeLive = (): boolean => {
+    if (process.env.PROPOSE_ENABLED === '1') return true
+    const notes = resolve(import.meta.dirname, '../meta-eval/fixtures/propose_notes.md'), seal = notes.replace(/\.md$/, '.sha256')
+    if (!existsSync(notes) || !existsSync(seal)) return false
+    return createHash('sha256').update(readFileSync(notes)).digest('hex') === readFileSync(seal, 'utf8').trim().split(/\s+/)[0]
   }
   const readJson = async (req: import('node:http').IncomingMessage): Promise<{ ok: true; json: unknown; bytes: number } | { ok: false }> => {
     const chunks: Buffer[] = []
@@ -42,6 +51,17 @@ function devApi(): Plugin {
         const { handleSync } = await server.ssrLoadModule('/src/lib/sync.ts') as { handleSync: (m: string, c: string, b: unknown) => Promise<{ code: number; body: unknown }> }
         try { const out = await handleSync(req.method ?? 'GET', code, read.json); res.statusCode = out.code; res.end(JSON.stringify(out.body)) }
         catch (e) { res.statusCode = 502; res.end(JSON.stringify({ error: `Sync store: ${(e as Error).message}` })) }
+      })
+      server.middlewares.use('/api/propose', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        if (req.method === 'GET') { res.end(JSON.stringify({ enabled: proposeLive() })); return }
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(JSON.stringify({ error: 'GET or POST' })); return }
+        const read = await readJson(req)
+        if (!read.ok) { res.statusCode = 400; res.end(JSON.stringify({ error: 'bad json' })); return }
+        if (read.bytes > 4 * 1024 * 1024) { res.statusCode = 413; res.end(JSON.stringify({ error: 'One request carries at most 4 MB.' })); return }
+        const { handlePropose } = await server.ssrLoadModule('/src/lib/propose.ts') as { handlePropose: (b: unknown, k: string | undefined, o: { live: boolean; ip?: string }) => Promise<{ code: number; body: unknown }> }
+        const out = await handlePropose(read.json, readKey(), { live: proposeLive(), ip: req.socket.remoteAddress ?? 'dev' })
+        res.statusCode = out.code; res.end(JSON.stringify(out.body))
       })
       server.middlewares.use('/api/extract', async (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return }

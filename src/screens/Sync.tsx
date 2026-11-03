@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
-import { readSync, writeSync, generateCode, normalizeCode, CODE_RE, pull, push, forget, inlineBlobPhotos, type SyncInfo } from '../lib/syncClient'
+import { readSync, writeSync, generateCode, normalizeCode, CODE_RE, forget, inlineBlobPhotos, runSync, openLink, shareLink, canShare, type SyncInfo } from '../lib/syncClient'
 
 const COPY = {
   title: 'Sync',
@@ -19,6 +19,10 @@ const COPY = {
   forgotten: 'The code and everything under it were deleted. This device keeps its bricks.',
   busy: 'Syncing…',
   bad: 'A code is six characters from A–Z and 2–9.',
+  share: 'Share link',
+  copy: 'Copy link',
+  copied: 'Link copied. Open it on the other device.',
+  copyFailed: 'Could not copy the link; the code above works too.',
 }
 
 /** Sync (PRD 7.3): the code is the only key. Pull first, then upload what the store does not hold; merge by id, newest version wins. */
@@ -38,14 +42,9 @@ export function SyncScreen() {
   const run = async (code: string, label = COPY.busy) => {
     setBusy(label); setNotice(null); setProgress(null)
     try {
-      const m = await pull(code)
-      const merged = store.mergeBricks(m.bricks)
-      const after = await push(code, live, (sent, total) => setProgress({ sent, total }))
-      const mergedAgain = store.mergeBricks(after.bricks)
-      save({ code, last_synced: new Date().toISOString(), server_count: after.bricks.filter(b => !b.superseded_by).length })
-      const got = merged + mergedAgain
-      const n = after.bricks.filter(b => !b.superseded_by).length
-      setNotice(`${n} ${n === 1 ? 'brick' : 'bricks'} under ${code}${got ? ` · ${got} new or updated here` : ''}.`)
+      const { info: next, live: n, got } = await runSync(code, store, (sent, total) => setProgress({ sent, total }))
+      setInfo(next)
+      setNotice(`${n} ${n === 1 ? 'brick' : 'bricks'} under ${code}${got ? ` · ${got} ${got === 1 ? 'item' : 'items'} new or updated here` : ''}.`)
     } catch (e) {
       setNotice((e as Error).message)
     } finally { setBusy(null); setProgress(null) }
@@ -63,11 +62,17 @@ export function SyncScreen() {
 
   useEffect(() => {
     if (!info?.code || !canvas.current) return
-    const url = `${location.origin}/sync?code=${info.code}`
+    const url = openLink(info.code)
     QRCode.toCanvas(canvas.current, url, { width: 176, margin: 1, color: { dark: '#1A1917', light: '#F4F2EE' } }).catch(() => undefined)
   }, [info?.code])
 
   const onMake = () => run(generateCode())
+  const onShare = async () => {
+    if (!info?.code) return
+    const r = await shareLink(openLink(info.code))
+    if (r === 'copied') setNotice(COPY.copied)
+    else if (r === 'failed') setNotice(COPY.copyFailed)
+  }
   const onEnter = () => {
     const code = normalizeCode(entry)
     if (!CODE_RE.test(code)) { setNotice(COPY.bad); return }
@@ -108,6 +113,7 @@ export function SyncScreen() {
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" className="btn btn-accent" disabled={!!busy} onClick={() => run(info.code)}>{COPY.syncNow}</button>
+              <button type="button" className="btn" disabled={!!busy} onClick={onShare} title="A link that opens this library on another device">{canShare() ? COPY.share : COPY.copy}</button>
               <button type="button" className="btn btn-quiet" disabled={!!busy} onClick={onForget} title="Deletes the photos and bricks stored under this code">{COPY.forget}</button>
             </div>
           </section>

@@ -34,7 +34,9 @@ export type Actions = {
   mergeBricks: (incoming: Brick[]) => number
   /** Replace bricks wholesale (used before a code is forgotten, to inline photos that lived on the store). */
   replaceBricks: (bricks: Brick[]) => void
-  createProject: (intent: string, brickIds?: string[], name?: string) => string
+  createProject: (intent: string, brickIds?: string[], name?: string, extra?: Partial<Project>) => string
+  /** Sync: projects ride along with the bricks; merge by id, the newest `updatedAt` wins. Returns how many were new or changed. */
+  mergeProjects: (incoming: Project[]) => number
   updateProject: (id: string, patch: Partial<Project> | ((p: Project) => Partial<Project>)) => void
   setActive: (id: string | null) => void
   reset: () => void
@@ -127,11 +129,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return changed
     },
     replaceBricks: bricks => { setState(s => ({ ...s, bricks })); stateRef.current = { ...stateRef.current, bricks } },
-    createProject: (intent, brickIds = [], name) => {
-      const id = `p_${Date.now().toString(36)}`
+    createProject: (intent, brickIds = [], name, extra) => {
+      const id = `p_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
       const now = new Date().toISOString()
-      setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, { id, name, intent, createdAt: now, updatedAt: now, shell: 'list-review', brickIds, lockedBricks: {}, disabled: {}, choice: {}, locks: {}, manual: {} }] }))
+      const project: Project = { id, name, intent, createdAt: now, updatedAt: now, shell: 'list-review', brickIds, lockedBricks: {}, disabled: {}, choice: {}, locks: {}, manual: {}, ...extra }
+      setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, project] }))
+      stateRef.current = { ...stateRef.current, activeProjectId: id, projects: [...stateRef.current.projects, project] }
       return id
+    },
+    mergeProjects: incoming => {
+      const byId = new Map(stateRef.current.projects.map(p => [p.id, p]))
+      let changed = 0
+      for (const inc of incoming) {
+        if (!inc || typeof inc.id !== 'string' || !Array.isArray(inc.brickIds)) continue
+        const have = byId.get(inc.id)
+        if (have && (inc.updatedAt ?? inc.createdAt ?? '') <= (have.updatedAt ?? have.createdAt ?? '')) continue
+        byId.set(inc.id, { ...have, ...inc, disabled: inc.disabled ?? {}, choice: inc.choice ?? {}, locks: inc.locks ?? {}, manual: inc.manual ?? {} })
+        changed++
+      }
+      if (!changed) return 0
+      const projects = [...byId.values()]
+      setState(s => ({ ...s, projects }))
+      stateRef.current = { ...stateRef.current, projects }
+      return changed
     },
     updateProject: (id, patch) => setState(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, ...(typeof patch === 'function' ? patch(p) : patch), updatedAt: new Date().toISOString() } : p) })),
     setActive: id => setState(s => ({ ...s, activeProjectId: id })),

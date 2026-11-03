@@ -134,6 +134,10 @@ export function proposeValue(key: ParameterKey, rel: { rule: string; target: str
 export type RelationRef = `${string}/${string}`   // brickId/relationId
 export const relRef = (brickId: string, relationId: string): RelationRef => `${brickId}/${relationId}`
 
+/** P2–P3: the model's picks for an intent, each quoting one rule of the brick verbatim (checked on the server), and what the person did with them. */
+export type ProposalPick = { brickId: string; quotedRule: string; why: string; status: 'proposed' | 'swapped'; swappedFrom?: string }
+export type Proposal = { at: string; model: string; effort: string; intent: string; latency_ms: number; dropped: number; picks: ProposalPick[] }
+
 export type Project = {
   id: string
   name?: string
@@ -142,6 +146,8 @@ export type Project = {
   updatedAt?: string
   shell?: 'list-review'
   brickIds: string[]
+  /** How the bricks got here (P3). Accepted picks are `proposed · model`; a swapped card is `adapted · by you`. Picking by hand records nothing. */
+  proposal?: Proposal
   /** Per-brick lock (spec): a locked brick keeps its values through Swap and Rotate and wins conflicts. */
   lockedBricks?: Record<string, true>
   disabled: Record<RelationRef, true>
