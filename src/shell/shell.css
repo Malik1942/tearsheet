@@ -46,7 +46,7 @@
 .shell[data-density="6"] .item .note, .shell[data-density="4"] .item .note { display: none; }
 
 /* hierarchy: what leads */
-.shell[data-hierarchy="type-led"] .item { grid-template-columns: 1fr minmax(0, calc(var(--image-share) * 60%)); }
+.shell[data-hierarchy="type-led"] .item { grid-template-columns: 1fr minmax(48px, calc(var(--image-share) * 60%)); }   /* 48px = the .pic min-height: a square never overflows its column at a low image share */
 .shell[data-hierarchy="type-led"] .item .pic { order: 2; aspect-ratio: 1 / 1; }
 .shell[data-hierarchy="type-led"] .item .title { font-size: var(--display-size); }
 .shell[data-hierarchy="image-led"] .item { grid-template-columns: 1fr; grid-template-rows: auto auto; }
