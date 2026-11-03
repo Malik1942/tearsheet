@@ -1,5 +1,6 @@
 import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, RELATIONSHIP_KEYS, normalize, type ParameterKey, type ParamValue, type Params } from '../shell/params'
 import type { Brick, Composition, ParameterValue, Provenance, Relation, Unexpressed } from './types'
+import type { VersionEntry } from './versions'
 
 /** Resolve a hand-authored composition (fixtures) into the full parameter set. Keys no brick sets fall back to a neutral default labeled adapted. */
 export function resolveParams(c: Composition): { params: Params; values: Record<ParameterKey, ParameterValue> } {
@@ -154,6 +155,10 @@ export type Project = {
   choice: Partial<Record<ParameterKey, RelationRef>>
   locks: Partial<Record<ParameterKey, ParameterValue>>   // a lock freezes the whole value, provenance and source included
   manual: Partial<Record<ParameterKey, ParamValue>>      // values set by hand; provenance interpreted, source user
+  /** C9: v1, v2, … bumped on every accepted change in Compose. A project saved before versions existed has none and reads as v1 with an empty history. */
+  version?: number
+  /** One entry per version, the latest last, at most `MAX_VERSIONS`; each says what that change moved (`changed_since_previous`) and holds the composition it made. */
+  versions?: VersionEntry[]
 }
 
 export type Candidate = ParameterValue & { ref: RelationRef; relation?: Relation }

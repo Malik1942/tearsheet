@@ -50,6 +50,7 @@ export function ComposeScreen({ id }: { id: string }) {
       <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
         <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
         <span className="ink-2">/ <Link href="/projects" className="ink-2">Projects</Link> / {project.name || 'Untitled'}</span>
+        <span className="mono ink-2 text-[11px]" title="Every accepted change makes a new version">{`v${project.version ?? 1}`}</span>
         <span className="ink-2 hidden truncate md:inline">· {project.intent}</span>
         <div className="ml-auto flex items-center gap-2">
           <div className="flex overflow-hidden rounded border hairline text-[12px]">

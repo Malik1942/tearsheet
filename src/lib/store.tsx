@@ -3,6 +3,7 @@ import { SAMPLES } from '../fixtures/samples'
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
 import { extractBrick } from './client'
+import { snapshotOf, withNextVersion } from './versions'
 
 /** Versioned key (PRD L9). The library starts empty; `Load sample library` seeds it. Older keys are ignored. */
 const KEY = 'tearsheet.v2'
@@ -132,7 +133,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     createProject: (intent, brickIds = [], name, extra) => {
       const id = `p_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
       const now = new Date().toISOString()
-      const project: Project = { id, name, intent, createdAt: now, updatedAt: now, shell: 'list-review', brickIds, lockedBricks: {}, disabled: {}, choice: {}, locks: {}, manual: {}, ...extra }
+      const base: Project = { id, name, intent, createdAt: now, updatedAt: now, shell: 'list-review', brickIds, lockedBricks: {}, disabled: {}, choice: {}, locks: {}, manual: {}, ...extra }
+      const project: Project = { ...base, version: 1, versions: [{ v: 1, at: now, changed: [], snapshot: snapshotOf(base) }] }   // C9: v1 has nothing before it to differ from
       setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, project] }))
       stateRef.current = { ...stateRef.current, activeProjectId: id, projects: [...stateRef.current.projects, project] }
       return id
@@ -144,7 +146,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (!inc || typeof inc.id !== 'string' || !Array.isArray(inc.brickIds)) continue
         const have = byId.get(inc.id)
         if (have && (inc.updatedAt ?? inc.createdAt ?? '') <= (have.updatedAt ?? have.createdAt ?? '')) continue
-        byId.set(inc.id, { ...have, ...inc, disabled: inc.disabled ?? {}, choice: inc.choice ?? {}, locks: inc.locks ?? {}, manual: inc.manual ?? {} })
+        byId.set(inc.id, { ...have, ...inc, disabled: inc.disabled ?? {}, choice: inc.choice ?? {}, locks: inc.locks ?? {}, manual: inc.manual ?? {}, version: inc.version, versions: inc.versions })   // C9: the version and its history come from the winner as they are, never mixed with the older copy's
         changed++
       }
       if (!changed) return 0
@@ -153,7 +155,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       stateRef.current = { ...stateRef.current, projects }
       return changed
     },
-    updateProject: (id, patch) => setState(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, ...(typeof patch === 'function' ? patch(p) : patch), updatedAt: new Date().toISOString() } : p) })),
+    // C9: every accepted change bumps the version and records what it moved; a rename or anything outside the composition does not. Read the bricks from the same state the update applies to.
+    updateProject: (id, patch) => setState(s => {
+      const at = new Date().toISOString()
+      return { ...s, projects: s.projects.map(p => p.id === id ? withNextVersion(p, { ...p, ...(typeof patch === 'function' ? patch(p) : patch), updatedAt: at }, s.bricks, at) : p) }
+    }),
     setActive: id => setState(s => ({ ...s, activeProjectId: id })),
     reset: () => setState(EMPTY),
     queue: { waiting: 0, inFlight: 0 },
