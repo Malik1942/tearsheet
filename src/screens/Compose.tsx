@@ -22,8 +22,8 @@ const NEUTRAL = NEUTRAL_SKIN
 const CONFLICT_W = 130   // C6: width of each mini-screen in a conflict tile
 const COPY = { unexpressedEmpty: 'Everything from these bricks found a slot.', conflictDefault: 'Using the top brick until you choose.', changed: 'What changed and why', changedEmpty: 'These bricks set no relationship yet; the screens use the shell defaults.' }
 
-/** Fine-tune (15_SIMPLIFY §2, 3 See): today's Compose, opened in a drawer from See; logic unchanged. Three columns at >= 960 px, stacked below:
- *  materials (left) feed the shell (center); the sheet (right) shows every value with its provenance. Neutral skin is See's, so the drawer and See agree. */
+/** Fine-tune: today's Compose, opened in a drawer from the Make page's ⋯; logic unchanged. Three columns at >= 960 px, stacked below:
+ *  materials (left) feed the shell (center); the sheet (right) shows every value with its provenance. Neutral skin is the page's, so the drawer and the page agree. */
 export function ComposePanel({ project, neutral, onNeutral, screen }: { project: Project; neutral: boolean; onNeutral: () => void; screen: 'both' | 'list' | 'review' }) {
   const store = useStore()
   const [swapping, setSwapping] = useState<string | null>(null)

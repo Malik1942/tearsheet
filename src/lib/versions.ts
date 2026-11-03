@@ -8,16 +8,18 @@ import { PARAMETER_KEYS, type ParameterKey } from '../shell/params'
 export type ValueRef = { value: string | number; brickId: string; provenance: string }
 export type Change = { key: ParameterKey; from: ValueRef; to: ValueRef }
 /** The composition of a project at one version: everything Compose changes, and nothing else (not the name, the intent or the proposal). */
-export type Snapshot = Pick<Project, 'brickIds' | 'lockedBricks' | 'disabled' | 'choice' | 'locks' | 'manual'>
+export type Snapshot = Pick<Project, 'brickIds' | 'lockedBricks' | 'mutedBricks' | 'disabled' | 'choice' | 'locks' | 'manual'>
 export type VersionEntry = { v: number; at: string; changed: Change[]; snapshot: Snapshot }
 
 /** The history keeps this many entries, the latest last. */
 export const MAX_VERSIONS = 50
 
-/** A copy of the project's composition. A missing `lockedBricks` reads as none locked, so the same composition always gives the same snapshot. */
+/** A copy of the project's composition. A missing `lockedBricks` reads as none locked, so the same composition always gives the same snapshot.
+ *  `mutedBricks` (a photo tapped off on Make) is kept only when some photo is muted, so a snapshot from before it existed reads the same. */
 export function snapshotOf(p: Project): Snapshot {
-  const { brickIds, lockedBricks, disabled, choice, locks, manual } = p
-  return JSON.parse(JSON.stringify({ brickIds, lockedBricks: lockedBricks ?? {}, disabled, choice, locks, manual })) as Snapshot
+  const { brickIds, lockedBricks, mutedBricks, disabled, choice, locks, manual } = p
+  const muted = mutedBricks && Object.keys(mutedBricks).length ? { mutedBricks } : {}
+  return JSON.parse(JSON.stringify({ brickIds, lockedBricks: lockedBricks ?? {}, ...muted, disabled, choice, locks, manual })) as Snapshot
 }
 
 /** Structural equality for JSON data: key order does not matter, array order does. */

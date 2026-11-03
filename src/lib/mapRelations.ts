@@ -155,6 +155,8 @@ export type Project = {
   proposal?: Proposal
   /** Per-brick lock (spec): a locked brick keeps its values through Swap and Rotate and wins conflicts. */
   lockedBricks?: Record<string, true>
+  /** Make (one page): a photo tapped off. A muted brick stays in the project and contributes nothing: no candidates, no skin, nothing unexpressed. Older projects have none. */
+  mutedBricks?: Record<string, true>
   disabled: Record<RelationRef, true>
   choice: Partial<Record<ParameterKey, RelationRef>>
   locks: Partial<Record<ParameterKey, ParameterValue>>   // a lock freezes the whole value, provenance and source included
@@ -307,7 +309,7 @@ export function skinOf(brick: Brick): Partial<Record<ParameterKey, ParameterValu
 /** Derive everything the prototype and the panel need. `unexpressed` is never hand-edited. */
 export function resolveProject(project: Project, bricks: Brick[]): Resolved {
   const ordered = [...project.brickIds].sort((a, b) => (project.lockedBricks?.[b] ? 1 : 0) - (project.lockedBricks?.[a] ? 1 : 0))
-  const inProject = ordered.map(id => bricks.find(b => b.id === id)).filter((b): b is Brick => !!b)
+  const inProject = ordered.filter(id => !project.mutedBricks?.[id]).map(id => bricks.find(b => b.id === id)).filter((b): b is Brick => !!b)
   const candidates: Partial<Record<ParameterKey, Candidate[]>> = {}
   const unexpressed: Unexpressed[] = []
   const capped: Candidate[] = []

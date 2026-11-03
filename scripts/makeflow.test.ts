@@ -1,10 +1,11 @@
-/** 15_SIMPLIFY §2 Make, the pure parts: the auto name (spec v3 P2), the Picks card line and label, the See rows and their switches, and the E1 link and landing.
+/** Make as one page, the pure parts: the auto name (spec v3 P2), the date line, a photo muted as a whole, which photos the row shows and their one label, the routes, and the E1 link and landing.
  *  Expected strings are typed out from the specs, never read from makeFlow.ts. Run: npm test */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, instructionsLink, isOff, openDestination, photoLine, pickLabel, seeRows, toggleRef } from '../src/lib/makeFlow.ts'
+import { autoName, instructionsLink, makeRoute, oneLabel, openDestination, photoLine, photoRow, toggleMuted } from '../src/lib/makeFlow.ts'
+import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
 
 const M = (id: string, value: string) => ({ id, statement: value, value, how_measured: 'visual estimate' })
@@ -40,7 +41,7 @@ describe('P2 auto name: the first four words of the intent', () => {
   })
 })
 
-describe('Picks card: the date line and the one label', () => {
+describe('the date line under a photo', () => {
   const today = new Date(2026, 10, 3)
   it('own photo: the day it was taken when known, else the saved day', () => {
     assert.equal(photoLine({ id: 'x', origin: 'own', saved_at: '2026-11-03', taken_at: '2025-12-27' }, today), 'Dec 27, 2025')
@@ -49,63 +50,91 @@ describe('Picks card: the date line and the one label', () => {
   it('a starter carries its credit line', () => {
     assert.equal(photoLine({ id: 'x', origin: 'starter', credit: 'Minneapolis Institute of Art, 1923', saved_at: '2026-11-02' }, today), 'Minneapolis Institute of Art, 1923')
   })
-  it('the label of the quoted rule; with no quote, the brick\'s first label', () => {
-    assert.equal(pickLabel(chicago, ACCENT.rule)?.label, 'A clear accent')
-    assert.equal(pickLabel(chicago, '')?.label, 'Mostly text')
-    assert.equal(pickLabel(chicago, 'not a rule of this brick')?.label, 'Mostly text')
+})
+
+// a photo whose one relation loses to Chicago's (the top brick wins a conflict) and that has no skin: it sets nothing while Chicago is on
+const ECHO = { parameter: 'image_text_dominance', rule: 'let the photo fill 80% of each item', target: '80% image', source_hypothesis: 'h1' } as const
+const echo = brick('echo', [ECHO], { fragile_if_changed: '' })
+const g2 = SAMPLES.find(b => b.id === 'g2')!
+
+describe('a photo muted as a whole (mutedBricks)', () => {
+  it('a muted brick sets nothing: no rule, no skin, nothing unexpressed from it', () => {
+    const on = resolveProject(project({ brickIds: ['chicago', 'g2'] }), [chicago, g2])
+    assert.ok(Object.values(on.values).some(v => v.source?.brickId === 'chicago'))
+    assert.ok(on.unexpressed.some(u => u.brickId === 'chicago'))
+    const off = resolveProject(project({ brickIds: ['chicago', 'g2'], mutedBricks: { chicago: true } }), [chicago, g2])
+    assert.ok(!Object.values(off.values).some(v => v.source?.brickId === 'chicago'))
+    assert.ok(!off.unexpressed.some(u => u.brickId === 'chicago'))
+    assert.ok(!Object.values(off.candidates).flat().some(c => c?.source?.brickId === 'chicago'))
+  })
+  it('the skin follows the photo that supplies it: muting g2 takes its colors away', () => {
+    const p = project({ brickIds: ['chicago', 'g2'] })
+    assert.equal(resolveProject(p, [chicago, g2]).values.color_bg.source?.brickId, 'g2')
+    assert.notEqual(resolveProject({ ...p, mutedBricks: { g2: true } }, [chicago, g2]).values.color_bg.source?.brickId, 'g2')
+  })
+  it('a project without the field resolves as before', () => {
+    const p = project({ brickIds: ['chicago', 'g2'] })
+    assert.deepEqual(resolveProject(p, [chicago, g2]).params, resolveProject({ ...p, mutedBricks: {} }, [chicago, g2]).params)
+  })
+  it('a tap is a new version that records what moved, so the change highlight runs; on again is another', () => {
+    const at = '2026-11-03T15:00:00.000Z'
+    const v1 = { ...project({ brickIds: ['chicago', 'g2'] }), ...firstVersion(project({ brickIds: ['chicago', 'g2'] }), at) }
+    const v2 = withNextVersion(v1, { ...v1, mutedBricks: toggleMuted(v1.mutedBricks, 'chicago') }, [chicago, g2], at)
+    assert.equal(v2.version, 2)
+    assert.deepEqual(v2.mutedBricks, { chicago: true })
+    assert.ok(changedSincePrevious(v2).some(c => c.key === 'hierarchy_mode'), JSON.stringify(changedSincePrevious(v2).map(c => c.key)))
+    const v3 = withNextVersion(v2, { ...v2, mutedBricks: toggleMuted(v2.mutedBricks, 'chicago') }, [chicago, g2], at)
+    assert.equal(v3.version, 3)
+    assert.deepEqual(v3.mutedBricks, {})
+    assert.ok(changedSincePrevious(v3).some(c => c.key === 'hierarchy_mode'))
   })
 })
 
-describe('3 See: one row per brick, one switch per label', () => {
-  it('Chicago shows its three active labels, all on, with the refs that switch them', () => {
-    const p = project()
-    const rows = seeRows(p, resolveProject(p, [chicago]), [chicago])
-    assert.equal(rows.length, 1)
-    assert.deepEqual(rows[0].labels.map(l => [l.label, l.ref, l.on]), [
-      ['Mostly text', 'chicago/r1', true], ['Title leads', 'chicago/r1:hierarchy_mode', true], ['Centered', 'chicago/r1:alignment_edge', true],
-    ])
+describe('the photo row: which photos show, and the one label', () => {
+  it('Chicago and g2 both set something and show; echo sets nothing under Chicago and is left out', () => {
+    const p = project({ brickIds: ['chicago', 'g2', 'echo'] })
+    assert.deepEqual(photoRow(p, [chicago, g2, echo]).map(c => [c.brick.id, c.muted]), [['chicago', false], ['g2', false]])
   })
-  it('Title leads off: its switch stays, off; the hierarchy goes back to the shell default; on again restores it', () => {
-    const off = project({ disabled: toggleRef({}, 'chicago/r1:hierarchy_mode') })
-    assert.deepEqual(off.disabled, { 'chicago/r1:hierarchy_mode': true })
-    const r = resolveProject(off, [chicago])
-    assert.notEqual(r.params.hierarchy_mode, 'type-led')
-    const row = seeRows(off, r, [chicago])[0]
-    assert.deepEqual(row.labels.find(l => l.label === 'Title leads')?.on, false)
-    assert.deepEqual(row.labels.find(l => l.label === 'Mostly text')?.on, true)
-    const on = project({ disabled: toggleRef(off.disabled, 'chicago/r1:hierarchy_mode') })
-    assert.deepEqual(on.disabled, {})
-    assert.equal(resolveProject(on, [chicago]).params.hierarchy_mode, 'type-led')
+  it('a muted photo that would set something stays, dimmed; one that would not stays out', () => {
+    const p = project({ brickIds: ['chicago', 'g2', 'echo'], mutedBricks: { chicago: true, echo: true } })
+    assert.deepEqual(photoRow(p, [chicago, g2, echo]).map(c => [c.brick.id, c.muted]), [['chicago', true], ['g2', false]])
   })
-  it('a relation switched off as a whole holds its readings off; turning one on clears the relation', () => {
-    const d = { 'chicago/r1': true } as Project['disabled']
-    assert.ok(isOff({ disabled: d }, 'chicago/r1:hierarchy_mode'))
-    const p = project({ disabled: d })
-    const row = seeRows(p, resolveProject(p, [chicago]), [chicago])[0]
-    assert.deepEqual(row.labels.filter(l => l.ref.startsWith('chicago/r1')).map(l => l.on), [false, false, false])
-    assert.deepEqual(toggleRef(d, 'chicago/r1:hierarchy_mode'), {})
+  it('with Chicago off, echo (next in line) sets its share and shows', () => {
+    const on = project({ brickIds: ['chicago', 'echo', 'g2'] })
+    assert.deepEqual(photoRow(on, [chicago, g2, echo]).map(c => c.brick.id), ['chicago', 'g2'])
+    const off = project({ brickIds: ['chicago', 'echo', 'g2'], mutedBricks: { chicago: true } })
+    assert.deepEqual(photoRow(off, [chicago, g2, echo]).map(c => c.brick.id), ['chicago', 'echo', 'g2'])
   })
-  it('a freed cap slot brings the held-back label in', () => {
-    const p = project()
-    const before = seeRows(p, resolveProject(p, [chicago]), [chicago])[0].labels.map(l => l.label)
-    assert.ok(!before.includes('A clear accent'), before.join(', '))
-    const off = project({ disabled: { 'chicago/r1': true } })
-    const after = seeRows(off, resolveProject(off, [chicago]), [chicago])[0].labels.map(l => l.label)
-    assert.ok(after.includes('A clear accent'), after.join(', '))
-  })
-  it('rows follow the project order and skip bricks the library no longer has', () => {
-    const g2 = SAMPLES.find(b => b.id === 'g2')!
-    const p = project({ brickIds: ['g2', 'gone', 'chicago'] })
-    const rows = seeRows(p, resolveProject(p, [chicago, g2]), [chicago, g2])
-    assert.deepEqual(rows.map(r => r.brick.id), ['g2', 'chicago'])
-  })
-  it('a label that is on but overruled by a brick above it is marked not in use', () => {
-    const g2 = SAMPLES.find(b => b.id === 'g2')!
+  it('the label is the first one among the values the photo sets, in its own rule order', () => {
     const p = project({ brickIds: ['chicago', 'g2'] })
-    const rows = seeRows(p, resolveProject(p, [chicago, g2]), [chicago, g2])
-    const find = (id: string, label: string) => rows.find(r => r.brick.id === id)!.labels.find(l => l.label === label)!
-    assert.deepEqual([find('chicago', 'Mostly text').on, find('chicago', 'Mostly text').inUse], [true, true])
-    assert.deepEqual([find('g2', 'Big images').on, find('g2', 'Big images').inUse], [true, false])
+    const row = photoRow(p, [chicago, g2])
+    assert.equal(row[0].label, 'Mostly text')
+    // g2's first rule (big images) loses to Chicago's text-led share; its accent is the first thing it sets that has a label
+    assert.equal(row[1].label, 'One small accent')
+  })
+  it('a muted photo keeps the label it would have when on', () => {
+    const p = project({ brickIds: ['chicago', 'g2'], mutedBricks: { chicago: true } })
+    assert.equal(photoRow(p, [chicago, g2])[0].label, 'Mostly text')
+  })
+  it('with nothing set that has a label, the photo\'s first label overall', () => {
+    const r = resolveProject(project({ brickIds: ['chicago'] }), [chicago])
+    assert.equal(oneLabel(echo, r), 'Big images')
+  })
+})
+
+describe('Make routes', () => {
+  it('/make is the empty page; a project and its older step routes are its page; share and export open Share', () => {
+    assert.deepEqual(makeRoute('/make'), { id: null, share: false })
+    assert.deepEqual(makeRoute('/project/p_1'), { id: 'p_1', share: false })
+    assert.deepEqual(makeRoute('/project/p_1/preview'), { id: 'p_1', share: false })
+    assert.deepEqual(makeRoute('/project/p_1/share'), { id: 'p_1', share: true })
+    assert.deepEqual(makeRoute('/project/p_1/export'), { id: 'p_1', share: true })
+    assert.deepEqual(makeRoute('/project/p%201'), { id: 'p 1', share: false })
+  })
+  it('Instructions, Projects and the Library are not Make', () => {
+    assert.equal(makeRoute('/project/p_1/instructions'), null)
+    assert.equal(makeRoute('/projects'), null)
+    assert.equal(makeRoute('/'), null)
   })
 })
 
