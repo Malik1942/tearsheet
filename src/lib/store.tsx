@@ -3,23 +3,32 @@ import { SAMPLES } from '../fixtures/samples'
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
 
-const KEY = 'bricks.v2'   // v2: the library is seeded from the v3 sample bricks (own photos only); v1 held the step-2 fixtures
-const SEED: Brick[] = SAMPLES
+/** Versioned key. The library starts empty; `Load sample library` seeds it. (The earlier bricks.v1/v2 keys held step-2 fixtures and are ignored.) */
+const KEY = 'tearsheet.v1'
+export const LIBRARY_CAP = 60
 
 export type State = { bricks: Brick[]; projects: Project[]; activeProjectId: string | null }
+
+const EMPTY: State = { bricks: [], projects: [], activeProjectId: null }
 
 const initial = (): State => {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return JSON.parse(raw) as State
+    if (raw) {
+      const s = JSON.parse(raw) as State
+      // an extraction interrupted by a reload cannot resume; show it as unparsed with a retry
+      return { ...s, bricks: s.bricks.map(b => b.status === 'extracting' ? { ...b, status: 'unparsed', error: 'Interrupted before the reading came back.' } : b) }
+    }
   } catch { /* storage unavailable: run in memory */ }
-  return { bricks: SEED, projects: [], activeProjectId: null }
+  return EMPTY
 }
 
 export type Actions = {
-  addBrick: (b: Brick) => void
+  addBrick: (b: Brick) => boolean
+  updateBrick: (id: string, patch: Partial<Brick>) => void
   removeBrick: (id: string) => void
-  createProject: (intent: string) => string
+  loadSamples: () => void
+  createProject: (intent: string, brickIds?: string[]) => string
   updateProject: (id: string, patch: Partial<Project> | ((p: Project) => Partial<Project>)) => void
   setActive: (id: string | null) => void
   reset: () => void
@@ -29,20 +38,37 @@ const Ctx = createContext<(State & Actions) | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(initial)
-  useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* ignore */ } }, [state])
+  const [full, setFull] = useState(false)
+  useEffect(() => {
+    try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* quota or private mode: keep running in memory */ }
+  }, [state])
   const actions = useMemo<Actions>(() => ({
-    addBrick: b => setState(s => ({ ...s, bricks: [b, ...s.bricks.filter(x => x.id !== b.id)] })),
+    addBrick: b => {
+      let ok = true
+      setState(s => {
+        if (s.bricks.filter(x => x.id !== b.id).length >= LIBRARY_CAP) { ok = false; return s }
+        return { ...s, bricks: [b, ...s.bricks.filter(x => x.id !== b.id)] }
+      })
+      setFull(!ok)
+      return ok
+    },
+    updateBrick: (id, patch) => setState(s => ({ ...s, bricks: s.bricks.map(b => b.id === id ? { ...b, ...patch } : b) })),
     removeBrick: id => setState(s => ({ ...s, bricks: s.bricks.filter(b => b.id !== id), projects: s.projects.map(p => ({ ...p, brickIds: p.brickIds.filter(x => x !== id) })) })),
-    createProject: intent => {
+    loadSamples: () => setState(s => {
+      const have = new Set(s.bricks.map(b => b.id))
+      const fresh = SAMPLES.filter(b => !have.has(b.id)).map(b => ({ ...b, status: 'ready' as const, prompt_version: 'v3' }))
+      return { ...s, bricks: [...fresh, ...s.bricks].slice(0, LIBRARY_CAP) }
+    }),
+    createProject: (intent, brickIds = []) => {
       const id = `p_${Date.now().toString(36)}`
-      setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, { id, intent, createdAt: new Date().toISOString(), brickIds: [], disabled: {}, choice: {}, locks: {}, manual: {} }] }))
+      setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, { id, intent, createdAt: new Date().toISOString(), brickIds, disabled: {}, choice: {}, locks: {}, manual: {} }] }))
       return id
     },
     updateProject: (id, patch) => setState(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, ...(typeof patch === 'function' ? patch(p) : patch) } : p) })),
     setActive: id => setState(s => ({ ...s, activeProjectId: id })),
-    reset: () => setState({ bricks: SEED, projects: [], activeProjectId: null }),
+    reset: () => setState(EMPTY),
   }), [])
-  return <Ctx.Provider value={{ ...state, ...actions }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ ...state, ...actions, ...(full ? { libraryFull: true } : {}) } as State & Actions}>{children}</Ctx.Provider>
 }
 
 export function useStore() {

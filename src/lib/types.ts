@@ -18,6 +18,11 @@ export type Brick = {
   model: { id: string; effort: string; latency_ms: number; input_tokens: number; output_tokens: number }
   /** Skin colors measured from the sent pixels by the harness, not by the model. */
   skin_measured?: { color_bg: string; color_fg: string; color_accent: string; how_measured: string }
+  status?: BrickStatus
+  error?: string
+  retries?: number
+  /** Which prompt produced it; values are frozen at save time, a re-extraction is a new brick. */
+  prompt_version?: string
 }
 
 export type Provenance = 'measured' | 'interpreted' | 'adapted'
@@ -42,3 +47,6 @@ export type Composition = {
 
 /** A relation the user switched off by hand inside a project. Not derived; recorded so the handoff can say so. */
 export type DisabledRelation = { brickId: string; relationId: string; reason: string }
+
+/** Library card state. Absent means ready (bricks from fixtures predate the field). */
+export type BrickStatus = 'extracting' | 'ready' | 'unparsed'

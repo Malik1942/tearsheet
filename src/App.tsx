@@ -1,29 +1,48 @@
-import { useEffect, useState } from 'react'
-import { StoreProvider } from './lib/store'
+import { StoreProvider, useStore } from './lib/store'
+import { match, usePath, Link } from './lib/router'
+import { Library } from './Library'
+import { BrickCard } from './bricks/BrickCard'
 import { Compare } from './Compare'
-import { CollectPage } from './Collect'
 import { ProjectPage } from './Project'
 import { Solo } from './Solo'
 
-const ROUTES = [['#/collect', 'Collect'], ['#/project', 'Project'], ['#/compare', 'Compare (step 2)']] as const
+function BrickRoute({ id }: { id: string }) {
+  const store = useStore()
+  const brick = store.bricks.find(b => b.id === id)
+  return (
+    <div className="chrome min-h-full p-4">
+      <div className="mb-3 text-[12px]"><Link href="/" className="ink-2">← Library</Link></div>
+      {brick ? <div className="mx-auto max-w-3xl"><BrickCard brick={brick} actions={<Link href="/projects" className="btn">Use in a project →</Link>} /></div> : <p className="ink-2">No brick with id {id}.</p>}
+    </div>
+  )
+}
+
+function Routes() {
+  const path = usePath()
+  const solo = match('/solo/:target/:screen', path)
+  if (solo) return <Solo target={solo.target} screen={solo.screen as 'list' | 'review'} />
+  const brick = match('/brick/:id', path)
+  if (brick) return <BrickRoute id={brick.id} />
+  if (path === '/projects' || path.startsWith('/project/')) return <div className="chrome min-h-full"><Nav /><ProjectPage /></div>
+  if (path === '/compare') return <div className="chrome min-h-full"><Nav /><Compare /></div>
+  return <Library />
+}
+
+function Nav() {
+  const path = usePath()
+  const items = [['/', 'Library'], ['/projects', 'Projects'], ['/compare', 'Compare (step 2)']] as const
+  return (
+    <nav className="flex items-center gap-1 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
+      <Link href="/" className="mr-3 font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
+      {items.map(([h, label]) => <Link key={h} href={h} className={`btn btn-quiet ${path === h ? 'font-semibold' : ''}`} style={path === h ? { color: 'var(--ink)' } : undefined}>{label}</Link>)}
+    </nav>
+  )
+}
 
 export default function App() {
-  const [hash, setHash] = useState(location.hash || '#/collect')
-  useEffect(() => {
-    const on = () => setHash(location.hash || '#/collect')
-    window.addEventListener('hashchange', on)
-    return () => window.removeEventListener('hashchange', on)
-  }, [])
-  const solo = hash.match(/^#\/solo\/([^/]+)\/(list|review)$/)
-  if (solo) return <Solo target={solo[1]} screen={solo[2] as 'list' | 'review'} />
   return (
     <StoreProvider>
-      <nav className="flex items-center gap-1 border-b border-stone-300 bg-white px-4 py-2 text-sm">
-        <span className="mr-3 font-semibold">Tearsheet</span>
-        {ROUTES.map(([h, label]) => <a key={h} href={h} className={`rounded px-2 py-1 ${hash === h ? 'bg-stone-800 text-white' : 'hover:bg-stone-100'}`}>{label}</a>)}
-        <span className="ml-auto text-[11px] text-stone-500">collect first, decide later</span>
-      </nav>
-      {hash === '#/project' ? <ProjectPage /> : hash === '#/compare' ? <Compare /> : <CollectPage />}
+      <Routes />
     </StoreProvider>
   )
 }

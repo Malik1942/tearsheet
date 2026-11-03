@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./chrome/tokens.css";
 
 html, body, #root { height: 100%; }
-body { margin: 0; background: #ecebe7; color: #1b1b1b; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-ui); }
