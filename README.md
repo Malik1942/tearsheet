@@ -17,6 +17,10 @@ Built for the Meta Global AI Developer Hackathon (Indie track) on the Meta Model
 
 One parameter is filled in by rule rather than by the model: `alignment_edge`. The model measures where text aligns ("all text starts in the left sixth", "three lines left-aligned") but, in every run so far, never proposes alignment as a transferable relation. When a measurement about text names an edge, the product emits an `alignment_edge` candidate labeled `adapted · by rule` with that measurement as its source, so the chip says the rule did it, not the model. The same pattern maps a measured type description ("heavy wide low-contrast sans") onto a substitute font stack, and falls back to `system-ui` marked `no match` rather than guess.
 
+Two more readings by rule:
+- **A dominant title said in words.** A rule under `image_text_dominance` or `hierarchy_mode` that says a title dominates without giving a number ("an order of magnitude larger", "the title dominates", "one centered title") reads as `hierarchy_mode` type-led, `image_text_dominance` 0.2 (text-led), and the alignment the same sentence names. Each is `adapted · by rule` and cites the relation.
+- **One hue keeps its accent.** `palette_hue_count` 1 normally makes the accent the text color. It keeps the accent when something sets `accent_coverage`, because one hue used once as the bright spot is the accent.
+
 Relationship parameters carry character: `type_scale_ratio`, `hierarchy_mode`, `density`, `grouping`, `rhythm`, `alignment_edge`, `image_text_dominance`, `accent_placement`, `accent_coverage`, `palette_hue_count`. Appearance parameters are the skin: `color_bg`, `color_fg`, `color_accent`, `radius`, `type_family`, `spacing_unit`. See `src/shell/params.ts`. All of them become CSS custom properties plus six data-attribute switches; one JSON in, one render out, no generator.
 
 ## Run
@@ -28,7 +32,7 @@ npm run dev          # http://localhost:5173
 
 The dev server serves `/api/extract`, `/api/propose` and `/api/sync/:code` itself (the same handlers as the Vercel functions) and reads `META_API_KEY` from the environment or from `../meta-eval/.env`. The key never reaches the browser. In development, `localStorage.setItem('tearsheet.dry', '1')` makes the app send `dry: true`: both model proxies then return the request they would have sent and nothing leaves the server.
 
-Deploy: Vercel, with `META_API_KEY` set as an environment variable, `PROPOSE_ENABLED=1` once the proposal set has passed. `api/extract.ts` (`maxDuration` 120 s; a medium-effort extraction takes 10 to 26 s), `api/propose.ts` (60 s) and `api/sync/[code].ts` (60 s) are the serverless functions. `npm run check:prompts` compares the prompts and schemas with the harness files in `../meta-eval`.
+Deploy: Vercel, with `META_API_KEY` set as an environment variable and `PROPOSE_ENABLED=1` for live proposals. `api/extract.ts` (`maxDuration` 120 s; a medium-effort extraction takes 10 to 26 s), `api/propose.ts` (60 s) and `api/sync/[code].ts` (60 s) are the serverless functions. `npm run check:prompts` compares the prompts and schemas with the harness files in `../meta-eval`.
 
 ## Verification
 
@@ -45,7 +49,7 @@ The extraction prompt and schema were gated before any of this was built: three 
 
 ```
 api/extract.ts          Vercel function: image in, Brick out (key stays server-side)
-api/propose.ts          Vercel function: intent + rules in, up to three picks with verbatim quotes out (off until PROPOSE_ENABLED=1)
+api/propose.ts          Vercel function: intent + rules in, up to three picks with verbatim quotes out (live when PROPOSE_ENABLED=1)
 api/sync/[code].ts      Vercel function: the library under a six-character code in a Blob store
 src/lib/                schema.ts (zod, exactly the Spark schema), extract.ts / propose.ts / sync.ts (shared with the dev server), guard.ts (call limits),
                         mapRelations.ts (relations -> parameters, provenance, conflicts, locks; the Project type), store.tsx (library, queue, projects), syncClient.ts, markdown.tsx
@@ -72,7 +76,29 @@ When a project gets its one-line intent, the model proposes up to three bricks f
 
 The honest part is the check: each pick must quote one of that brick's rules character for character (`quoted_rule` equals the rule after trimming). A pick that paraphrases, names an unknown brick, repeats a brick or comes fourth is dropped and reported, never repaired. If nothing survives, or the call fails, the project form falls back to picking by hand with one line of text and no error modal. The accepted set is recorded on the project: each brick carries `proposed · model` with the quoted rule and the model's sentence, a swapped card carries `adapted · by you` and names what it replaced; `parameters.json` holds the whole record under `proposal`, and `handoff.md` says per brick how it got there. Picking by hand records nothing.
 
-Live proposals are off in production: the function answers 503 unless `PROPOSE_ENABLED=1` is set in the deployment, and it is not set. `GET /api/propose` returns `{ enabled }`, so the project form says so before anyone clicks and offers picking by hand. The dev server also turns live proposals on when `../meta-eval/fixtures/propose_notes.md` is sealed (its `.sha256` beside it matches). The proposal regression ran twice on 2026-11-02 (sealed sets v1 and v2, six calls, every quoted rule verbatim): 0 of 3 intents passed, then 1 of 3. Propose is shipped off by decision; picking by hand is the shipped path. The record is `../meta-eval/docs/PROPOSE_RUN_2026-11-02.md`. The procedure is in `../meta-eval/docs/PROPOSE.md`; `scripts/propose.sh` there builds the request the product builds for the sample library (the product sorts the library by brick id, as the harness does). Prompt: `src/lib/proposePrompt.ts`, sha256 `11156a48cd52eec26614fb0c1264a157e74b9e23323cd216da5fbd3d88447c38`, identical to `../meta-eval/fixtures/prompts/propose.md`; `npm run check:prompts` verifies both prompts and both schemas against the harness files. Every live call writes one JSON line to the function log with tokens, cost and latency, including calls that come back unfinished or unparsed (PRD 10.4). Guards on the function: per-address 20 calls an hour and `MAX_DAILY_CALLS` a day (default 300), counted in memory.
+Live proposals are on in production (`PROPOSE_ENABLED=1` since 2026-11-03); without it the function answers 503. `GET /api/propose` returns `{ enabled }`, so the project form can say so before anyone clicks and offer picking by hand, which stays one tap away. The proposal regression ran three times against sealed sets, nine calls, and every quoted rule was verbatim:
+- 2026-11-02: 0 of 3 intents passed, then 1 of 3.
+- 2026-11-03, with the designer's lean chips: 1 of 3.
+
+The proposer matches the designer's picks on one intent in three. It ships on anyway by decision, with the lean chips as the way to push it toward the parameter families you care about. The records are `../meta-eval/docs/PROPOSE_RUN_2026-11-02.md` and `PROPOSE_RUN_2026-11-03.md`. On the public site, the concert intent with a lean of `dark` + `one accent`, over the twelve starters plus the Chicago photo, proposed the Chicago photo first, quoting its accent rule. The procedure is in `../meta-eval/docs/PROPOSE.md`; `scripts/propose.sh` there builds the request the product builds for the sample library (the product sorts the library by brick id, as the harness does). Prompt: `src/lib/proposePrompt.ts`, sha256 `11156a48cd52eec26614fb0c1264a157e74b9e23323cd216da5fbd3d88447c38`, identical to `../meta-eval/fixtures/prompts/propose.md`; `npm run check:prompts` verifies both prompts and both schemas against the harness files. Every live call writes one JSON line to the function log with tokens, cost and latency, including calls that come back unfinished or unparsed (PRD 10.4). Guards on the function: per-address 20 calls an hour and `MAX_DAILY_CALLS` a day (default 300), counted in memory.
+
+## Why not just ask a chat
+
+We ran the same task both ways on 2026-11-03, one call each. The input was the twelve sample photos plus one of our own (a December 2025 photo of the CHICAGO marquee over a stage) and the intent "a concert log for someone who goes to a lot of shows".
+- **The chat:** the same model Tearsheet uses (`muse-spark-1.3`, effort low) with the thirteen photos attached to one plain message: no system prompt, no schema, no rules.
+- **Tearsheet:** the live proposal on the public site, with a lean of `dark` + `one accent`.
+
+| | General chat | Tearsheet |
+|---|---|---|
+| Surfaced the photo we hadn't thought of (CHICAGO) | yes, "for *content* reference, not style": it is "the only actual live-performance photo" | yes, first pick, quoting its rule "restrict the single warm accent to under 10% of frame …" |
+| Reason lands on a screen element | partly: "header title, subhead info, footer details" for a template it does not show | yes: the quoted rule sets `accent_coverage`; the photo's title rule moves the list and year-review titles |
+| We kept the change | no screen changed, so there was nothing to keep | yes: the title-led layout is the shot in the video |
+
+**What separated them.** Both found the CHICAGO photo. The chat chose it because it shows a concert, and set aside the three car photos because they are cars ("wrong subject"). Tearsheet never sees the photos: it chose CHICAGO for its one-warm-accent rule and a car photo (g2) for the same kind of rule, and the change shows on the screen with its provenance. The chat's answer is kept verbatim in `../meta-eval/docs/FAIR_COMPARISON_2026-11-03.md`.
+
+## Measured by mask (after the video)
+
+SAM 3.1 passed its gate on 2026-11-03: 2 of 3 photos, with masks tight on discrete objects (the taillights, the lit sign, the audience) and missing or partial on soft, out-of-focus or flat regions. Two runs on the same photo were identical. Mask-measured subject share and accent coverage land after the video. They will be used only for sharp, separate objects; everything else keeps the model's estimate, labeled `estimated`. The gate record is `../meta-eval/docs/SAM_GATE.md`.
 
 ## Phone
 
