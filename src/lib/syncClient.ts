@@ -1,6 +1,7 @@
 /** Browser side of Sync (PRD 7.3). The code lives in localStorage; the server holds the library under `libraries/<code>/`. */
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
+import { fitProjectForSync } from './versions'
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 export const CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
@@ -38,8 +39,8 @@ export const forget = (code: string) => call('DELETE', code)
 /** S2: upload in batches sized by JSON length. Only bricks the server does not already hold at this version are sent; the projects
  *  (small JSON) go with the first batch, or alone when every brick is already there. */
 export async function push(code: string, bricks: Brick[], allProjects: Project[], onProgress?: (sent: number, total: number) => void): Promise<Manifest> {
-  // the server holds at most 50 projects per code: send the most recently edited
-  const projects = [...allProjects].sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)).slice(0, 50)
+  // the server holds at most 50 projects per code: send the most recently edited. A long history is trimmed in the copy that is sent (C9); the local project keeps it.
+  const projects = [...allProjects].sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)).slice(0, 50).map(p => fitProjectForSync(p))
   let manifest = await pull(code)
   const held = new Map(manifest.bricks.map(b => [b.id, b]))
   const todo = bricks.filter(b => {
@@ -50,18 +51,20 @@ export async function push(code: string, bricks: Brick[], allProjects: Project[]
   })
   let sent = 0
   onProgress?.(0, todo.length)
-  let batch: Brick[] = [], size = 2, projectsSent = false
+  // The first POST carries the projects, so they count toward its size; if they leave no room for the next brick they go alone first.
+  const projectsBytes = projects.length ? JSON.stringify(projects).length + 12 : 0   // + the `"projects":` key and its comma
+  let batch: Brick[] = [], size = 2 + projectsBytes, projectsSent = false
   const flush = async () => {
-    if (!batch.length) return
+    if (!batch.length && (projectsSent || !projects.length)) return
     manifest = await call('POST', code, { bricks: batch, ...(projectsSent ? {} : { projects }) }); projectsSent = true
     sent += batch.length; onProgress?.(sent, todo.length); batch = []; size = 2
   }
   for (const b of todo) {
     const len = JSON.stringify(b).length + 1
-    if (batch.length && size + len > BATCH_BYTES) await flush()
+    if (size + len > BATCH_BYTES) await flush()
     batch.push(b); size += len
   }
-  await flush()
+  if (batch.length) await flush()
   if (!projectsSent && projects.length) manifest = await call('POST', code, { bricks: [], projects })
   return manifest
 }

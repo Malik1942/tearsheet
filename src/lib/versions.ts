@@ -42,17 +42,60 @@ export function diffValues(before: Resolved['values'], after: Resolved['values']
   return changes
 }
 
+/** v1 of a project, the one place it is built: version 1 and its one entry, which has nothing before it to differ from. Spread it into the new project. */
+export function firstVersion(p: Project, at: string): Pick<Project, 'version' | 'versions'> {
+  return { version: 1, versions: [{ v: 1, at, changed: [], snapshot: snapshotOf(p) }] }
+}
+
 /** `next` as the project's next version, or `next` itself when the composition did not change (a rename or anything outside it does not bump).
- *  A change that moves no value, such as a lock, still bumps: the person did accept it, and its `changed` is empty. */
+ *  A change that moves no value, such as a lock, still bumps: the person did accept it, and its `changed` is empty.
+ *  A project saved before versions existed reads as v1, so its first change keeps that v1 (its composition before the change) ahead of v2. */
 export function withNextVersion(prev: Project, next: Project, bricks: Brick[], at: string): Project {
   const snapshot = snapshotOf(next)
   if (sameJson(snapshotOf(prev), snapshot)) return next
   const version = (prev.version ?? 1) + 1
   const changed = diffValues(resolveProject(prev, bricks).values, resolveProject(next, bricks).values)
-  return { ...next, version, versions: [...(prev.versions ?? []), { v: version, at, changed, snapshot }].slice(-MAX_VERSIONS) }
+  const legacyV1 = !prev.versions?.length && (prev.version ?? 1) === 1
+  const history = legacyV1 ? firstVersion(prev, prev.createdAt).versions! : prev.versions ?? []
+  return { ...next, version, versions: [...history, { v: version, at, changed, snapshot }].slice(-MAX_VERSIONS) }
 }
 
 /** What the latest version moved: the last entry's changes, or none. */
 export function changedSincePrevious(p: Project): Change[] {
   return p.versions?.[p.versions.length - 1]?.changed ?? []
+}
+
+/** The project as Sync sends it: the oldest history entries dropped until its JSON is at most `maxBytes`, the latest entry always kept.
+ *  Fifty real entries run 66–106 KB, and the server refuses a project that is too large, which would fail the whole push; the history is the
+ *  one thing that can go, because every other field is what the project is. Client side only: the project on this device keeps every entry. Never mutates `p`. */
+export function fitProjectForSync(p: Project, maxBytes = 60 * 1024): Project {
+  const v = p.versions
+  if (!v || v.length < 2 || JSON.stringify(p).length <= maxBytes) return p
+  for (let keep = v.length - 1; keep > 1; keep--) {
+    const fit: Project = { ...p, versions: v.slice(-keep) }
+    if (JSON.stringify(fit).length <= maxBytes) return fit
+  }
+  return { ...p, versions: v.slice(-1) }
+}
+
+/** The incoming copy's version, if it is a number. */
+const validVersion = (v: unknown): number | undefined => typeof v === 'number' && Number.isFinite(v) ? v : undefined
+/** The incoming copy's history, if every entry has a numeric `v` and a `changed` list; the field comes from another device, so it is checked. */
+const validVersions = (v: unknown): VersionEntry[] | undefined =>
+  Array.isArray(v) && v.every(e => !!e && typeof e.v === 'number' && Number.isFinite(e.v) && Array.isArray(e.changed)) ? v as VersionEntry[] : undefined
+
+/** Merge a list of projects from another device into this one's, by id: the newest `updatedAt` wins, and a tie keeps what is here.
+ *  The winner's version and history are taken as they come, never mixed with the older copy's, so a project saved before versions existed
+ *  replaces the history with none. Returns the list and how many projects were added or replaced. Pure: neither list is changed. */
+export function mergeProjectLists(existing: Project[], incoming: Project[]): { projects: Project[]; changed: number } {
+  const byId = new Map(existing.map(p => [p.id, p]))
+  let changed = 0
+  for (const inc of incoming) {
+    if (!inc || typeof inc.id !== 'string' || !Array.isArray(inc.brickIds)) continue
+    const have = byId.get(inc.id)
+    if (have && (inc.updatedAt ?? inc.createdAt ?? '') <= (have.updatedAt ?? have.createdAt ?? '')) continue
+    byId.set(inc.id, { ...have, ...inc, disabled: inc.disabled ?? {}, choice: inc.choice ?? {}, locks: inc.locks ?? {}, manual: inc.manual ?? {}, version: validVersion(inc.version), versions: validVersions(inc.versions) })
+    changed++
+  }
+  return { projects: [...byId.values()], changed }
 }
