@@ -30,6 +30,8 @@ Deploy: Vercel, with `META_API_KEY` set as an environment variable. `api/extract
 
 ## Evidence
 
+Prompt in production: v3, sha256 `2a2e7fa5684fe352cf5ecfd8476776c07ff7c9878baa0168b05a61f1a4beba60` (`src/lib/extractPrompt.ts`). It is the gated prompt (sha256 `5cb75981a5b31e823d6037af31173c8b6ba2542455a5143ccd1eecfd7bd197f4`) plus one instruction to describe the type when text is visible. A v2 that forced a layout relation was tried on the same three photos and rejected. Measured values are the model's reading in one run; another run can differ (one accent coverage moved from under 6% to under 15% between runs), which is why every value carries its provenance and nothing is treated as a single truth.
+
 The extraction prompt and schema were gated before any of this was built: three sealed photos, one call each, judged against pre-registered notes. The harness, the sealed notes, the run report and the overlays live in `../meta-eval`. Extraction costs about $0.013 to $0.023 per photo.
 
 ## Layout

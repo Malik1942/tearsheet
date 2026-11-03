@@ -8,7 +8,8 @@ const COLORS: Record<ParameterValue['provenance'], string> = {
 
 /** One parameter value with its provenance class. Interpreted values get a dotted outline so the difference is visible at a glance. */
 export function ProvenanceChip({ pv, onClick }: { pv: ParameterValue; onClick?: (pv: ParameterValue) => void }) {
-  const title = [pv.source?.relationRule, pv.source?.note, pv.source?.measurementIds?.length ? `measurements: ${pv.source.measurementIds.join(', ')}` : ''].filter(Boolean).join('\n')
+  const MEANING = { measured: 'Read off the image by the model in this run; another run may differ.', interpreted: "The model's reading; rests on the measurements listed.", adapted: 'Set by you or by the shell.' }
+  const title = [MEANING[pv.provenance], pv.source?.relationRule, pv.source?.note, pv.source?.measurementIds?.length ? `measurements: ${pv.source.measurementIds.join(', ')}` : ''].filter(Boolean).join('\n')
   return (
     <button type="button" onClick={() => onClick?.(pv)} title={title}
       className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-4 ${COLORS[pv.provenance]} ${onClick ? 'cursor-pointer hover:brightness-95' : 'cursor-default'}`}>

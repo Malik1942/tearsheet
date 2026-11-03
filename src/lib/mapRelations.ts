@@ -156,8 +156,9 @@ const TYPE_STACKS: [RegExp, string, string][] = [
   [/(?<!sans[- ])\bserif\b/, '"Georgia", "Times New Roman", serif', 'serif'],
   [/mono|typewriter/, '"SF Mono", Menlo, Consolas, monospace', 'monospace'],
   [/script|handwrit|brush/, '"Snell Roundhand", "Brush Script MT", cursive', 'script'],
-  [/\bsans\b/, '"Helvetica Neue", "Inter", Arial, sans-serif', 'sans'],
+  [/\bsans(?:-serif)?\b/, '"Helvetica Neue", "Inter", Arial, sans-serif', 'sans'],
 ]
+const NO_MATCH = 'system-ui, -apple-system, "Segoe UI", sans-serif'
 
 export function typeFamilyOf(brick: Brick): ParameterValue | null {
   for (const m of brick.measurements) {
@@ -167,13 +168,17 @@ export function typeFamilyOf(brick: Brick): ParameterValue | null {
     // the primary description: the first clause that names a type class; later clauses usually describe secondary text
     const clause = full.split(/[;.]|\bwhile\b|\bwhereas\b|,\s*(?=(?:cast|body|plate|tagline|subtitle|secondary|small))/).find(c => /\b(sans|serif|mono|script)/.test(c)) ?? full
     const text = /\b(wide|extended|heavy|extra-bold|black)\b/.test(clause) && !/\b(condensed|narrow)\b/.test(clause) ? clause.replace(/narrow/g, '') : clause
-    for (const [re, stack, label] of TYPE_STACKS) {
-      if (re.test(text)) {
-        return { key: 'type_family', value: stack, provenance: 'adapted', locked: false,
-          source: { brickId: brick.id, measurementIds: [m.id], regionLabels: brick.regions.filter(r => r.measurement_ids.includes(m.id)).map(r => r.label),
-            note: `${label}; the description is measured (${m.id}), the stack is the shell's substitute. No typeface is named: the prompt forbids names unless unmistakable.` } }
-      }
+    const hits = TYPE_STACKS.filter(([re]) => re.test(text))
+    const classes = new Set(hits.map(h => h[2].includes('serif') && !h[2].includes('sans') ? 'serif' : h[2].includes('sans') ? 'sans' : h[2]))
+    // trusted only when exactly one type class is named in the primary clause; anything else falls back and says so
+    if (hits.length && classes.size === 1) {
+      const [, stack, label] = hits[0]
+      return { key: 'type_family', value: stack, provenance: 'adapted', locked: false,
+        source: { brickId: brick.id, measurementIds: [m.id], regionLabels: brick.regions.filter(r => r.measurement_ids.includes(m.id)).map(r => r.label),
+          note: `by rule: ${label}; the description is measured (${m.id}), the stack is the shell's substitute. No typeface is named: the prompt forbids names unless unmistakable.` } }
     }
+    return { key: 'type_family', value: NO_MATCH, provenance: 'adapted', locked: false,
+      source: { brickId: brick.id, measurementIds: [m.id], note: `by rule · no match: ${m.id} describes the type but no rule read it with confidence; system-ui is used rather than a guess` } }
   }
   return null
 }
