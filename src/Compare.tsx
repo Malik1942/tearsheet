@@ -11,11 +11,15 @@ import { Photo } from './bricks/Photo'
 
 const BRICKS = bricksJson as unknown as Brick[]
 const IDS = Object.keys(COMPOSITIONS)
+/** Same colors, radius, type and spacing for every shell: what is left is the relationship parameters. */
+const NEUTRAL = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const
 
-function Column({ slot, compId, onChange, showPhoto, screen }: { slot: number; compId: string; onChange: (id: string) => void; showPhoto: boolean; screen: 'list' | 'review' }) {
+function Column({ slot, compId, onChange, showPhoto, screen, neutral }: { slot: number; compId: string; onChange: (id: string) => void; showPhoto: boolean; screen: 'list' | 'review'; neutral: boolean }) {
   const comp = COMPOSITIONS[compId]
   const brick = BRICKS.find(b => b.id === comp.brickIds[0])!
-  const { params, values } = resolveParams(comp)
+  const resolved = resolveParams(comp)
+  const values = resolved.values
+  const params = neutral ? { ...resolved.params, ...NEUTRAL } : resolved.params
   const [hl, setHl] = useState<ParameterValue | null>(null)
   const set = (pv: ParameterValue) => pv.provenance !== 'adapted' && pv.source?.regionLabels ? pv : null
   const regions = hl ? brick.regions.filter(r => hl.source?.regionLabels?.includes(r.label)) : []
@@ -61,6 +65,7 @@ export function Compare() {
   const [slots, setSlots] = useState<string[]>(['g1', 'g2', 'c1'])
   const [showPhoto, setShowPhoto] = useState(true)
   const [screen, setScreen] = useState<'list' | 'review'>('list')
+  const [neutral, setNeutral] = useState(false)
   const rotate = () => setSlots(s => [s[1], s[2], s[0]])
   return (
     <div className="mx-auto max-w-[1600px] p-4">
@@ -75,10 +80,11 @@ export function Compare() {
           </div>
           <button type="button" onClick={rotate} className="rounded border border-stone-400 bg-white px-3 py-1 text-sm hover:bg-stone-100">Rotate assignments</button>
           <button type="button" onClick={() => setShowPhoto(v => !v)} className="rounded border border-stone-400 bg-white px-3 py-1 text-sm hover:bg-stone-100">{showPhoto ? 'Hide photos' : 'Show photos'}</button>
+          <button type="button" onClick={() => setNeutral(v => !v)} title="Same colors, radius, type and spacing on every shell; only the relationship parameters differ" className={`rounded border px-3 py-1 text-sm ${neutral ? 'border-stone-800 bg-stone-800 text-white' : 'border-stone-400 bg-white hover:bg-stone-100'}`}>Neutral skin</button>
         </div>
       </header>
       <div className="flex gap-6">
-        {slots.map((id, i) => <Column key={i} slot={i} compId={id} showPhoto={showPhoto} screen={screen} onChange={v => setSlots(s => s.map((x, j) => j === i ? v : x))} />)}
+        {slots.map((id, i) => <Column key={i} slot={i} compId={id} showPhoto={showPhoto} screen={screen} neutral={neutral} onChange={v => setSlots(s => s.map((x, j) => j === i ? v : x))} />)}
       </div>
     </div>
   )

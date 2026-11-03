@@ -12,7 +12,9 @@ export function Solo({ target, screen }: { target: string; screen: 'list' | 'rev
   }
   const comp = COMPOSITIONS[id]
   if (!comp) return <div className="p-4 text-sm">unknown composition</div>
-  const { params } = resolveParams(comp)
+  const neutral = typeof location !== 'undefined' && /[?&]neutral=1/.test(location.href)
+  const base = resolveParams(comp).params
+  const params = neutral ? { ...base, color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } : base
   return (
     <div className="h-dvh w-full overflow-hidden">
       <Shell params={params} screen={screen} height={typeof window !== 'undefined' ? window.innerHeight : 800} />
