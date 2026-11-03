@@ -3,7 +3,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { exifTakenAt } from '../src/lib/exifDate.ts'
-import { datesLabel, originLabel } from '../src/lib/brickLabels.ts'
+import { dateLine, datesLabel, originLabel } from '../src/lib/brickLabels.ts'
 
 /** SOI, an optional APP0, APP1 "Exif" with IFD0 → Exif IFD → DateTimeOriginal (ASCII, 20 bytes), then SOS and EOI. */
 function jpeg(date: string | null, le: boolean, { app0 = false, tag = 0x9003 } = {}): ArrayBuffer {
@@ -56,5 +56,22 @@ describe('the date line on a card', () => {
   it('is the origin line of an own brick; a starter keeps its credit', () => {
     assert.equal(originLabel({ id: 'b_x', origin: 'own', saved_at: '2026-11-03', taken_at: '2025-12-27' }, today), 'taken Dec 27, 2025 · saved Nov 3')
     assert.equal(originLabel({ id: 'g2', origin: 'starter', saved_at: '2025-06-21', taken_at: '2025-06-01' }, today), 'starter · Malik Zhang, 2025')
+  })
+})
+
+describe('the Library card date line (15_SIMPLIFY §2)', () => {
+  const today = new Date(2026, 10, 3)
+  it('is the day the photo was taken, alone, when its EXIF gave one', () => {
+    assert.equal(dateLine({ id: 'b_x', origin: 'own', saved_at: '2026-11-03', taken_at: '2025-12-27' }, today), 'Dec 27, 2025')
+    assert.equal(dateLine({ id: 'b_x', origin: 'own', saved_at: '2026-11-03', taken_at: '2026-10-30' }, today), 'Oct 30')
+    assert.equal(dateLine({ id: 'b_x', origin: 'own', saved_at: '2026-11-03', taken_at: '2026-11-03' }, today), 'Nov 3')
+  })
+  it('is the saved date without one', () => {
+    assert.equal(dateLine({ id: 'b_x', origin: 'own', saved_at: '2026-11-03' }, today), 'saved Nov 3')
+    assert.equal(dateLine({ id: 'b_x', origin: 'own', saved_at: '2025-06-21' }, today), 'saved Jun 21, 2025')
+  })
+  it('is the credit line for a starter', () => {
+    assert.equal(dateLine({ id: 'g2', origin: 'starter', saved_at: '2025-06-21', taken_at: '2025-06-01' }, today), 'Malik Zhang, 2025')
+    assert.equal(dateLine({ id: 'x', origin: 'starter', saved_at: '2025-06-21', credit: 'Courtesy NASA/JPL-Caltech' }, today), 'Courtesy NASA/JPL-Caltech')
   })
 })
