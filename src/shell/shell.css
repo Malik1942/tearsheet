@@ -1,21 +1,31 @@
 /* The prototype shell. Everything visual comes from CSS custom properties set by toCssVars() and the data-* switches from dataAttributes(). No generator. */
 
+/* ---------- spacing: a 4 px base (steps 4 8 12 16 24 32 48 at an 8 px spacing_unit, so every step is a multiple of --space), grouped by proximity:
+   inside an item (title → meta 4, meta → tags 8) < around an item (--item-pad, 32 24 16 12 as density goes 1 2 4 6) < between sections (32). Nothing sets a fixed height. */
 .shell {
-  --body-size: 14px;
   --viewport-h: 640px;
-  --item-h: calc(var(--viewport-h) / var(--density));
+  --side: calc(var(--space) * 2.5);                     /* side margins, 20 at an 8 px unit, on both screens */
+  --slot: calc(var(--viewport-h) / var(--density));    /* the share of the screen density gives one item: it caps a poster's height, it never sets an item's */
   --accent-weight: var(--accent-coverage);
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-family);
-  font-size: var(--body-size);
-  line-height: 1.35;
+  font-size: var(--t-body);
+  line-height: 1.4;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
 }
 .shell * { box-sizing: border-box; }
 .shell img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); }
+
+/* ---------- type: one scale from type_scale_ratio (params.ts typeScale), three sizes per screen ----------
+   List: title (names), body (meta, notes), caption (tags, group labels). Under type-led the names take display and meta and notes drop to caption, so it is still three.
+   Year review: display (year, totals), title (rows, feature), caption (months, row meta, dates, stat labels). */
+.t-caption, .tag, .group-title, .when, .stats li, .row .meta, .feature .meta, .action { font-size: var(--t-caption); font-weight: 500; line-height: 1.3; }
+.t-title, .bar-title, .item .title, .row .title, .feature .title { font-family: var(--font-display); font-size: var(--t-title); font-weight: 650; line-height: 1.15; letter-spacing: -0.01em; }
+.t-display, .screen-title, .stats strong { font-family: var(--font-display); font-size: var(--t-display); font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
+.meta, .when, .stats { font-variant-numeric: tabular-nums; }
 
 /* ---------- alignment: text hugs one edge, the opposite side stays empty ---------- */
 .shell[data-align="left"]   .text { text-align: left;   padding-right: calc(24% * (1 - var(--image-share))); }
@@ -27,70 +37,97 @@
 .shell[data-align="right"]  .item > * { direction: ltr; }
 .shell[data-align="right"]  .group-title, .shell[data-align="right"] .screen-title { text-align: right; }
 .shell[data-align="center"] .group-title, .shell[data-align="center"] .screen-title { text-align: center; }
+/* center never centers a wrapped multi-line meta (A5): the date and the venue take a fixed line each, cut with an ellipsis, and the tags keep to one line */
+.shell[data-align="center"] .item .meta :is(.date, .venue) { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shell[data-align="center"] .item .meta .sep { display: none; }
+.shell[data-align="center"] .item .tags { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* measure: a list item's text column stops at 32 characters, at the edge the alignment names */
+.item .text { max-width: 32ch; }
+.shell[data-align="center"] .item .text { justify-self: center; width: 100%; }
 
-/* ---------- list items ---------- */
+/* ---------- top bar: the screen title, one control on the right, a hairline below; no status bar. It follows the alignment like the headings ---------- */
+.bar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--space); min-height: 44px; padding: calc(var(--space) * 0.5) var(--side); background: var(--color-bg); border-bottom: 1px solid var(--color-line); }
+.bar-title { flex: 1; min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shell[data-align="right"] .bar { flex-direction: row-reverse; }
+.shell[data-align="right"] .bar-title { text-align: right; }
+.shell[data-align="center"] .bar { display: grid; grid-template-columns: 1fr auto 1fr; }
+.shell[data-align="center"] .bar-title { grid-column: 2; text-align: center; }
+.shell[data-align="center"] .bar > :last-child { grid-column: 3; justify-self: end; }
+/* the quiet control: a 32 px square on the surface tint, muted. The list's is .action, the one place the accent goes under accent_placement: actions */
+.action, .bar-icon { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--space) * 0.5); flex: none; min-width: 32px; height: 32px; padding: 0 var(--space); font-family: inherit; font-weight: 650; color: var(--color-muted); background: var(--color-surface); border: 1px solid transparent; border-radius: var(--radius); }
+.icon { display: block; flex: none; }
+
+/* ---------- list items: no card, a hairline between items only, a chevron at the trailing edge; the whole row is the target ---------- */
 .item {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words */
+  grid-template-columns: minmax(calc(48px * 16 / 10), calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words. The poster column never drops under 76.8 px, the width of a 48 px tall 16:10 poster, so a low share never pushes it over the text */
   gap: calc(var(--space) * 2);
-  padding: calc(var(--space) * 2) calc(var(--space) * 2);
-  min-height: var(--item-h);
+  padding: var(--item-pad) calc(var(--side) + 12px + var(--space)) var(--item-pad) var(--side);   /* density sets this padding (params.ts ITEM_PAD), never a min-height: an item is as tall as what it holds. The right side keeps room for the chevron */
   align-items: center;
-  border-bottom: 1px solid var(--color-line);
 }
-.item .pic { aspect-ratio: 16 / 10; max-height: calc(var(--item-h) - var(--space) * 4); min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
+.item + .item { border-top: 1px solid var(--color-line); }
+.chev { position: absolute; right: var(--side); top: 50%; translate: 0 -50%; width: 12px; height: 12px; color: var(--color-muted); }
+.item .pic { aspect-ratio: 16 / 10; min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
 .item .text { min-width: 0; }
-.item .title { font-size: var(--title-size); font-weight: 700; line-height: 1.05; margin: 0 0 calc(var(--space) * 0.75); letter-spacing: -0.01em; overflow-wrap: anywhere; hyphens: auto; }
-.item .meta { color: var(--color-muted); font-size: var(--body-size); margin: 0; }
-.item .note { margin: calc(var(--space) * 0.75) 0 0; color: var(--color-fg); }
+.item .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; hyphens: auto; }   /* title → meta: 4 */
+.item .meta { color: var(--color-muted); margin: 0; }
+.item .note { margin: var(--space) 0 0; color: var(--color-fg); }   /* meta → note: 8 */
+.item .tags { margin: var(--space) 0 0; }                           /* → tags: 8 */
 .shell[data-density="6"] .item .note, .shell[data-density="4"] .item .note { display: none; }
 
 /* hierarchy: what leads */
 .shell[data-hierarchy="type-led"] .item { grid-template-columns: 1fr minmax(48px, calc(var(--image-share) * 60%)); }   /* 48px = the .pic min-height: a square never overflows its column at a low image share */
 .shell[data-hierarchy="type-led"] .item .pic { order: 2; aspect-ratio: 1 / 1; }
-.shell[data-hierarchy="type-led"] .item .title { font-size: var(--display-size); }
+.shell[data-hierarchy="type-led"] .item .title { font-size: var(--t-display); font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
+.shell[data-hierarchy="type-led"] .item :is(.meta, .note) { font-size: var(--t-caption); font-weight: 500; line-height: 1.3; }   /* display names, caption details: three sizes with the top bar's title */
 .shell[data-hierarchy="image-led"] .item { grid-template-columns: 1fr; grid-template-rows: auto auto; }
-.shell[data-hierarchy="image-led"] .item .pic { aspect-ratio: 16 / 9; max-height: calc((var(--item-h) - var(--space) * 4) * var(--image-share)); }
-.shell[data-hierarchy="image-led"] .item .title { font-size: calc(var(--body-size) * 1.15); }
+.shell[data-hierarchy="image-led"] .item .pic { width: 100%; aspect-ratio: 16 / 9; max-height: calc((var(--slot) - var(--item-pad) * 2) * var(--image-share)); }
+.shell[data-hierarchy="image-led"] .item .title { font-size: var(--t-body); }   /* the poster leads: names stay at body size, set apart by weight */
 
 /* rhythm */
 .shell[data-rhythm="alternating"] .item:nth-child(even) .pic { order: 2; }
 .shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type,
 .shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type {
-  grid-template-columns: 1fr; min-height: calc(var(--item-h) * 1.8);
+  grid-template-columns: 1fr;
 }
 .shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .pic,
-.shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .pic { order: 0; aspect-ratio: 16 / 9; max-height: calc(var(--item-h) * 1.1); }
-.shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
-.shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .title { font-size: var(--display-size); }
+.shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .pic { order: 0; width: 100%; aspect-ratio: 16 / 9; max-height: calc(var(--slot) * 1.1); }
+/* the featured name is never under title size: under image-led it steps up from body to title; under balanced and type-led it already is title or display */
+.shell[data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
+.shell[data-hierarchy="image-led"][data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .title { font-size: var(--t-title); }
 
 /* grouping */
 .group-title {
-  font-size: var(--body-size);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--color-muted);
-  padding: calc(var(--space) * 2) calc(var(--space) * 2) var(--space);
+  padding: calc(var(--space) * 4) var(--side) var(--space);   /* between sections 32, label → first row 8 */
   margin: 0;
 }
+.group:first-of-type > .group-title { padding-top: calc(var(--space) * 3); }
+
+/* ---------- tags: text only, caption size, muted, a middle dot between them; no outlined pills ---------- */
+.tags { margin: 0; }
+.tag { color: var(--color-muted); }
+.tag + .tag::before { content: '·'; display: inline-block; margin: 0 0.4em; color: var(--color-muted); }
 
 /* ---------- accent: where and how much ---------- */
-.tag { display: inline-block; font-size: calc(var(--body-size) * 0.8); border-radius: var(--radius); padding: 1px calc(var(--space) * 0.75); margin-right: calc(var(--space) * 0.5); border: 1px solid var(--color-line); color: var(--color-muted); }
-.action { display: inline-block; font: inherit; border: 1px solid var(--color-line); background: transparent; color: var(--color-fg); border-radius: var(--radius); padding: calc(var(--space) * 0.5) calc(var(--space) * 1.5); margin-top: var(--space); }
-.hero-mark { display: none; }
+/* labels: the tag text takes the accent; at 15% the first show's first tag is filled; at 2% the tags stay grey after a small dot */
+.shell[data-accent="labels"] .tag { color: var(--color-accent); }
+.shell[data-accent="labels"][data-coverage="le15"] .group:first-of-type .item:first-of-type .tag:first-child { background: var(--color-accent); color: var(--color-bg); padding: 1px calc(var(--space) * 0.75); border-radius: var(--radius); }
+.shell[data-accent="labels"][data-coverage="le2"] .tag { color: var(--color-muted); }
+.shell[data-accent="labels"][data-coverage="le2"] .tags::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); margin-right: 6px; vertical-align: 0.1em; }
 
-.shell[data-accent="labels"] .tag { color: var(--color-accent); border-color: var(--color-accent); }
-.shell[data-accent="labels"][data-coverage="le15"] .tag { background: var(--color-accent); color: var(--color-bg); }
-.shell[data-accent="labels"][data-coverage="le2"] .tag { border-color: var(--color-line); color: var(--color-muted); }
-.shell[data-accent="labels"][data-coverage="le2"] .tag::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); margin-right: 5px; }
-
-.shell[data-accent="actions"] .action { border-color: var(--color-accent); color: var(--color-accent); }
+/* actions: the list's one action becomes "Add show" (ListScreen) and takes the accent: filled at 15%, outlined at 5%, an underline at 2% */
+.shell[data-accent="actions"] .action { border-color: var(--color-accent); color: var(--color-accent); background: transparent; padding: 0 calc(var(--space) * 1.5); }
 .shell[data-accent="actions"][data-coverage="le15"] .action { background: var(--color-accent); color: var(--color-bg); }
-.shell[data-accent="actions"][data-coverage="le2"] .action { border-color: var(--color-line); color: var(--color-fg); text-decoration: underline; text-decoration-color: var(--color-accent); }
+.shell[data-accent="actions"][data-coverage="le2"] .action { border-color: transparent; color: var(--color-fg); text-decoration: underline 2px; text-decoration-color: var(--color-accent); text-underline-offset: 3px; }
 
-.shell[data-accent="dividers"] .item { border-bottom-color: var(--color-accent); }
-.shell[data-accent="dividers"][data-coverage="le15"] .item { border-bottom-width: 6px; }
-.shell[data-accent="dividers"][data-coverage="le5"] .item { border-bottom-width: 2px; }
+/* dividers: the hairline between items, thicker with coverage */
+.shell[data-accent="dividers"] .item + .item { border-top-color: var(--color-accent); }
+.shell[data-accent="dividers"][data-coverage="le15"] .item + .item { border-top-width: 6px; }
+.shell[data-accent="dividers"][data-coverage="le5"] .item + .item { border-top-width: 2px; }
 
 .shell[data-accent="one-hero"] .group:first-of-type .item:first-of-type .title,
 .shell[data-accent="one-hero"][data-grouping="none"] .item:first-of-type .title,
@@ -101,35 +138,35 @@
 .shell[data-accent="one-hero"][data-coverage="le15"][data-grouping="none"] .item:first-of-type * { color: var(--color-bg); }
 
 /* ---------- year review (detail) ---------- */
-.review-head { padding: calc(var(--space) * 3) calc(var(--space) * 2) calc(var(--space) * 2); }
-.screen-title { font-size: var(--display-size); font-weight: 800; letter-spacing: -0.02em; line-height: 1; margin: 0 0 var(--space); }
-.stats { display: flex; gap: calc(var(--space) * 2); flex-wrap: wrap; color: var(--color-muted); margin: 0; padding: 0; list-style: none; }
-.stats strong { color: var(--color-fg); font-size: var(--title-size); display: block; line-height: 1.1; }
+.review-head { padding: calc(var(--space) * 3) var(--side) var(--space); }
+.screen-title { margin: 0 0 calc(var(--space) * 2); }
+.stats { display: flex; gap: calc(var(--space) * 3); flex-wrap: wrap; color: var(--color-muted); margin: 0; padding: 0; list-style: none; }
+.stats strong { color: var(--color-fg); display: block; margin-bottom: calc(var(--space) * 0.5); }
 .shell[data-accent="labels"] .stats strong { color: var(--color-accent); }
-.review-section { padding: 0 0 calc(var(--space) * 2); }
-.review-section .group-title { font-size: var(--title-size); text-transform: none; letter-spacing: -0.01em; color: var(--color-fg); font-weight: 700; }
-.row { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--space) * 1.5); align-items: center; padding: var(--space) calc(var(--space) * 2); border-bottom: 1px solid var(--color-line); }
+.review-section:last-child { padding-bottom: calc(var(--space) * 4); }
+
+.row { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--space) * 1.5); align-items: center; padding: calc(var(--space) * 1.5) var(--side); }   /* 12 px rows */
+.row + .row { border-top: 1px solid var(--color-line); }
 .row .pic { width: calc(32px + var(--image-share) * 56px); height: calc(32px + var(--image-share) * 56px); }
-.row .title { font-size: var(--body-size); font-weight: 600; margin: 0; overflow-wrap: anywhere; }
-.row .meta { margin: 0; color: var(--color-muted); font-size: calc(var(--body-size) * 0.9); }
-.row .when { color: var(--color-muted); font-variant-numeric: tabular-nums; font-size: calc(var(--body-size) * 0.9); }
-.shell[data-accent="dividers"] .row { border-bottom-color: var(--color-accent); }
+.row .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; }
+.row .meta { margin: 0; color: var(--color-muted); }
+.row .when { color: var(--color-muted); white-space: nowrap; min-width: 5ch; text-align: right; }
+.shell[data-accent="dividers"] .row + .row { border-top-color: var(--color-accent); }
 .shell[data-hierarchy="image-led"] .row { grid-template-columns: 1fr; }
 .shell[data-hierarchy="image-led"] .row .pic { width: 100%; height: calc(80px + var(--image-share) * 160px); }
 .shell[data-hierarchy="type-led"] .row .pic { display: none; }
-.shell[data-hierarchy="type-led"] .row .title { font-size: var(--title-size); }
 .shell[data-rhythm="alternating"] .row:nth-child(even) .pic { order: 3; }
 .shell[data-rhythm="alternating"] .row:nth-child(even) .when { order: -1; }
-.feature { margin: 0 calc(var(--space) * 2) calc(var(--space) * 2); padding: calc(var(--space) * 2); background: var(--color-surface); border-radius: var(--radius); }
+.feature { margin: var(--space) var(--side) 0; padding: calc(var(--space) * 2); background: var(--color-surface); border-radius: var(--radius); }
 .feature .pic { height: calc(90px + var(--image-share) * 140px); margin-bottom: var(--space); }
-.feature .title { font-size: var(--title-size); font-weight: 700; margin: 0; }
+.feature .title { margin: 0 0 calc(var(--space) * 0.5); }
 .shell[data-align="right"] .feature, .shell[data-align="right"] .review-head { text-align: right; }
 .shell[data-align="center"] .feature, .shell[data-align="center"] .review-head { text-align: center; }
 .shell[data-align="center"] .stats { justify-content: center; }
 .shell[data-align="right"] .stats { justify-content: flex-end; }
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature { background: var(--color-accent); }
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature * { color: var(--color-bg); }
-.palette-3 .tag { border-color: transparent; background: var(--color-tertiary); color: var(--color-fg); }
+.palette-3 .tag { text-decoration: underline 0.3em var(--color-tertiary); text-underline-offset: 0.05em; text-decoration-skip-ink: none; }   /* the third hue as a thick underline under the tag text */
 
 /* ---------- C11 change highlight ----------
    Compose sets data-flash="key key ..." on .shell for one second after an accepted change. Each rule below outlines the elements that parameter restyles on the two screens, in the chrome accent
@@ -139,44 +176,43 @@
    the accent family (below) is gated on data-accent that way, so a key outlines only what the shell's current placement colors.
    No transition or animation, so prefers-reduced-motion changes nothing: the outline is not motion and stays. */
 
-/* type_scale_ratio: --title-size and --display-size. A .row .title is body size and a list title is 1.15x body under image-led, except under type-led or on the featured first item */
-.shell[data-flash~="type_scale_ratio"] :is(.screen-title, .stats strong, .feature .title),
+/* type_scale_ratio: --t-title and --t-display. A list name is body size under image-led, except on the featured first item; every other title and display text takes the ratio */
+.shell[data-flash~="type_scale_ratio"] :is(.screen-title, .stats strong, .feature .title, .row .title),
 .shell[data-flash~="type_scale_ratio"]:not([data-hierarchy="image-led"]) .item .title,
-.shell[data-flash~="type_scale_ratio"][data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
-.shell[data-flash~="type_scale_ratio"][data-hierarchy="type-led"] .row .title { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
-.shell[data-flash~="type_scale_ratio"] .review-section .group-title { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell[data-flash~="type_scale_ratio"][data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
-/* hierarchy_mode: what leads a list item and a review row. spacing_unit: --space pads and gaps both. density: --item-h sizes the list item and hides its note at 4 and 6 */
+/* hierarchy_mode: what leads a list item and a review row. spacing_unit: --space pads and gaps both. density: --item-pad pads the list item and the note hides at 4 and 6 */
 .shell[data-flash~="hierarchy_mode"] :is(.item, .row),
 .shell[data-flash~="spacing_unit"] :is(.item, .row),
 .shell[data-flash~="density"] .item { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
 
-/* grouping: the headings of both screens. alignment_edge: where the text sits, which .review-head and .group-title also align */
+/* grouping: the headings of both screens. alignment_edge: where the text sits, which .review-head, .group-title and the top bar also align */
 .shell[data-flash~="grouping"] .group-title,
-.shell[data-flash~="alignment_edge"] :is(.review-head, .group-title) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell[data-flash~="alignment_edge"] :is(.bar, .review-head, .group-title) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
 .shell[data-flash~="alignment_edge"] :is(.text, .feature) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
 /* rhythm: alternating moves the poster of every even item and row (the same :nth-child the shell uses, so a group title shifts the parity); featured-first enlarges the first item of the first group and adds .feature to the review */
 .shell[data-flash~="rhythm"] :is(.item:nth-child(even), .row:nth-child(even), .group:first-of-type .item:first-of-type) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
 .shell[data-flash~="rhythm"] .feature { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
-/* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), tags, buttons and the feature card.
+/* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), the top bar's buttons and the feature card (tags are text; the one filled tag at labels 15% rounds too).
    palette_hue_count at three hues: the third hue tints the tags, and .palette-3 is on the tag row only then (the other hue counts recolor the accent: see the accent family below) */
 .shell[data-flash~="image_text_dominance"] .pic,
-.shell[data-flash~="radius"] :is(.pic img, .tag, .action, .feature),
+.shell[data-flash~="radius"] :is(.pic img, .action, .bar-icon, .feature),
+.shell[data-flash~="radius"][data-accent="labels"][data-coverage="le15"] .group:first-of-type .item:first-of-type .tag:first-child,
 .shell[data-flash~="palette_hue_count"] .palette-3 .tag { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
 /* The accent family. What the accent colors depends on data-accent, so a rule names an element only under the placement that restyles it:
-   labels: the tags and the review totals. actions: the Details buttons. dividers: the line under every item and row. one-hero: the headline, the first item and, at 15%, the feature card.
+   labels: the tags and the review totals. actions: the "Add show" button in the list's top bar. dividers: the hairline between items and rows. one-hero: the headline, the first item and, at 15%, the feature card.
    color_accent recolors whichever of those the shell shows. palette_hue_count does the same (one hue makes the accent the text color, two or three make it color_accent).
-   accent_coverage changes how much is drawn: the tags (labels), the buttons (actions), the item's line width (dividers), the first item and the card (one-hero); the totals and the row lines ignore it.
+   accent_coverage changes how much is drawn: the tags (labels), the button (actions), the item's line width (dividers), the first item and the card (one-hero); the totals and the row lines ignore it.
    accent_placement moves the accent from one placement to another and the one it left is not known, so it outlines every consumer on every placement: the one ungated union. */
 .shell[data-flash~="accent_placement"] :is(.tag, .action, .stats strong),
 .shell:is([data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="labels"] :is(.tag, .stats strong),
 .shell:is([data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="actions"] .action,
 .shell[data-flash~="accent_coverage"][data-accent="labels"] .tag,
 .shell[data-flash~="accent_coverage"][data-accent="actions"] .action { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
-/* dividers draw the line under every item and row (coverage sets only the item's line width); one-hero colors the headline and the first item, and at 15% fills the first item and the feature card */
+/* dividers draw the hairline between items and between rows (coverage sets only the item's line width); one-hero colors the headline and the first item, and at 15% fills the first item and the feature card */
 .shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="dividers"] :is(.item, .row),
 .shell[data-flash~="accent_coverage"][data-accent="dividers"] .item,
 .shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"], [data-flash~="accent_coverage"])[data-accent="one-hero"] .group:first-of-type .item:first-of-type { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
@@ -186,4 +222,4 @@
 
 /* color_bg: the page background is the shell itself. color_fg and type_family: the text of titles and meta lines (type_family sets every text; these are the ones that read as text) */
 .shell[data-flash~="color_bg"] { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
-.shell:is([data-flash~="color_fg"], [data-flash~="type_family"]) :is(.title, .screen-title, .meta) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+.shell:is([data-flash~="color_fg"], [data-flash~="type_family"]) :is(.bar-title, .title, .screen-title, .meta) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }

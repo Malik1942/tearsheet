@@ -1,6 +1,6 @@
 /** Rule before number (spec v2 C4′): the sentence a parameter's value reads as on the two prototype screens, and the row text built from it.
  *  Pure: no React, no model call. Each sentence was written from shell.css, ListScreen.tsx and DetailScreen.tsx; change one of those and change its sentence here. */
-import { DEFAULT_PARAMS, RELATIONSHIP_KEYS, accentShows, type ParameterKey, type Params } from '../shell/params'
+import { DEFAULT_PARAMS, DISPLAY_CAP_PX, ITEM_PAD, NEUTRAL_TEXT_FAMILY, PARAM_SPEC, RELATIONSHIP_KEYS, accentShows, typeScale, type ParameterKey, type Params } from '../shell/params'
 import type { Project, Resolved } from './mapRelations'
 import type { Brick, Measurement, ParameterValue } from './types'
 
@@ -36,11 +36,19 @@ const HIERARCHY = (side: string): Record<string, string> => ({
   'image-led': 'The poster leads each list item, full width above the text; year-review rows become full-width images.',
   balanced: 'Poster and text sit side by side in each list item.',
 })
-const DENSITY: Record<string, string> = {
-  1: 'One list item fills the screen, with its note.',
-  2: 'Two list items per screen, with notes.',
-  4: 'Four list items per screen; notes are hidden.',
-  6: 'Six list items per screen; notes are hidden.',
+/** Density sets the padding above and below each list item (params.ts ITEM_PAD, in spacing units) and whether the note shows; an item is as tall as what it holds, so the sentence never counts items per screen.
+ *  [how the list reads, what happens to the note]. */
+const DENSITY: Record<string, [string, string]> = {
+  1: ['The loosest list', 'notes show'],
+  2: ['A loose list', 'notes show'],
+  4: ['A compact list', 'notes are hidden'],
+  6: ['The tightest list', 'notes are hidden'],
+}
+/** A list item's padding at this density: in px when spacing_unit is in px, else as a multiple of it. */
+const itemPad = (params: Params): string => {
+  const m = ITEM_PAD[Number(params.density)] ?? ITEM_PAD[Number(DEFAULT_PARAMS.density)]
+  const unit = String(params.spacing_unit).trim(), px = /^(\d+(?:\.\d+)?)px$/.exec(unit)
+  return px ? `${Number((Number(px[1]) * m).toFixed(2))} px` : `${m} × ${unit}`
 }
 const GROUPING: Record<string, string> = {
   none: 'One ungrouped list; the year review still groups by month.',
@@ -79,15 +87,17 @@ const HERO_ONE = "the first show's title does not stand out."
 const heroTitle = (n: string) => `Only the first show's title and the “2025” headline are ${n}.`
 /** Where the accent lands, by placement and then coverage: [with two hues or more (n = the accent's color name), with one hue, where the accent is the text color, after "With one hue the accent is the text color: "]. `none` is handled in landsOn. */
 const ACCENT: Record<string, Record<string, [(n: string) => string, string]>> = {
+  // tags are text (design pass A3): the tag text takes the accent, and at 15% only the first show's first tag is filled
   labels: {
-    '<=15%': [n => `Genre tags are filled ${n}; year-review totals are ${n}.`, 'genre tags are filled with it.'],
-    '<=5%': [n => `Genre tags are outlined in ${n}; year-review totals are ${n}.`, 'genre tags are outlined in it.'],
+    '<=15%': [n => `Genre tags are ${n}, and the first show's first tag is filled ${n}; year-review totals are ${n}.`, "genre tags are set in it, and the first show's first tag is filled with it."],
+    '<=5%': [n => `Genre tags are ${n}; year-review totals are ${n}.`, 'genre tags are set in it.'],
     '<=2%': [n => `Genre tags stay grey with a small ${n} dot; year-review totals are ${n}.`, 'genre tags stay grey with a small dot in it.'],
   },
+  // no per-row buttons (A3): the list's one action is the "Add show" button in its top bar
   actions: {
-    '<=15%': [n => `Only the Details buttons are filled ${n}.`, 'the Details buttons are filled with it.'],
-    '<=5%': [n => `Only the Details buttons are ${n}.`, 'the Details buttons are outlined in it.'],
-    '<=2%': [n => `Only the Details buttons carry the accent, as a ${n} underline.`, 'the Details buttons get an underline in it.'],
+    '<=15%': [n => `Only the “Add show” button in the list's top bar is filled ${n}.`, "the “Add show” button in the list's top bar is filled with it."],
+    '<=5%': [n => `Only the “Add show” button in the list's top bar is ${n}.`, "the “Add show” button in the list's top bar is outlined in it."],
+    '<=2%': [n => `Only the “Add show” button in the list's top bar carries the accent, as a ${n} underline.`, "the “Add show” button in the list's top bar gets an underline in it."],
   },
   dividers: {
     '<=15%': [n => `The lines between items are ${n} and 6 px thick.`, 'the lines between items are 6 px thick in it.'],
@@ -115,21 +125,29 @@ export function landsOn(key: ParameterKey, params: Params): string {
   const side = params.alignment_edge === 'right' ? 'left' : 'right'
   switch (key) {
     case 'type_scale_ratio': {
-      const base = H === 'type-led' ? `Artist names lead at ${R}× the body text; the “2025” headline is ${R}× too.`
-        : H === 'image-led' ? `List titles stay small under the poster; year-review section titles are ${r}× and the “2025” headline is ${R}×.`
-        : `Artist names are ${r}× the body text; the “2025” headline is ${R}×.`
-      // the featured first show sets its title in the display size; under type-led every name already does
-      return params.rhythm === 'featured-first' && H !== 'type-led' ? `${base} The first show's title is ${R}×.` : base
+      // params.ts typeScale: title is body × r, display body × r², both capped at 44 px; a capped size is named in px
+      const t = typeScale(r)
+      const T = t.title >= DISPLAY_CAP_PX ? `${DISPLAY_CAP_PX} px (the cap)` : `${Number(r.toFixed(3))}×`
+      const D = t.display >= DISPLAY_CAP_PX ? `${DISPLAY_CAP_PX} px (the cap)` : `${R}×`
+      const ofBody = (x: string) => x.endsWith('×') ? `${x} the body text` : x
+      const base = H === 'type-led' ? `Artist names lead at ${ofBody(D)}; the “2025” headline and the totals are ${D} too.`
+        : H === 'image-led' ? `List titles stay small under the poster; year-review rows are ${T} and the “2025” headline and the totals are ${D}.`
+        : `Artist names are ${ofBody(T)}; the “2025” headline and the totals are ${D}.`
+      // the featured first show steps its name up to title size under image-led; under balanced and type-led every name already is at least that
+      return params.rhythm === 'featured-first' && H === 'image-led' ? `${base} The first show's title is ${T}.` : base
     }
     case 'hierarchy_mode': return entry(HIERARCHY(side), key, params)
-    case 'density': return entry(DENSITY, key, params)
+    case 'density': {
+      const [list, note] = entry(DENSITY, key, params)
+      return `${list}: ${itemPad(params)} above and below each item; ${note}.`
+    }
     case 'grouping': return entry(GROUPING, key, params)
     case 'rhythm': return (params.rhythm === 'alternating' ? ALTERNATING(side)[String(H)] : undefined) ?? entry(RHYTHM, key, params)
     case 'alignment_edge': return entry(ALIGNMENT(String(H)), key, params)
     case 'image_text_dominance': {
       const base = H === 'type-led' ? `The poster sits on the ${side} as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
-        : H === 'image-led' ? `Posters run full width above the text, ${P}% of the item's height; year-review images grow with it.`
-        : `Posters take up to ${P}% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.`
+        : H === 'image-led' ? `Posters run full width above the text, ${P}% as tall as the room density gives each item; year-review images grow with it.`
+        : `Posters take up to ${P}% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.`
       return s > 0.8 ? `${base} Capped at 80% so the text stays readable.` : s < 0.15 ? `${base} Raised to 15% so the poster stays visible.` : base
     }
     case 'accent_placement': {
@@ -149,13 +167,15 @@ export function landsOn(key: ParameterKey, params: Params): string {
     case 'color_accent': return accentShows(params) ? `${cap(n)} accent; accent_placement decides where it shows.` : 'Unused: with one hue the accent is the text color.'
     case 'radius': {
       const radius = String(params.radius)
-      return radius === '0px' || radius === '0' ? 'Posters, tags and buttons have square corners.' : `Corners of posters, tags and buttons are ${radius}.`
+      return radius === '0px' || radius === '0' ? 'Posters and buttons have square corners.' : `Corners of posters and buttons are ${radius}.`
     }
     case 'type_family': {
-      const first = String(params.type_family).split(',')[0].trim().replace(/^["']|["']$/g, '')
+      // the shell's default family is the neutral skin, which toCssVars sets in Inter
+      const family = String(params.type_family) === PARAM_SPEC.type_family.default ? NEUTRAL_TEXT_FAMILY : String(params.type_family)
+      const first = family.split(',')[0].trim().replace(/^["']|["']$/g, '')
       return `Every text on both screens is set in ${first}.`
     }
-    case 'spacing_unit': return `Padding and gaps step in ${String(params.spacing_unit)}; list items pad 2×.`
+    case 'spacing_unit': return `Padding and gaps step in ${String(params.spacing_unit)}; list items pad ${ITEM_PAD[Number(params.density)] ?? ITEM_PAD[Number(DEFAULT_PARAMS.density)]}×.`
   }
 }
 

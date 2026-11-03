@@ -74,31 +74,33 @@ describe('colorName', () => {
 })
 
 describe('landsOn: type_scale_ratio', () => {
-  it('type-led: the names lead at the squared ratio', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 1.25 })), 'Artist names lead at 1.56× the body text; the “2025” headline is 1.56× too.')
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 2 })), 'Artist names lead at 4× the body text; the “2025” headline is 4× too.')
+  // design pass A1: on a 15 px body, title = 15 × r and display = 15 × r², both capped at 44 px
+  it('type-led: the names lead at the squared ratio, or at the cap', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 1.25 })), 'Artist names lead at 1.56× the body text; the “2025” headline and the totals are 1.56× too.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 2 })), 'Artist names lead at 44 px (the cap); the “2025” headline and the totals are 44 px (the cap) too.')
   })
-  it('image-led: list titles stay small; section titles take the ratio and the headline its square', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 1.414 })), 'List titles stay small under the poster; year-review section titles are 1.414× and the “2025” headline is 2×.')
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 2 })), 'List titles stay small under the poster; year-review section titles are 2× and the “2025” headline is 4×.')
+  it('image-led: list titles stay small; year-review rows take the ratio and the headline its square', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 1.414 })), 'List titles stay small under the poster; year-review rows are 1.414× and the “2025” headline and the totals are 2×.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 2 })), 'List titles stay small under the poster; year-review rows are 2× and the “2025” headline and the totals are 44 px (the cap).')
   })
   it('balanced: the names take the ratio and the headline its square', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', type_scale_ratio: 1.25 })), 'Artist names are 1.25× the body text; the “2025” headline is 1.56×.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', type_scale_ratio: 1.25 })), 'Artist names are 1.25× the body text; the “2025” headline and the totals are 1.56×.')
   })
-  it('squares every ratio of the vocabulary to two places', () => {
-    for (const [ratio, square] of [[1.125, '1.27'], [1.25, '1.56'], [1.414, '2'], [1.6, '2.56'], [2, '4'], [3, '9']] as const) {
-      assert.equal(landsOn('type_scale_ratio', p({ type_scale_ratio: ratio })), `Artist names are ${ratio}× the body text; the “2025” headline is ${square}×.`)
+  it('squares every ratio of the vocabulary to two places, and names the 44 px cap where it binds', () => {
+    for (const [ratio, square] of [[1.125, '1.27×'], [1.25, '1.56×'], [1.414, '2×'], [1.6, '2.56×'], [2, '44 px (the cap)']] as const) {
+      assert.equal(landsOn('type_scale_ratio', p({ type_scale_ratio: ratio })), `Artist names are ${ratio}× the body text; the “2025” headline and the totals are ${square}.`)
     }
+    assert.equal(landsOn('type_scale_ratio', p({ type_scale_ratio: 3 })), 'Artist names are 44 px (the cap); the “2025” headline and the totals are 44 px (the cap).')
   })
 })
 
 describe('landsOn: type_scale_ratio with a featured first show', () => {
-  it('balanced and image-led: the first show title takes the squared ratio, after one space', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', rhythm: 'featured-first', type_scale_ratio: 1.25 })), "Artist names are 1.25× the body text; the “2025” headline is 1.56×. The first show's title is 1.56×.")
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', rhythm: 'featured-first', type_scale_ratio: 2 })), "List titles stay small under the poster; year-review section titles are 2× and the “2025” headline is 4×. The first show's title is 4×.")
+  it('image-led: the first show title steps up to the ratio, after one space', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', rhythm: 'featured-first', type_scale_ratio: 2 })), "List titles stay small under the poster; year-review rows are 2× and the “2025” headline and the totals are 44 px (the cap). The first show's title is 2×.")
   })
-  it('type-led already says every name leads at that size, so nothing is added', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', rhythm: 'featured-first', type_scale_ratio: 2 })), 'Artist names lead at 4× the body text; the “2025” headline is 4× too.')
+  it('balanced and type-led already set every name at title or display size, so nothing is added', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', rhythm: 'featured-first', type_scale_ratio: 1.25 })), 'Artist names are 1.25× the body text; the “2025” headline and the totals are 1.56×.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', rhythm: 'featured-first', type_scale_ratio: 2 })), 'Artist names lead at 44 px (the cap); the “2025” headline and the totals are 44 px (the cap) too.')
   })
   it('uniform and alternating add nothing', () => {
     for (const rhythm of ['uniform', 'alternating']) for (const hierarchy_mode of ['balanced', 'image-led']) {
@@ -198,10 +200,10 @@ describe('landsOn: the plain enums', () => {
       balanced: 'Poster and text sit side by side in each list item.',
     }],
     ['density', {
-      1: 'One list item fills the screen, with its note.',
-      2: 'Two list items per screen, with notes.',
-      4: 'Four list items per screen; notes are hidden.',
-      6: 'Six list items per screen; notes are hidden.',
+      1: 'The loosest list: 32 px above and below each item; notes show.',
+      2: 'A loose list: 24 px above and below each item; notes show.',
+      4: 'A compact list: 16 px above and below each item; notes are hidden.',
+      6: 'The tightest list: 12 px above and below each item; notes are hidden.',
     }],
     ['grouping', {
       none: 'One ungrouped list; the year review still groups by month.',
@@ -232,8 +234,8 @@ describe('landsOn: the plain enums', () => {
   })
   it('reads a value outside the vocabulary as the default and never throws', () => {
     for (const [key, sentences] of table) assert.equal(landsOn(key, p({ [key]: 'zzz' })), sentences[String(DEFAULT_PARAMS[key])], key)
-    assert.equal(landsOn('accent_placement', p({ accent_placement: 'zzz' })), 'Genre tags are outlined in blue; year-review totals are blue.')
-    assert.equal(landsOn('accent_placement', p({ accent_coverage: 'zzz' })), 'Genre tags are outlined in blue; year-review totals are blue.')
+    assert.equal(landsOn('accent_placement', p({ accent_placement: 'zzz' })), 'Genre tags are blue; year-review totals are blue.')
+    assert.equal(landsOn('accent_placement', p({ accent_coverage: 'zzz' })), 'Genre tags are blue; year-review totals are blue.')
   })
 })
 
@@ -251,33 +253,34 @@ describe('landsOn: image_text_dominance', () => {
     for (const hierarchy_mode of ['image-led', 'balanced']) assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode, alignment_edge: 'right' })), landsOn('image_text_dominance', p({ hierarchy_mode, alignment_edge: 'left' })), hierarchy_mode)
   })
   it('image-led: full-width posters, the share as a percent of the item height', () => {
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.55 })), "Posters run full width above the text, 55% of the item's height; year-review images grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.55 })), "Posters run full width above the text, 55% as tall as the room density gives each item; year-review images grow with it.")
   })
   it('balanced: posters take the share of each list item width', () => {
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.4 })), "Posters take up to 40% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.4 })), "Posters take up to 40% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.")
   })
   it('adds the cap note above 0.8 and the raise note below 0.15, each after one space', () => {
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.95 })), "Posters run full width above the text, 80% of the item's height; year-review images grow with it. Capped at 80% so the text stays readable.")
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.1 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it. Raised to 15% so the poster stays visible.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.95 })), "Posters run full width above the text, 80% as tall as the room density gives each item; year-review images grow with it. Capped at 80% so the text stays readable.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.1 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it. Raised to 15% so the poster stays visible.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 1 })), "The poster sits on the right as a square up to 48% of the item's width; year-review rows have no thumbnails. Capped at 80% so the text stays readable.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0 })), "The poster sits on the right as a square up to 9% of the item's width; year-review rows have no thumbnails. Raised to 15% so the poster stays visible.")
   })
   it('adds no note exactly at 0.8 and at 0.15', () => {
-    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.8 })), "Posters take up to 80% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.")
-    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.15 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.8 })), "Posters take up to 80% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.15 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.")
   })
 })
 
 describe('landsOn: accent_placement and accent_coverage', () => {
   const ONE_HUE: Record<string, Record<string, string>> = {   // what follows "With one hue the accent is the text color: ", by what shell.css does with --color-accent = --color-fg
-    labels: { '<=15%': 'genre tags are filled with it.', '<=5%': 'genre tags are outlined in it.', '<=2%': 'genre tags stay grey with a small dot in it.' },
-    actions: { '<=15%': 'the Details buttons are filled with it.', '<=5%': 'the Details buttons are outlined in it.', '<=2%': 'the Details buttons get an underline in it.' },
+    // design pass A3: tags are text, the list's one action is "Add show" in its top bar
+    labels: { '<=15%': "genre tags are set in it, and the first show's first tag is filled with it.", '<=5%': 'genre tags are set in it.', '<=2%': 'genre tags stay grey with a small dot in it.' },
+    actions: { '<=15%': "the “Add show” button in the list's top bar is filled with it.", '<=5%': "the “Add show” button in the list's top bar is outlined in it.", '<=2%': "the “Add show” button in the list's top bar gets an underline in it." },
     dividers: { '<=15%': 'the lines between items are 6 px thick in it.', '<=5%': 'the lines between items are 2 px thick in it.', '<=2%': 'the lines between items are drawn in it.' },
     'one-hero': { '<=15%': 'the first show is filled with it.', '<=5%': "the first show's title does not stand out.", '<=2%': "the first show's title does not stand out." },
   }
   const BY: Record<string, Record<string, string>> = {   // default accent #2F6FED is blue
-    labels: { '<=15%': 'Genre tags are filled blue; year-review totals are blue.', '<=5%': 'Genre tags are outlined in blue; year-review totals are blue.', '<=2%': 'Genre tags stay grey with a small blue dot; year-review totals are blue.' },
-    actions: { '<=15%': 'Only the Details buttons are filled blue.', '<=5%': 'Only the Details buttons are blue.', '<=2%': 'Only the Details buttons carry the accent, as a blue underline.' },
+    labels: { '<=15%': "Genre tags are blue, and the first show's first tag is filled blue; year-review totals are blue.", '<=5%': 'Genre tags are blue; year-review totals are blue.', '<=2%': 'Genre tags stay grey with a small blue dot; year-review totals are blue.' },
+    actions: { '<=15%': "Only the “Add show” button in the list's top bar is filled blue.", '<=5%': "Only the “Add show” button in the list's top bar is blue.", '<=2%': "Only the “Add show” button in the list's top bar carries the accent, as a blue underline." },
     dividers: { '<=15%': 'The lines between items are blue and 6 px thick.', '<=5%': 'The lines between items are blue and 2 px thick.', '<=2%': 'The lines between items are blue and 1 px thick.' },
     'one-hero': { '<=15%': 'The first show is filled blue and the “2025” headline is blue.', '<=5%': "Only the first show's title and the “2025” headline are blue.", '<=2%': "Only the first show's title and the “2025” headline are blue." },
   }
@@ -290,8 +293,8 @@ describe('landsOn: accent_placement and accent_coverage', () => {
     }
   })
   it('takes the color name from color_accent', () => {
-    assert.equal(landsOn('accent_placement', p({ accent_placement: 'actions', accent_coverage: '<=5%', color_accent: '#C8502A' })), 'Only the Details buttons are red.')
-    assert.equal(landsOn('accent_placement', p({ accent_placement: 'labels', accent_coverage: '<=15%', color_accent: '#2E8B57' })), 'Genre tags are filled green; year-review totals are green.')
+    assert.equal(landsOn('accent_placement', p({ accent_placement: 'actions', accent_coverage: '<=5%', color_accent: '#C8502A' })), "Only the “Add show” button in the list's top bar is red.")
+    assert.equal(landsOn('accent_placement', p({ accent_placement: 'labels', accent_coverage: '<=15%', color_accent: '#2E8B57' })), "Genre tags are green, and the first show's first tag is filled green; year-review totals are green.")
   })
   it('none keeps its sentence', () => {
     assert.equal(landsOn('accent_placement', p({ accent_placement: 'none' })), 'No element takes the accent color.')
@@ -307,19 +310,19 @@ describe('landsOn: accent_placement and accent_coverage', () => {
     for (const coverage of ['<=15%', '<=5%', '<=2%']) assert.equal(landsOn('accent_placement', p({ accent_placement: 'none', accent_coverage: coverage, palette_hue_count: 1 })), 'No element takes the accent color.')
   })
   it('with three hues the accent still lands as with two', () => {
-    assert.equal(landsOn('accent_placement', p({ accent_placement: 'actions', accent_coverage: '<=5%', palette_hue_count: 3 })), 'Only the Details buttons are blue.')
+    assert.equal(landsOn('accent_placement', p({ accent_placement: 'actions', accent_coverage: '<=5%', palette_hue_count: 3 })), "Only the “Add show” button in the list's top bar is blue.")
   })
   it('accent_coverage: placement none means coverage has no effect', () => {
     for (const coverage of ['<=15%', '<=5%', '<=2%']) assert.equal(landsOn('accent_coverage', p({ accent_placement: 'none', accent_coverage: coverage })), 'No element takes the accent, so coverage has no effect.')
   })
   it('accent_coverage: shows ≤, then the placement sentence with its first letter lower-cased', () => {
-    assert.equal(landsOn('accent_coverage', p({ accent_placement: 'actions', accent_coverage: '<=5%' })), 'At ≤5% coverage: only the Details buttons are blue.')
+    assert.equal(landsOn('accent_coverage', p({ accent_placement: 'actions', accent_coverage: '<=5%' })), "At ≤5% coverage: only the “Add show” button in the list's top bar is blue.")
     for (const [placement, byCoverage] of Object.entries(BY)) for (const [coverage, sentence] of Object.entries(byCoverage)) {
       assert.equal(landsOn('accent_coverage', p({ accent_placement: placement, accent_coverage: coverage })), `At ${coverage.replace('<=', '≤')} coverage: ${lower(sentence)}`, `${placement} ${coverage}`)
     }
   })
   it('accent_coverage: with one hue it carries the one-hue sentence', () => {
-    assert.equal(landsOn('accent_coverage', p({ accent_placement: 'actions', accent_coverage: '<=5%', palette_hue_count: 1 })), 'At ≤5% coverage: with one hue the accent is the text color: the Details buttons are outlined in it.')
+    assert.equal(landsOn('accent_coverage', p({ accent_placement: 'actions', accent_coverage: '<=5%', palette_hue_count: 1 })), "At ≤5% coverage: with one hue the accent is the text color: the “Add show” button in the list's top bar is outlined in it.")
     for (const [placement, byCoverage] of Object.entries(ONE_HUE)) for (const coverage of Object.keys(byCoverage)) {
       assert.equal(landsOn('accent_coverage', p({ accent_placement: placement, accent_coverage: coverage, palette_hue_count: 1 })), `At ${coverage.replace('<=', '≤')} coverage: with one hue the accent is the text color: ${byCoverage[coverage]}`, `${placement} ${coverage}`)
     }
@@ -349,14 +352,14 @@ describe('landsOn: palette_hue_count and the skin', () => {
     assert.equal(landsOn('palette_hue_count', p({ palette_hue_count: 2, color_accent: '#A6D4E3' })), 'Two hues: the text color plus light blue for the accent.')
   })
   it('radius: zero is square, anything else is named', () => {
-    assert.equal(landsOn('radius', p({ radius: '0px' })), 'Posters, tags and buttons have square corners.')
-    assert.equal(landsOn('radius', p({ radius: '0' })), 'Posters, tags and buttons have square corners.')
-    assert.equal(landsOn('radius', p({ radius: 0 })), 'Posters, tags and buttons have square corners.')
-    assert.equal(landsOn('radius', p({ radius: '8px' })), 'Corners of posters, tags and buttons are 8px.')
-    assert.equal(landsOn('radius', p({ radius: '50%' })), 'Corners of posters, tags and buttons are 50%.')
+    assert.equal(landsOn('radius', p({ radius: '0px' })), 'Posters and buttons have square corners.')
+    assert.equal(landsOn('radius', p({ radius: '0' })), 'Posters and buttons have square corners.')
+    assert.equal(landsOn('radius', p({ radius: 0 })), 'Posters and buttons have square corners.')
+    assert.equal(landsOn('radius', p({ radius: '8px' })), 'Corners of posters and buttons are 8px.')
+    assert.equal(landsOn('radius', p({ radius: '50%' })), 'Corners of posters and buttons are 50%.')
   })
   it('type_family: the first family of the stack, trimmed, without its quotes', () => {
-    assert.equal(landsOn('type_family', p()), 'Every text on both screens is set in system-ui.')
+    assert.equal(landsOn('type_family', p()), 'Every text on both screens is set in Inter.')   // the default family is the neutral skin, set in Inter (design pass A1)
     assert.equal(landsOn('type_family', p({ type_family: '"Helvetica Neue", "Inter", Arial, sans-serif' })), 'Every text on both screens is set in Helvetica Neue.')
     assert.equal(landsOn('type_family', p({ type_family: "'Gill Sans', serif" })), 'Every text on both screens is set in Gill Sans.')
     assert.equal(landsOn('type_family', p({ type_family: '  Georgia , serif' })), 'Every text on both screens is set in Georgia.')
@@ -383,20 +386,20 @@ const resolved = resolveProject(project(), SAMPLES)
 
 /** What g1, g2 and calmmouse resolve to, row by row: the headline typed out from the spec, with rules and statements read from the fixtures. */
 const HEADLINES: Record<ParameterKey, string> = {
-  type_scale_ratio: `${ruleOf('calmmouse', 'r1')} → List titles stay small under the poster; year-review section titles are 2× and the “2025” headline is 4×.`,
+  type_scale_ratio: `${ruleOf('calmmouse', 'r1')} → List titles stay small under the poster; year-review rows are 2× and the “2025” headline and the totals are 44 px (the cap).`,
   hierarchy_mode: `${ruleOf('g1', 'r1')} → The poster leads each list item, full width above the text; year-review rows become full-width images.`,
-  density: 'Shell default → Four list items per screen; notes are hidden.',
+  density: 'Shell default → A compact list: 16 px above and below each item; notes are hidden.',
   grouping: 'Shell default → One ungrouped list; the year review still groups by month.',
   rhythm: 'Shell default → Every list item has the same shape.',
   alignment_edge: 'Shell default → Text hugs the left edge; posters stay full width above the text.',   // this project resolves image-led
-  image_text_dominance: `${ruleOf('g2', 'r1')} → Posters run full width above the text, 80% of the item's height; year-review images grow with it. Capped at 80% so the text stays readable.`,
-  accent_placement: 'Shell default → Genre tags are outlined in light blue; year-review totals are light blue.',
-  accent_coverage: `${ruleOf('g2', 'r2')} → At ≤5% coverage: genre tags are outlined in light blue; year-review totals are light blue.`,
+  image_text_dominance: `${ruleOf('g2', 'r1')} → Posters run full width above the text, 80% as tall as the room density gives each item; year-review images grow with it. Capped at 80% so the text stays readable.`,
+  accent_placement: 'Shell default → Genre tags are light blue; year-review totals are light blue.',
+  accent_coverage: `${ruleOf('g2', 'r2')} → At ≤5% coverage: genre tags are light blue; year-review totals are light blue.`,
   palette_hue_count: `${ruleOf('g1', 'r3')} → A third hue tints the genre tags on the list.`,
   color_bg: 'Off-white page background on both screens.',
   color_fg: 'Black text; muted text and lines are mixed from it.',
   color_accent: 'Light blue accent; accent_placement decides where it shows.',
-  radius: 'Shell default → Corners of posters, tags and buttons are 8px.',
+  radius: 'Shell default → Corners of posters and buttons are 8px.',
   type_family: `${statementOf('g2', 'm4')} → Every text on both screens is set in Helvetica Neue.`,
   spacing_unit: 'Shell default → Padding and gaps step in 8px; list items pad 2×.',
 }
@@ -439,7 +442,7 @@ describe('ruleTextOf, rowHeadline and footnoteOf on g1 + g2 + calmmouse', () => 
   })
   it('a hand-set value starts with Set by you →', () => {
     const r = resolveProject(project({ manual: { density: 2 } }), SAMPLES)
-    assert.equal(rowHeadline(r.values.density, r.params, SAMPLES), 'Set by you → Two list items per screen, with notes.')
+    assert.equal(rowHeadline(r.values.density, r.params, SAMPLES), 'Set by you → A loose list: 24 px above and below each item; notes show.')
     assert.equal(ruleTextOf(r.values.density, SAMPLES), null)
     assert.equal(footnoteOf(r.values.density, SAMPLES), null)
   })
@@ -557,7 +560,7 @@ describe('exportCss', () => {
       assert.equal(commentOf(css, key), escaped(HEADLINES[key]), key)
       assert.ok(commentOf(css, key).startsWith('Shell default → '), key)
     }
-    assert.ok(css.includes('  --density: 4; /* Shell default → Four list items per screen; notes are hidden. */\n'))
+    assert.ok(css.includes('  --density: 4; /* Shell default → A compact list: 16 px above and below each item; notes are hidden. */\n'))
     assert.ok(!css.includes('shell default'), 'the lower-case origin is gone')
     for (const key of SHELL_DEFAULTS) assert.ok(!commentOf(css, key).includes('adapted'), `no adapted origin on the ${key} default`)
   })
@@ -572,7 +575,7 @@ describe('exportCss', () => {
     assert.ok(css.includes('  --type-scale-ratio: 2; /* '))
     assert.ok(css.includes('  --color-bg: #D4DFE0; /* '))
     assert.ok(css.includes('\n  /* resolved shell variables, what the two reference screens actually consume */\n'))
-    assert.ok(css.includes('  --title-size: calc(var(--body-size) * 2);\n'))
+    assert.ok(css.includes('  --t-title: 30px;\n'))   // 15 px body × ratio 2
   })
   it('opens and closes the same number of comments', () => {
     assert.equal(count(css, '/*'), count(css, '*/'))
@@ -584,7 +587,7 @@ describe('exportCss', () => {
     const r: Resolved = { ...resolved, values }
     const text = exportCss(r, [...SAMPLES, evil])
     const comment = commentOf(text, 'density')
-    assert.equal(comment, 'close * / early → Four list items per screen; notes are hidden. · measured · evil* /brick · r* /1 · from mx · mx: a * / b')
+    assert.equal(comment, 'close * / early → A compact list: 16 px above and below each item; notes are hidden. · measured · evil* /brick · r* /1 · from mx · mx: a * / b')
     assert.equal(count(text, '/*'), count(text, '*/'))
   })
 })
