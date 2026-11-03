@@ -72,7 +72,7 @@ export function ComposeScreen({ id }: { id: string }) {
                 <Link href={`/brick/${b.id}`} aria-label={`Open brick ${b.id}`}><Photo src={b.photo.url} className="h-10 w-14 rounded object-cover" /></Link>
                 <div className="min-w-0 flex-1">
                   <div className="mono text-[12px]">{b.id}</div><div className="ink-2 text-[11px]">saved {b.saved_at}</div>
-                  {(() => { const p = pickOf(b.id); return p ? <span className={`chip ${p.status === 'proposed' ? 'chip-proposed' : 'chip-adapted'} mt-0.5 px-1.5 text-[10px]`} title={p.status === 'proposed' ? `Proposed by the model for this intent, quoting: ${p.quotedRule}` : `Swapped in by you for ${p.swappedFrom}`}>{p.status === 'proposed' ? 'proposed · model' : 'adapted · by you'}</span> : null })()}
+                  {(() => { const p = pickOf(b.id); return p ? <span className={`chip ${p.status === 'proposed' ? 'chip-proposed' : 'chip-adapted'} mt-0.5 px-1.5 text-[10px]`} title={p.status === 'proposed' ? `Proposed by the model for this intent, quoting: ${p.quotedRule}` : p.status === 'anchor' ? 'Chosen by you as the starting point' : `Swapped in by you for ${p.swappedFrom}`}>{p.status === 'proposed' ? 'proposed · model' : 'adapted · by you'}</span> : null })()}
                 </div>
                 {locked[b.id] && <span title="Locked: keeps its values through Swap and Rotate">🔒</span>}
               </div>

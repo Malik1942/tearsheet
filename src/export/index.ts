@@ -39,6 +39,7 @@ export function exportHandoff(intent: string, bricks: Brick[], r: Resolved, prop
   const howPicked = (b: Brick) => {
     const p = proposal?.picks.find(x => x.brickId === b.id)
     if (!p) return proposal ? ' Added by you.' : ''
+    if (p.status === 'anchor') return ' Chosen by you as the starting point ("More like this one").'
     return p.status === 'proposed' ? ` Proposed by the model (${proposal!.model}, effort ${proposal!.effort}) for this intent, quoting its rule: "${p.quotedRule}" (${p.why})` : ` Swapped in by you for ${p.swappedFrom}.`
   }
   const lines: string[] = [
@@ -74,7 +75,8 @@ export function proposedNow(brickIds: string[], proposal?: Proposal): number {
 function proposedLine(bricks: Brick[], proposal?: Proposal): string {
   const n = proposedNow(bricks.map(b => b.id), proposal)
   if (!proposal || n === 0) return 'The bricks were chosen by a person; none of them is a model proposal.'
-  return `${n} of ${bricks.length} bricks were proposed by the model from the library's rules on ${proposal.at.slice(0, 10)} (one text call with ids, rule text and parameters only; no photos) and accepted by a person; each such proposal quotes one rule of its brick verbatim, checked on the server before it was shown. The other bricks were chosen by the person.${proposal.dropped ? ` ${proposal.dropped} ${proposal.dropped === 1 ? 'pick was' : 'picks were'} dropped by that check.` : ''}`
+  const lean = proposal.lean ? [proposal.lean.chips.join(', ') || null, proposal.lean.anchor_id ? `starting point: ${proposal.lean.anchor_id}` : null].filter(Boolean).join('; ') : ''
+  return `${n} of ${bricks.length} bricks were proposed by the model from the library's rules on ${proposal.at.slice(0, 10)} (one text call with ids, rule text and parameters only; no photos) and accepted by a person; each such proposal quotes one rule of its brick verbatim, checked on the server before it was shown. The other bricks were chosen by the person.${proposal.dropped ? ` ${proposal.dropped} ${proposal.dropped === 1 ? 'pick was' : 'picks were'} dropped by that check.` : ''}${lean ? ` The proposal leaned on: ${lean}.` : ''}`
 }
 
 export function download(name: string, text: string, type = 'text/plain') {
