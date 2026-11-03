@@ -159,7 +159,7 @@
 .shell[data-align="right"] .stats { justify-content: flex-end; }
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature { background: var(--color-accent); }
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature * { color: var(--color-bg); }
-.palette-3 .tag { background: linear-gradient(transparent 55%, var(--color-tertiary) 55%); }   /* the third hue as a marker under the tag text */
+.palette-3 .tag { text-decoration: underline 0.3em var(--color-tertiary); text-underline-offset: 0.05em; text-decoration-skip-ink: none; }   /* the third hue as a thick underline under the tag text */
 
 /* ---------- C11 change highlight ----------
    Compose sets data-flash="key key ..." on .shell for one second after an accepted change. Each rule below outlines the elements that parameter restyles on the two screens, in the chrome accent
