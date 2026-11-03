@@ -13,7 +13,8 @@ export const MAX_BODY = 4 * 1024 * 1024
 
 export type Manifest = { code: string; updated_at: string; bricks: Brick[]; projects: Project[]; bytes: number }
 export const CAP_PROJECTS = 50
-const MAX_PROJECT_JSON = 64 * 1024
+/** A project's JSON, history included. The client sends at most 60 KB (`fitProjectForSync`); this is the ceiling, so a history can never fail a push. */
+export const MAX_PROJECT_JSON = 256 * 1024
 
 const prefix = (code: string) => `libraries/${code}/`
 const manifestPath = (code: string) => `${prefix(code)}manifest.json`

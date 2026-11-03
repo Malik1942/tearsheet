@@ -3,7 +3,7 @@ import { SAMPLES } from '../fixtures/samples'
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
 import { extractBrick } from './client'
-import { snapshotOf, withNextVersion } from './versions'
+import { firstVersion, mergeProjectLists, withNextVersion } from './versions'
 import { afterResult, type Held } from './queue'
 import { IDB, hydrate, needsHydration, persistState } from './persist'
 import { deletePhoto, getPhotos, putPhoto } from './photoStore'
@@ -211,23 +211,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const id = `p_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
       const now = new Date().toISOString()
       const base: Project = { id, name, intent, createdAt: now, updatedAt: now, shell: 'list-review', brickIds, lockedBricks: {}, disabled: {}, choice: {}, locks: {}, manual: {}, ...extra }
-      const project: Project = { ...base, version: 1, versions: [{ v: 1, at: now, changed: [], snapshot: snapshotOf(base) }] }   // C9: v1 has nothing before it to differ from
+      const project: Project = { ...base, ...firstVersion(base, now) }   // C9: v1, with nothing before it to differ from
       setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, project] }))
       stateRef.current = { ...stateRef.current, activeProjectId: id, projects: [...stateRef.current.projects, project] }
       return id
     },
     mergeProjects: incoming => {
-      const byId = new Map(stateRef.current.projects.map(p => [p.id, p]))
-      let changed = 0
-      for (const inc of incoming) {
-        if (!inc || typeof inc.id !== 'string' || !Array.isArray(inc.brickIds)) continue
-        const have = byId.get(inc.id)
-        if (have && (inc.updatedAt ?? inc.createdAt ?? '') <= (have.updatedAt ?? have.createdAt ?? '')) continue
-        byId.set(inc.id, { ...have, ...inc, disabled: inc.disabled ?? {}, choice: inc.choice ?? {}, locks: inc.locks ?? {}, manual: inc.manual ?? {}, version: inc.version, versions: inc.versions })   // C9: the version and its history come from the winner as they are, never mixed with the older copy's
-        changed++
-      }
+      const { projects, changed } = mergeProjectLists(stateRef.current.projects, incoming)   // C9: the version and its history come from the winner as they are (validated), never mixed with the older copy's
       if (!changed) return 0
-      const projects = [...byId.values()]
       setState(s => ({ ...s, projects }))
       stateRef.current = { ...stateRef.current, projects }
       return changed
