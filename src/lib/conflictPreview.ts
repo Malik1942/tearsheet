@@ -13,6 +13,12 @@ export type ConflictTile = {
   pressed: boolean
 }
 
+/** True when the stored choice names one of the tiles' candidates, that is, when the person's pick still stands. A choice that no longer names a candidate (its brick was swapped out, its relation switched off)
+ *  is stale: the tiles fall back to the top brick, and the copy under them has to say so rather than show a pick that is gone. */
+export function choiceStands(tiles: ConflictTile[], choice?: RelationRef): boolean {
+  return choice !== undefined && tiles.some(t => t.ref === choice)
+}
+
 /** Spec v3 C6: a conflict is chosen by preview. One tile per candidate of `k`, in the resolver's order; each tile's `params` differ from the project's only in `k`.
  *  `choice` is the ref the person picked (`project.choice[k]`); the pressed tile is that one, else the first. */
 export function conflictTiles(resolved: Resolved, k: ParameterKey, choice?: RelationRef): ConflictTile[] {

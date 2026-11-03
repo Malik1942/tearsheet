@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project, type RelationRef } from '../src/lib/mapRelations.ts'
-import { conflictTiles } from '../src/lib/conflictPreview.ts'
+import { choiceStands, conflictTiles } from '../src/lib/conflictPreview.ts'
 import { PARAMETER_KEYS, type ParameterKey } from '../src/shell/params.ts'
 
 const project = (choice: Project['choice'] = {}): Project => ({ id: 'p', intent: '', createdAt: '', brickIds: ['g1', 'g2', 'calmmouse'], disabled: {}, choice, locks: {}, manual: {} })
@@ -84,5 +84,25 @@ describe('conflictTiles (C6)', () => {
 
   it('a key nobody sets as a relation gives no tiles', () => {
     assert.deepEqual(conflictTiles(resolve(), 'color_bg' as ParameterKey), [])
+  })
+})
+
+describe('choiceStands (C6 copy line)', () => {
+  it('is false when nothing is chosen', () => {
+    assert.equal(choiceStands(conflictTiles(resolve(), 'palette_hue_count'), undefined), false)
+  })
+  it('is true when the stored choice is one of the current candidates, the first or any other', () => {
+    for (const ref of ['g1/r3', 'g2/r3'] as RelationRef[]) {
+      assert.equal(choiceStands(conflictTiles(resolve({ palette_hue_count: ref }), 'palette_hue_count', ref), ref), true, ref)
+    }
+  })
+  it('is false for a stale choice, a ref that names no candidate of this key: the screen keeps saying the top brick is used', () => {
+    const stale = 'calmmouse/r2' as RelationRef
+    const tiles = conflictTiles(resolve({ palette_hue_count: stale }), 'palette_hue_count', stale)
+    assert.deepEqual(tiles.map(t => t.pressed), [true, false])   // the tiles themselves fall back to the top brick
+    assert.equal(choiceStands(tiles, stale), false)
+  })
+  it('is false when there are no tiles', () => {
+    assert.equal(choiceStands([], 'g1/r3' as RelationRef), false)
   })
 })

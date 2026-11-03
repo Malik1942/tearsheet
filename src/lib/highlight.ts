@@ -15,6 +15,22 @@ export function flashKeys(prevVersion: number, project: Project): ParameterKey[]
   return (project.version ?? 1) > prevVersion ? changedSincePrevious(project).map(c => c.key) : []
 }
 
+/** What `useChangeFlash` remembers of the project it is showing: which one and the version it last saw. `null` before it has seen any. */
+export type FlashSeen = { id: string; v: number } | null
+
+/** The step `useChangeFlash` takes on each render, from what it has seen, the project now, and the keys now flashing; returns both updated.
+ *  A project first seen, or a different project from the one seen, flashes nothing and clears what was running (the highlight belongs to the project it came from).
+ *  The same project at a higher version flashes the keys that version moved, but a rise that moved nothing (a lock) leaves a running highlight alone, as does an equal or lower version, which only moves `seen`.
+ *  When nothing changed it hands back the very `seen` and `flash` it was given, so the caller can tell by identity and set no state. */
+export function nextFlash(seen: FlashSeen, project: Project | undefined, current: ParameterKey[]): { seen: FlashSeen; flash: ParameterKey[] } {
+  if (!project) return { seen, flash: current }
+  const v = project.version ?? 1
+  if (seen === null || seen.id !== project.id) return { seen: { id: project.id, v }, flash: current.length === 0 ? current : [] }
+  if (seen.v === v) return { seen, flash: current }
+  const keys = flashKeys(seen.v, project)
+  return { seen: { id: project.id, v }, flash: keys.length > 0 ? keys : current }
+}
+
 /** Every region of the brick whose `measurement_ids` include the measurement, in the brick's order; none for an unknown or missing id. */
 export function peekRegions(brick: Brick, measurementId: string | undefined): Region[] {
   return measurementId ? brick.regions.filter(r => r.measurement_ids.includes(measurementId)) : []

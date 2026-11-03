@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type FocusEvent, type KeyboardEvent, type PointerEvent, type RefObject } from 'react'
+import { useEffect, useRef, useState, type FocusEvent, type PointerEvent, type RefObject } from 'react'
 import type { Rect } from '../lib/highlight'
 
 const HOVER_DELAY_MS = 150
 
-/** Spec v3 C12: when a sheet row shows its photo peek. A mouse hovering the row opens it after a short delay and leaving closes it; a tap, a click, Enter or Space on the row pins it open or closed.
+/** Spec v3 C12: when a sheet row shows its photo peek. A mouse hovering the row opens it after a short delay and leaving closes it; a tap or a click on the row, or Enter or Space on the row's source button (a real button, so the keys are its own), pins it open or closed.
  *  A pinned peek closes on a press anywhere outside the row, on Escape, and when focus leaves the row. While it shows, it follows the row through scrolling and closes once the row is off screen.
  *  A touch never counts as hovering, so a tap is not a hover followed by a click that closes it again. `ref` is the row's element, `enabled` is false for a row with no source brick: nothing opens and nothing is pinned. */
 export function usePeek(ref: RefObject<HTMLDivElement | null>, enabled: boolean) {
@@ -56,12 +56,8 @@ export function usePeek(ref: RefObject<HTMLDivElement | null>, enabled: boolean)
       window.clearTimeout(timer.current)
       setHover(false)
     },
+    // a click reaches here from a tap or a mouse click on the row, and from Enter or Space on the source button inside it (a button turns those keys into a click, so no key handler is needed)
     onClick: () => { if (enabled) toggle() },
-    onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
-      if (!enabled || e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return
-      e.preventDefault()
-      toggle()
-    },
     onBlur: (e: FocusEvent<HTMLDivElement>) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPinned(false) },
   }
   return { open, anchor, handlers }
