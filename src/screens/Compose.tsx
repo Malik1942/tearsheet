@@ -6,12 +6,15 @@ import { standInLine } from '../lib/standIns'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS } from '../shell/params'
 import type { ParameterValue } from '../lib/types'
 import { Shell } from '../shell/Shell'
+import { MiniPreview } from '../shell/MiniPreview'
+import { conflictTiles } from '../lib/conflictPreview'
 import { Photo } from '../bricks/Photo'
 import { ProvenanceChip } from '../compose/ProvenanceChip'
 import { Section, Row } from '../compose/Sheet'
 import { download, exportCss, exportHandoff, exportJson } from '../export'
 
 const NEUTRAL = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const
+const CONFLICT_W = 130   // C6: width of each mini-screen in a conflict tile
 const COPY = { unexpressedEmpty: 'Everything from these bricks found a slot.', conflictDefault: 'Using the top brick until you choose.', phone: 'Compose needs a wider screen. On this phone:' }
 
 /** Compose: three columns at >= 960 px. Materials (left) feed the shell (center); the sheet (right) shows every value with its provenance. */
@@ -131,14 +134,19 @@ export function ComposeScreen({ id }: { id: string }) {
             <Section title="Conflicts">
               {resolved.conflicts.map(k => (
                 <div key={k} className="py-1 text-[12px]">
-                  <div className="mono">{k}</div>
-                  {(resolved.candidates[k] ?? []).map(c => (
-                    <label key={c.ref} className="flex cursor-pointer items-center gap-2 py-0.5">
-                      <input type="radio" name={`c-${k}`} checked={(project.choice[k] ?? resolved.candidates[k]![0].ref) === c.ref} onChange={() => update(p => ({ choice: { ...p.choice, [k]: c.ref } }))} />
-                      <span className="mono">{c.ref}</span><span className="mono">= {String(c.value)}</span><span className="ink-2">· {c.provenance}</span>
-                    </label>
-                  ))}
-                  {!project.choice[k] ? <div className="ink-2 text-[11px]">{COPY.conflictDefault}</div> : <div className="pt-1"><ProvenanceChip pv={resolved.values[k]} showKey={false} /></div>}
+                  <div className="mono pb-1">{k}</div>
+                  {/* C6: choose by preview. One tile per candidate: a mini-screen rendered with that brick's value, the whole tile one button. */}
+                  <div role="group" aria-label={`Choose ${k}`} className="flex flex-wrap gap-2">
+                    {conflictTiles(resolved, k, project.choice[k]).map(t => (
+                      <button key={t.ref} type="button" aria-pressed={t.pressed} aria-label={`Use ${t.brickId}'s ${k} = ${t.value}`} onClick={() => update(p => ({ choice: { ...p.choice, [k]: t.ref } }))}
+                        className="flex cursor-pointer flex-col items-start gap-1 rounded p-1 text-left" style={{ width: CONFLICT_W + 12, background: 'transparent', color: 'var(--ink)', border: `2px solid ${t.pressed ? 'var(--ink)' : 'var(--line)'}` }}>
+                        <MiniPreview params={t.params} width={CONFLICT_W} />
+                        <span className="mono block max-w-full break-words text-[11px]">{t.brickId} · {String(t.value)}</span>
+                        <span className="ink-2 text-[11px]">{t.provenance}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {!project.choice[k] ? <div className="ink-2 pt-1 text-[11px]">{COPY.conflictDefault}</div> : <div className="pt-1"><ProvenanceChip pv={resolved.values[k]} showKey={false} /></div>}
                 </div>
               ))}
             </Section>
