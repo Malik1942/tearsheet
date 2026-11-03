@@ -87,15 +87,17 @@ const HERO_ONE = "the first show's title does not stand out."
 const heroTitle = (n: string) => `Only the first show's title and the “2025” headline are ${n}.`
 /** Where the accent lands, by placement and then coverage: [with two hues or more (n = the accent's color name), with one hue, where the accent is the text color, after "With one hue the accent is the text color: "]. `none` is handled in landsOn. */
 const ACCENT: Record<string, Record<string, [(n: string) => string, string]>> = {
+  // tags are text (design pass A3): the tag text takes the accent, and at 15% only the first show's first tag is filled
   labels: {
-    '<=15%': [n => `Genre tags are filled ${n}; year-review totals are ${n}.`, 'genre tags are filled with it.'],
-    '<=5%': [n => `Genre tags are outlined in ${n}; year-review totals are ${n}.`, 'genre tags are outlined in it.'],
+    '<=15%': [n => `Genre tags are ${n}, and the first show's first tag is filled ${n}; year-review totals are ${n}.`, "genre tags are set in it, and the first show's first tag is filled with it."],
+    '<=5%': [n => `Genre tags are ${n}; year-review totals are ${n}.`, 'genre tags are set in it.'],
     '<=2%': [n => `Genre tags stay grey with a small ${n} dot; year-review totals are ${n}.`, 'genre tags stay grey with a small dot in it.'],
   },
+  // no per-row buttons (A3): the list's one action is the "Add show" button in its top bar
   actions: {
-    '<=15%': [n => `Only the Details buttons are filled ${n}.`, 'the Details buttons are filled with it.'],
-    '<=5%': [n => `Only the Details buttons are ${n}.`, 'the Details buttons are outlined in it.'],
-    '<=2%': [n => `Only the Details buttons carry the accent, as a ${n} underline.`, 'the Details buttons get an underline in it.'],
+    '<=15%': [n => `Only the “Add show” button in the list's top bar is filled ${n}.`, "the “Add show” button in the list's top bar is filled with it."],
+    '<=5%': [n => `Only the “Add show” button in the list's top bar is ${n}.`, "the “Add show” button in the list's top bar is outlined in it."],
+    '<=2%': [n => `Only the “Add show” button in the list's top bar carries the accent, as a ${n} underline.`, "the “Add show” button in the list's top bar gets an underline in it."],
   },
   dividers: {
     '<=15%': [n => `The lines between items are ${n} and 6 px thick.`, 'the lines between items are 6 px thick in it.'],
@@ -165,7 +167,7 @@ export function landsOn(key: ParameterKey, params: Params): string {
     case 'color_accent': return accentShows(params) ? `${cap(n)} accent; accent_placement decides where it shows.` : 'Unused: with one hue the accent is the text color.'
     case 'radius': {
       const radius = String(params.radius)
-      return radius === '0px' || radius === '0' ? 'Posters, tags and buttons have square corners.' : `Corners of posters, tags and buttons are ${radius}.`
+      return radius === '0px' || radius === '0' ? 'Posters and buttons have square corners.' : `Corners of posters and buttons are ${radius}.`
     }
     case 'type_family': {
       // the shell's default family is the neutral skin, which toCssVars sets in Inter

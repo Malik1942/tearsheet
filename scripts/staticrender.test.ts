@@ -37,9 +37,10 @@ describe('MiniPreview holds no interactive element', () => {
     assert.doesNotMatch(html, INTERACTIVE)
     assert.doesNotMatch(html, /tabindex|role="button"/i)
   })
-  it('still draws the Details control, as a span with the same class', () => {
+  it('still draws the top bar control, as a span with the same class', () => {
     const html = renderToStaticMarkup(h(MiniPreview, { params: DEFAULT_PARAMS }))
-    assert.match(html, /<span class="action">Details<\/span>/)
+    assert.match(html, /<span class="action"><svg class="icon"/)
+    assert.match(renderToStaticMarkup(h(MiniPreview, { params: { ...DEFAULT_PARAMS, accent_placement: 'actions' } })), /<span class="action"><svg class="icon"[^]*?<\/svg>Add show<\/span>/)
   })
   it('does so for every accent placement and grouping, since each lays the control out differently', () => {
     for (const accent_placement of ['none', 'labels', 'actions', 'dividers', 'one-hero']) {
@@ -57,9 +58,18 @@ describe('Shell staticRender', () => {
       assert.doesNotMatch(renderToStaticMarkup(h(Shell, { params: DEFAULT_PARAMS, screen, staticRender: true })), INTERACTIVE, screen)
     }
   })
-  it('leaves the Details control a real button when staticRender is off (the Compose shells are live)', () => {
-    assert.match(renderToStaticMarkup(h(Shell, { params: DEFAULT_PARAMS, screen: 'list' })), /<button class="action" type="button">Details<\/button>/)
+  it('leaves the top bar controls real buttons when staticRender is off (the Compose shells are live)', () => {
+    assert.match(renderToStaticMarkup(h(Shell, { params: DEFAULT_PARAMS, screen: 'list' })), /<button class="action" type="button" aria-label="Add show">/)
+    assert.match(renderToStaticMarkup(h(Shell, { params: { ...DEFAULT_PARAMS, accent_placement: 'actions' }, screen: 'list' })), /<button class="action" type="button"><svg class="icon"[^]*?<\/svg>Add show<\/button>/)
+    assert.match(renderToStaticMarkup(h(Shell, { params: DEFAULT_PARAMS, screen: 'review' })), /<button class="bar-icon" type="button" aria-label="Share">/)
     assert.doesNotMatch(renderToStaticMarkup(h(Shell, { params: DEFAULT_PARAMS, screen: 'list', staticRender: false })), /<span class="action"/)
+  })
+  it('draws no per-row Details button on either screen (design pass A3: the whole row is the target)', () => {
+    for (const screen of ['list', 'review'] as const) for (const staticRender of [true, false]) {
+      const html = renderToStaticMarkup(h(Shell, { params: { ...DEFAULT_PARAMS, accent_placement: 'actions' }, screen, staticRender }))
+      assert.doesNotMatch(html, /Details/, `${screen} ${staticRender}`)
+      assert.equal((html.match(/class="(action|bar-icon)"/g) ?? []).length, 1, `one top bar control on ${screen}`)
+    }
   })
 })
 

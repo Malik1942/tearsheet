@@ -59,7 +59,7 @@ describe('A2 spacing: density pads a list item and never sets its height', () =>
     for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) if (/\.item\b/.test(m[1]) && !/\.pic|\.title/.test(m[1])) assert.doesNotMatch(m[2], /min-height/, m[1].trim())
   })
   it('the list item pads by --item-pad and the side margin', () => {
-    assert.match(css, /\.item \{[^}]*padding: var\(--item-pad\) var\(--side\);/)
+    assert.match(css, /\.item \{[^}]*padding: var\(--item-pad\) calc\(var\(--side\) \+ 12px \+ var\(--space\)\) var\(--item-pad\) var\(--side\);/)   // the right side also keeps room for the chevron (A3)
     assert.match(css, /--side: calc\(var\(--space\) \* 2\.5\);/)
   })
 })

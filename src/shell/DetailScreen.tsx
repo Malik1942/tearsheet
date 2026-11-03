@@ -1,9 +1,12 @@
 import { CONCERTS, groupBy, posterFor, shortDate } from './content'
+import { TopBar } from './ListScreen'
 import type { Params } from './params'
 
+const ShareIcon = () => <svg className="icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 10V2.5M5 5.2 8 2.3l3 2.9M4 8v5.5h8V8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+
 /** Screen 2: the year in review. Exercises grouping and rhythm on a second layout.
- *  `staticRender` is the same contract as on `ListScreen`: no interactive element. This screen has none today (rows, tags and totals are plain text), so it has nothing to swap; a control added here has to honor the prop. */
-export function DetailScreen({ params }: { params: Params; staticRender?: boolean }) {
+ *  `staticRender` is the same contract as on `ListScreen`: no interactive element. The top bar's share control is its only one, drawn as a span with the same class. */
+export function DetailScreen({ params, staticRender = false }: { params: Params; staticRender?: boolean }) {
   const grouping = String(params.grouping) === 'none' ? 'by-time' : String(params.grouping)
   const groups = groupBy(CONCERTS, grouping)
   const rhythm = String(params.rhythm)
@@ -12,8 +15,11 @@ export function DetailScreen({ params }: { params: Params; staticRender?: boolea
   const ordered = rhythm === 'featured-first' ? [...groups].sort((a, b) => b.items.length - a.items.length) : groups
   return (
     <div>
+      <TopBar title="Year in review">
+        {staticRender ? <span className="bar-icon"><ShareIcon /></span> : <button className="bar-icon" type="button" aria-label="Share"><ShareIcon /></button>}
+      </TopBar>
       <header className="review-head">
-        <h1 className="screen-title">2025</h1>
+        <h2 className="screen-title">2025</h2>
         <ul className="stats">
           <li><strong>{CONCERTS.length}</strong> shows</li>
           <li><strong>{cities}</strong> cities</li>
@@ -35,7 +41,7 @@ export function DetailScreen({ params }: { params: Params; staticRender?: boolea
               <div className="pic"><img src={posterFor(c)} alt="" /></div>
               <div>
                 <p className="title">{c.artist}</p>
-                <p className="meta">{c.venue} · {c.tags.map(t => <span key={t} className="tag">{t}</span>)}</p>
+                <p className="meta">{c.venue} · <span className="tags">{c.tags.map(t => <span key={t} className="tag">{t}</span>)}</span></p>
               </div>
               <span className="when">{shortDate(c.date)}</span>
             </div>

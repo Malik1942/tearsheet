@@ -23,7 +23,7 @@
    List: title (names), body (meta, notes), caption (tags, group labels). Under type-led the names take display and meta and notes drop to caption, so it is still three.
    Year review: display (year, totals), title (rows, feature), caption (months, row meta, dates, stat labels). */
 .t-caption, .tag, .group-title, .when, .stats li, .row .meta, .feature .meta, .action { font-size: var(--t-caption); font-weight: 500; line-height: 1.3; }
-.t-title, .item .title, .row .title, .feature .title { font-family: var(--font-display); font-size: var(--t-title); font-weight: 650; line-height: 1.15; letter-spacing: -0.01em; }
+.t-title, .bar-title, .item .title, .row .title, .feature .title { font-family: var(--font-display); font-size: var(--t-title); font-weight: 650; line-height: 1.15; letter-spacing: -0.01em; }
 .t-display, .screen-title, .stats strong { font-family: var(--font-display); font-size: var(--t-display); font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
 .meta, .when, .stats { font-variant-numeric: tabular-nums; }
 
@@ -38,15 +38,29 @@
 .shell[data-align="right"]  .group-title, .shell[data-align="right"] .screen-title { text-align: right; }
 .shell[data-align="center"] .group-title, .shell[data-align="center"] .screen-title { text-align: center; }
 
-/* ---------- list items ---------- */
+/* ---------- top bar: the screen title, one control on the right, a hairline below; no status bar. It follows the alignment like the headings ---------- */
+.bar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--space); min-height: 44px; padding: calc(var(--space) * 0.5) var(--side); background: var(--color-bg); border-bottom: 1px solid var(--color-line); }
+.bar-title { flex: 1; min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shell[data-align="right"] .bar { flex-direction: row-reverse; }
+.shell[data-align="right"] .bar-title { text-align: right; }
+.shell[data-align="center"] .bar { display: grid; grid-template-columns: 1fr auto 1fr; }
+.shell[data-align="center"] .bar-title { grid-column: 2; text-align: center; }
+.shell[data-align="center"] .bar > :last-child { grid-column: 3; justify-self: end; }
+/* the quiet control: a 32 px square on the surface tint, muted. The list's is .action, the one place the accent goes under accent_placement: actions */
+.action, .bar-icon { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--space) * 0.5); flex: none; min-width: 32px; height: 32px; padding: 0 var(--space); font-family: inherit; font-weight: 650; color: var(--color-muted); background: var(--color-surface); border: 1px solid transparent; border-radius: var(--radius); }
+.icon { display: block; flex: none; }
+
+/* ---------- list items: no card, a hairline between items only, a chevron at the trailing edge; the whole row is the target ---------- */
 .item {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words */
   gap: calc(var(--space) * 2);
-  padding: var(--item-pad) var(--side);   /* density sets this padding (params.ts ITEM_PAD), never a min-height: an item is as tall as what it holds */
+  padding: var(--item-pad) calc(var(--side) + 12px + var(--space)) var(--item-pad) var(--side);   /* density sets this padding (params.ts ITEM_PAD), never a min-height: an item is as tall as what it holds. The right side keeps room for the chevron */
   align-items: center;
-  border-bottom: 1px solid var(--color-line);
 }
+.item + .item { border-top: 1px solid var(--color-line); }
+.chev { position: absolute; right: var(--side); top: 50%; translate: 0 -50%; width: 12px; height: 12px; color: var(--color-muted); }
 .item .pic { aspect-ratio: 16 / 10; min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
 .item .text { min-width: 0; }
 .item .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; hyphens: auto; }   /* title → meta: 4 */
@@ -86,23 +100,27 @@
 }
 .group:first-of-type > .group-title { padding-top: calc(var(--space) * 3); }
 
+/* ---------- tags: text only, caption size, muted, a middle dot between them; no outlined pills ---------- */
+.tags { margin: 0; }
+.tag { color: var(--color-muted); }
+.tag + .tag::before { content: '·'; display: inline-block; margin: 0 0.4em; color: var(--color-muted); }
+
 /* ---------- accent: where and how much ---------- */
-.tag { display: inline-block; border-radius: var(--radius); padding: 1px calc(var(--space) * 0.75); margin-right: calc(var(--space) * 0.5); border: 1px solid var(--color-line); color: var(--color-muted); }
-.action { display: inline-block; font-family: inherit; border: 1px solid var(--color-line); background: transparent; color: var(--color-fg); border-radius: var(--radius); padding: calc(var(--space) * 0.5) calc(var(--space) * 1.5); margin-top: var(--space); }
-.hero-mark { display: none; }
+/* labels: the tag text takes the accent; at 15% the first show's first tag is filled; at 2% the tags stay grey after a small dot */
+.shell[data-accent="labels"] .tag { color: var(--color-accent); }
+.shell[data-accent="labels"][data-coverage="le15"] .group:first-of-type .item:first-of-type .tag:first-child { background: var(--color-accent); color: var(--color-bg); padding: 1px calc(var(--space) * 0.75); border-radius: var(--radius); }
+.shell[data-accent="labels"][data-coverage="le2"] .tag { color: var(--color-muted); }
+.shell[data-accent="labels"][data-coverage="le2"] .tags::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); margin-right: 6px; vertical-align: 0.1em; }
 
-.shell[data-accent="labels"] .tag { color: var(--color-accent); border-color: var(--color-accent); }
-.shell[data-accent="labels"][data-coverage="le15"] .tag { background: var(--color-accent); color: var(--color-bg); }
-.shell[data-accent="labels"][data-coverage="le2"] .tag { border-color: var(--color-line); color: var(--color-muted); }
-.shell[data-accent="labels"][data-coverage="le2"] .tag::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); margin-right: 5px; }
-
-.shell[data-accent="actions"] .action { border-color: var(--color-accent); color: var(--color-accent); }
+/* actions: the list's one action becomes "Add show" (ListScreen) and takes the accent: filled at 15%, outlined at 5%, an underline at 2% */
+.shell[data-accent="actions"] .action { border-color: var(--color-accent); color: var(--color-accent); background: transparent; padding: 0 calc(var(--space) * 1.5); }
 .shell[data-accent="actions"][data-coverage="le15"] .action { background: var(--color-accent); color: var(--color-bg); }
-.shell[data-accent="actions"][data-coverage="le2"] .action { border-color: var(--color-line); color: var(--color-fg); text-decoration: underline; text-decoration-color: var(--color-accent); }
+.shell[data-accent="actions"][data-coverage="le2"] .action { border-color: transparent; color: var(--color-fg); text-decoration: underline 2px; text-decoration-color: var(--color-accent); text-underline-offset: 3px; }
 
-.shell[data-accent="dividers"] .item { border-bottom-color: var(--color-accent); }
-.shell[data-accent="dividers"][data-coverage="le15"] .item { border-bottom-width: 6px; }
-.shell[data-accent="dividers"][data-coverage="le5"] .item { border-bottom-width: 2px; }
+/* dividers: the hairline between items, thicker with coverage */
+.shell[data-accent="dividers"] .item + .item { border-top-color: var(--color-accent); }
+.shell[data-accent="dividers"][data-coverage="le15"] .item + .item { border-top-width: 6px; }
+.shell[data-accent="dividers"][data-coverage="le5"] .item + .item { border-top-width: 2px; }
 
 .shell[data-accent="one-hero"] .group:first-of-type .item:first-of-type .title,
 .shell[data-accent="one-hero"][data-grouping="none"] .item:first-of-type .title,
@@ -120,12 +138,13 @@
 .shell[data-accent="labels"] .stats strong { color: var(--color-accent); }
 .review-section:last-child { padding-bottom: calc(var(--space) * 4); }
 
-.row { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--space) * 1.5); align-items: center; padding: calc(var(--space) * 1.5) var(--side); border-bottom: 1px solid var(--color-line); }   /* 12 px rows */
+.row { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--space) * 1.5); align-items: center; padding: calc(var(--space) * 1.5) var(--side); }   /* 12 px rows */
+.row + .row { border-top: 1px solid var(--color-line); }
 .row .pic { width: calc(32px + var(--image-share) * 56px); height: calc(32px + var(--image-share) * 56px); }
 .row .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; }
 .row .meta { margin: 0; color: var(--color-muted); }
 .row .when { color: var(--color-muted); white-space: nowrap; min-width: 5ch; text-align: right; }
-.shell[data-accent="dividers"] .row { border-bottom-color: var(--color-accent); }
+.shell[data-accent="dividers"] .row + .row { border-top-color: var(--color-accent); }
 .shell[data-hierarchy="image-led"] .row { grid-template-columns: 1fr; }
 .shell[data-hierarchy="image-led"] .row .pic { width: 100%; height: calc(80px + var(--image-share) * 160px); }
 .shell[data-hierarchy="type-led"] .row .pic { display: none; }
@@ -140,7 +159,7 @@
 .shell[data-align="right"] .stats { justify-content: flex-end; }
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature { background: var(--color-accent); }
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature * { color: var(--color-bg); }
-.palette-3 .tag { border-color: transparent; background: var(--color-tertiary); color: var(--color-fg); }
+.palette-3 .tag { background: linear-gradient(transparent 55%, var(--color-tertiary) 55%); }   /* the third hue as a marker under the tag text */
 
 /* ---------- C11 change highlight ----------
    Compose sets data-flash="key key ..." on .shell for one second after an accepted change. Each rule below outlines the elements that parameter restyles on the two screens, in the chrome accent
@@ -160,32 +179,33 @@
 .shell[data-flash~="spacing_unit"] :is(.item, .row),
 .shell[data-flash~="density"] .item { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
 
-/* grouping: the headings of both screens. alignment_edge: where the text sits, which .review-head and .group-title also align */
+/* grouping: the headings of both screens. alignment_edge: where the text sits, which .review-head, .group-title and the top bar also align */
 .shell[data-flash~="grouping"] .group-title,
-.shell[data-flash~="alignment_edge"] :is(.review-head, .group-title) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell[data-flash~="alignment_edge"] :is(.bar, .review-head, .group-title) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
 .shell[data-flash~="alignment_edge"] :is(.text, .feature) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
 /* rhythm: alternating moves the poster of every even item and row (the same :nth-child the shell uses, so a group title shifts the parity); featured-first enlarges the first item of the first group and adds .feature to the review */
 .shell[data-flash~="rhythm"] :is(.item:nth-child(even), .row:nth-child(even), .group:first-of-type .item:first-of-type) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
 .shell[data-flash~="rhythm"] .feature { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
-/* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), tags, buttons and the feature card.
+/* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), the top bar's buttons and the feature card (tags are text; the one filled tag at labels 15% rounds too).
    palette_hue_count at three hues: the third hue tints the tags, and .palette-3 is on the tag row only then (the other hue counts recolor the accent: see the accent family below) */
 .shell[data-flash~="image_text_dominance"] .pic,
-.shell[data-flash~="radius"] :is(.pic img, .tag, .action, .feature),
+.shell[data-flash~="radius"] :is(.pic img, .action, .bar-icon, .feature),
+.shell[data-flash~="radius"][data-accent="labels"][data-coverage="le15"] .group:first-of-type .item:first-of-type .tag:first-child,
 .shell[data-flash~="palette_hue_count"] .palette-3 .tag { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
 /* The accent family. What the accent colors depends on data-accent, so a rule names an element only under the placement that restyles it:
-   labels: the tags and the review totals. actions: the Details buttons. dividers: the line under every item and row. one-hero: the headline, the first item and, at 15%, the feature card.
+   labels: the tags and the review totals. actions: the "Add show" button in the list's top bar. dividers: the hairline between items and rows. one-hero: the headline, the first item and, at 15%, the feature card.
    color_accent recolors whichever of those the shell shows. palette_hue_count does the same (one hue makes the accent the text color, two or three make it color_accent).
-   accent_coverage changes how much is drawn: the tags (labels), the buttons (actions), the item's line width (dividers), the first item and the card (one-hero); the totals and the row lines ignore it.
+   accent_coverage changes how much is drawn: the tags (labels), the button (actions), the item's line width (dividers), the first item and the card (one-hero); the totals and the row lines ignore it.
    accent_placement moves the accent from one placement to another and the one it left is not known, so it outlines every consumer on every placement: the one ungated union. */
 .shell[data-flash~="accent_placement"] :is(.tag, .action, .stats strong),
 .shell:is([data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="labels"] :is(.tag, .stats strong),
 .shell:is([data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="actions"] .action,
 .shell[data-flash~="accent_coverage"][data-accent="labels"] .tag,
 .shell[data-flash~="accent_coverage"][data-accent="actions"] .action { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
-/* dividers draw the line under every item and row (coverage sets only the item's line width); one-hero colors the headline and the first item, and at 15% fills the first item and the feature card */
+/* dividers draw the hairline between items and between rows (coverage sets only the item's line width); one-hero colors the headline and the first item, and at 15% fills the first item and the feature card */
 .shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="dividers"] :is(.item, .row),
 .shell[data-flash~="accent_coverage"][data-accent="dividers"] .item,
 .shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"], [data-flash~="accent_coverage"])[data-accent="one-hero"] .group:first-of-type .item:first-of-type { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
@@ -195,4 +215,4 @@
 
 /* color_bg: the page background is the shell itself. color_fg and type_family: the text of titles and meta lines (type_family sets every text; these are the ones that read as text) */
 .shell[data-flash~="color_bg"] { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
-.shell:is([data-flash~="color_fg"], [data-flash~="type_family"]) :is(.title, .screen-title, .meta) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+.shell:is([data-flash~="color_fg"], [data-flash~="type_family"]) :is(.bar-title, .title, .screen-title, .meta) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
