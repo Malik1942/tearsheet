@@ -9,7 +9,7 @@ import { SyncScreen } from './screens/Sync'
 import { OpenScreen } from './screens/Open'
 import { InstructionsScreen } from './screens/Instructions'
 import { SeeScreen } from './screens/See'
-import { ExportScreen } from './screens/Export'
+import { ShareScreen } from './screens/Share'
 import { Solo } from './Solo'
 import { lazy, Suspense } from 'react'
 
@@ -28,9 +28,9 @@ function Routes() {
   if (DevPixels && path === '/dev/pixels') return <Suspense fallback={null}><DevPixels /></Suspense>
   if (path === '/open') return <OpenScreen />
   const exp = match('/project/:id/export', path)
-  if (exp) return <ExportScreen id={exp.id} />
+  if (exp) return <ShareScreen id={exp.id} openDownloads />
   const share = match('/project/:id/share', path)
-  if (share) return <ExportScreen id={share.id} />
+  if (share) return <ShareScreen id={share.id} />
   const prev = match('/project/:id/preview', path)
   if (prev) return <SeeScreen id={prev.id} />
   const instr = match('/project/:id/instructions', path)
