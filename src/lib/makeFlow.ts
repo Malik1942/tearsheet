@@ -39,7 +39,8 @@ export const relationOf = (ref: RelationRef): RelationRef => ref.split(':')[0] a
 /** Whether a candidate is switched off in the project, by its own ref or by its relation's. */
 export const isOff = (project: Pick<Project, 'disabled'>, ref: RelationRef): boolean => !!project.disabled[ref] || !!project.disabled[relationOf(ref)]
 
-export type SeeLabel = ShortLabel & { ref: RelationRef; on: boolean }
+/** `inUse`: the screens show this label's value. A label that is on can still lose its parameter to a brick above it (or a choice made in Fine-tune). */
+export type SeeLabel = ShortLabel & { ref: RelationRef; on: boolean; inUse: boolean }
 export type SeeRow = { brick: Brick; labels: SeeLabel[] }
 
 /** 3 See, "From your photos": one row per brick of the project, in the project's order, each with the short labels of its candidates that are active in the
@@ -50,7 +51,10 @@ export function seeRows(project: Project, resolved: Resolved, bricks: Brick[]): 
     const brick = bricks.find(b => b.id === id)
     if (!brick) return []
     const shown = candidatesOf(brick).candidates.filter(c => active.has(c.ref) || isOff(project, c.ref))
-    const labels = labelsOf(shown).filter((l): l is ShortLabel & { ref: RelationRef } => !!l.ref).map(l => ({ ...l, on: !isOff(project, l.ref) }))
+    const labels = labelsOf(shown).filter((l): l is ShortLabel & { ref: RelationRef } => !!l.ref).map(l => {
+      const v = resolved.values[l.key]
+      return { ...l, on: !isOff(project, l.ref), inUse: v.source?.brickId === brick.id && v.source?.relationId === l.relationId && v.value === l.value }
+    })
     return [{ brick, labels }]
   })
 }

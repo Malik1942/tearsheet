@@ -99,6 +99,14 @@ describe('3 See: one row per brick, one switch per label', () => {
     const rows = seeRows(p, resolveProject(p, [chicago, g2]), [chicago, g2])
     assert.deepEqual(rows.map(r => r.brick.id), ['g2', 'chicago'])
   })
+  it('a label that is on but overruled by a brick above it is marked not in use', () => {
+    const g2 = SAMPLES.find(b => b.id === 'g2')!
+    const p = project({ brickIds: ['chicago', 'g2'] })
+    const rows = seeRows(p, resolveProject(p, [chicago, g2]), [chicago, g2])
+    const find = (id: string, label: string) => rows.find(r => r.brick.id === id)!.labels.find(l => l.label === label)!
+    assert.deepEqual([find('chicago', 'Mostly text').on, find('chicago', 'Mostly text').inUse], [true, true])
+    assert.deepEqual([find('g2', 'Big images').on, find('g2', 'Big images').inUse], [true, false])
+  })
 })
 
 describe('E1 minimal: the link and where /open lands', () => {

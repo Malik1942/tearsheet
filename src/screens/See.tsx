@@ -19,6 +19,7 @@ const COPY = {
   title: "Here's what they do",
   fromPhotos: 'From your photos',
   nothing: 'Nothing here to switch',
+  overruled: 'Another photo sets this here. Choose between them in Fine-tune.',
   carried: 'Everything carried over',
   couldnt: (n: number) => `${n} ${n === 1 ? 'thing' : 'things'} couldn't carry over`,
   share: 'Share',
@@ -95,8 +96,8 @@ export function SeeScreen({ id }: { id: string }) {
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-2">
                   {labels.length === 0 && <span className="ink-2 text-[13px]">{COPY.nothing}</span>}
                   {labels.map(l => (
-                    <span key={l.ref} className="inline-flex items-center gap-2">
-                      <LabelChip l={l} className={l.on ? '' : 'opacity-50'} />
+                    <span key={l.ref} className="inline-flex items-center gap-2" title={l.on && !l.inUse ? COPY.overruled : undefined}>
+                      <LabelChip l={l} className={l.on && l.inUse ? '' : 'opacity-50'} />
                       <Switch on={l.on} label={`${l.label}: ${l.on ? 'on' : 'off'}`} onChange={() => update(p => ({ disabled: toggleRef(p.disabled, l.ref) }))} />
                     </span>
                   ))}
