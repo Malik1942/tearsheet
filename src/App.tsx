@@ -7,9 +7,8 @@ import { ProjectsScreen } from './screens/Projects'
 import { MakeScreen } from './screens/Make'
 import { SyncScreen } from './screens/Sync'
 import { OpenScreen } from './screens/Open'
-import { PreviewScreen } from './screens/Preview'
 import { InstructionsScreen } from './screens/Instructions'
-import { ComposeScreen } from './screens/Compose'
+import { SeeScreen } from './screens/See'
 import { ExportScreen } from './screens/Export'
 import { Solo } from './Solo'
 import { lazy, Suspense } from 'react'
@@ -30,12 +29,14 @@ function Routes() {
   if (path === '/open') return <OpenScreen />
   const exp = match('/project/:id/export', path)
   if (exp) return <ExportScreen id={exp.id} />
+  const share = match('/project/:id/share', path)
+  if (share) return <ExportScreen id={share.id} />
   const prev = match('/project/:id/preview', path)
-  if (prev) return <PreviewScreen id={prev.id} />
+  if (prev) return <SeeScreen id={prev.id} />
   const instr = match('/project/:id/instructions', path)
   if (instr) return <InstructionsScreen id={instr.id} />
   const proj = match('/project/:id', path)
-  if (proj) return <ComposeScreen id={proj.id} />
+  if (proj) return <SeeScreen id={proj.id} />
   if (path === '/compare') return <div className="chrome min-h-full"><Nav /><Compare /></div>
   return <Library />
 }

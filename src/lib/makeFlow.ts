@@ -77,3 +77,6 @@ export function openDestination(projectId: string | null, known: boolean, to: st
 
 /** Where the step line's steps lead from inside a project: 1 What starts a new one, 3 See and 4 Share are the project's pages; 2 Picks is gone once the project exists. */
 export const projectSteps = (id: string): { 1: string; 3: string; 4: string } => ({ 1: '/make', 3: `/project/${id}`, 4: `/project/${id}/share` })
+
+/** Neutral skin: the same colors, radius, type and spacing on every shell, so only the relationship parameters remain (See's ⋯ and Fine-tune share it). */
+export const NEUTRAL_SKIN = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const
