@@ -3,6 +3,7 @@ import { SAMPLES } from '../fixtures/samples'
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
 import { extractBrick } from './client'
+import { afterResult, type Held } from './queue'
 
 /** Versioned key (PRD L9). The library starts empty; `Load sample library` seeds it. Older keys are ignored. */
 const KEY = 'tearsheet.v2'
@@ -43,7 +44,8 @@ export type Actions = {
   queue: { waiting: number; inFlight: number }
 }
 
-const Ctx = createContext<(State & Actions) | null>(null)
+/** `online` follows the browser's online and offline events; the Library reads it for the top-bar line (spec v3 L11). */
+const Ctx = createContext<(State & Actions & { online: boolean }) | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(initial)
@@ -51,23 +53,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const inFlight = useRef(new Set<string>())
   const waiting = useRef<string[]>([])
   const [queueTick, setQueueTick] = useState(0)
+  const [online, setOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false)
+  /** L11: set when the server refused (daily or hourly limit): nothing more is sent this session; the next open sends again. */
+  const limitHit = useRef(false)
+  /** L11: set when a send got no answer; cleared by the browser's `online` event. The browser's own `navigator.onLine` is checked as well. */
+  const offlineHold = useRef(false)
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* quota or private mode */ } }, [state])
 
   const update = (id: string, patch: Partial<Brick>) => setState(s => ({ ...s, bricks: s.bricks.map(b => b.id === id ? { ...b, ...patch } : b) }))
 
+  /** L11: bricks still waiting stay `pending` and record why, so a refused or offline photo is never dropped or marked failed. */
+  const holdWaiting = (held: Held) => {
+    const ids = new Set(waiting.current)
+    if (!stateRef.current.bricks.some(b => ids.has(b.id) && b.held !== held)) return
+    setState(s => ({ ...s, bricks: s.bricks.map(b => ids.has(b.id) && b.held !== held ? { ...b, status: 'pending', held } : b) }))
+  }
+
   const pump = () => {
-    while (inFlight.current.size < MAX_IN_FLIGHT && waiting.current.length) {
+    if (limitHit.current) holdWaiting('limit')
+    else if (offlineHold.current || (typeof navigator !== 'undefined' && navigator.onLine === false)) holdWaiting('offline')
+    else while (inFlight.current.size < MAX_IN_FLIGHT && waiting.current.length) {
       const id = waiting.current.shift()!
       const brick = stateRef.current.bricks.find(b => b.id === id)
       if (!brick) continue
       inFlight.current.add(id)
-      update(id, { status: 'extracting', error: undefined })
+      update(id, { status: 'extracting', held: undefined, error: undefined })
       const dry = import.meta.env.DEV && localStorage.getItem('tearsheet.dry') === '1'
       extractBrick({ dataUrl: brick.photo.url, width: brick.photo.width, height: brick.photo.height }, dry)
         .then(({ brick: done, result }) => {
           if ('dry' in result) { update(id, { status: 'unparsed', error: 'Dry run: nothing was sent.' }); return }
-          if (!result.ok || !done) update(id, { status: 'unparsed', error: result.ok ? 'No brick came back.' : result.error })
-          else update(id, { ...done, id, saved_at: brick.saved_at, version: brick.version, supersedes: brick.supersedes, status: 'ready', prompt_version: 'v3' })
+          const d = afterResult(result)
+          if (d.stop) {
+            // the photo goes back in line, first; the pump stops until the limit is over (next open) or the network is back
+            if (d.held === 'limit') limitHit.current = true; else offlineHold.current = true
+            if (!waiting.current.includes(id)) waiting.current.unshift(id)
+            update(id, { status: d.status, held: d.held, error: d.error })
+          } else if (d.status === 'ready' && done) update(id, { ...done, id, saved_at: brick.saved_at, version: brick.version, supersedes: brick.supersedes, status: 'ready', prompt_version: 'v3' })
+          else update(id, { status: 'unparsed', error: d.error ?? 'No brick came back.' })
         })
         .catch(e => update(id, { status: 'unparsed', error: (e as Error).message }))
         .finally(() => { inFlight.current.delete(id); setQueueTick(n => n + 1); pump() })
@@ -75,9 +97,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setQueueTick(n => n + 1)
   }
 
+  // L11: the browser says when the network leaves and comes back; on `online` the offline holds are lifted and the queue resumes
+  useEffect(() => {
+    const up = () => {
+      offlineHold.current = false
+      setOnline(true)
+      setState(s => s.bricks.some(b => b.held === 'offline') ? { ...s, bricks: s.bricks.map(b => b.held === 'offline' ? { ...b, held: undefined } : b) } : s)
+      pump()
+    }
+    const down = () => { setOnline(false); if (!limitHit.current) holdWaiting('offline') }
+    window.addEventListener('online', up); window.addEventListener('offline', down)
+    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // L5: on open, anything left pending or mid-flight by a closed tab is queued again
   useEffect(() => {
-    const stale = stateRef.current.bricks.filter(b => b.status === 'pending' || b.status === 'extracting').map(b => b.id)
+    const stale = stateRef.current.bricks.filter(b => (b.status === 'pending' || b.status === 'extracting') && !waiting.current.includes(b.id) && !inFlight.current.has(b.id)).map(b => b.id)
     if (stale.length) { waiting.current.push(...stale); pump() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -160,7 +196,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])
   const queue = useMemo(() => ({ waiting: waiting.current.length, inFlight: inFlight.current.size }), [queueTick, state.bricks.length])
-  return <Ctx.Provider value={{ ...state, ...actions, queue }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ ...state, ...actions, queue, online }}>{children}</Ctx.Provider>
 }
 
 export function useStore() {

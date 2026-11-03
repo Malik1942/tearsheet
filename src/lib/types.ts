@@ -21,6 +21,8 @@ export type Brick = {
   /** Skin colors measured from the sent pixels by the harness, not by the model. */
   skin_measured?: { color_bg: string; color_fg: string; color_accent: string; how_measured: string }
   status?: BrickStatus
+  /** Why a `pending` brick is not being sent (spec v3 L11): the server's daily or hourly limit, or no network. Cleared when it is sent. */
+  held?: 'limit' | 'offline'
   error?: string
   retries?: number
   /** Which prompt produced it; values are frozen at save time, a re-extraction is a new brick. */

@@ -1,6 +1,7 @@
 /** Shared by the Vercel function (api/extract.ts) and the Vite dev middleware. Runs on the server only; the key never reaches the browser. */
 import { BRICK_SCHEMA as schema } from './brick.schema.js'
 import { EXTRACT_PROMPT } from './extractPrompt.js'
+import { reserveCall } from './guard.js'
 import { BrickExtractionSchema, type BrickExtraction } from './schema.js'
 
 export const MODEL = 'muse-spark-1.3'
@@ -24,7 +25,8 @@ export function buildRequest(imageDataUrl: string, maxOutputTokens = MAX_OUT) {
 
 export type ExtractResult =
   | { ok: true; extraction: BrickExtraction; status: string; latency_ms: number; usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number }; retried: boolean }
-  | { ok: false; error: string; http?: number; status?: string; raw_text?: string; latency_ms: number }
+  /** `limited` and `offline` are set by the browser client (src/lib/client.ts), not by `extract`: the server's own refusal (daily cap, per-IP rate) and a fetch that never got an answer. */
+  | { ok: false; error: string; http?: number; status?: string; raw_text?: string; latency_ms: number; limited?: boolean; offline?: boolean }
 
 const outputText = (body: any): string =>
   (body?.output ?? []).filter((i: any) => i?.type === 'message').flatMap((i: any) => i.content ?? []).filter((p: any) => p?.type === 'output_text').map((p: any) => p.text ?? '').join('\n')
@@ -70,7 +72,9 @@ export function cleanKey(raw: string | undefined): string | undefined {
   return k || undefined
 }
 
-export async function handleExtract(bodyJson: any, apiKey: string | undefined): Promise<{ code: number; body: any }> {
+/** Order: image, dry run, key, then the call guard, so a dry run or a bad request never uses up a reservation. A refusal carries `limited: true`
+ *  so the browser can tell "come back later" (keep the photo, queue it) from an ordinary failure (spec v3 L11). */
+export async function handleExtract(bodyJson: any, apiKey: string | undefined, opts: { ip?: string } = {}): Promise<{ code: number; body: any }> {
   const image = String(bodyJson?.image ?? '')
   if (!image.startsWith('data:image/')) return { code: 400, body: { error: 'image must be a data URL' } }
   if (image.length > 6_000_000) return { code: 413, body: { error: 'image too large; downscale to a 2048 px long side first' } }
@@ -80,5 +84,7 @@ export async function handleExtract(bodyJson: any, apiKey: string | undefined): 
   }
   const key = cleanKey(apiKey)
   if (!key) return { code: 500, body: { error: 'META_API_KEY is not set on the server' } }
+  const refused = reserveCall(opts.ip ?? 'unknown')
+  if (refused) return { code: refused.code, body: { error: refused.error, limited: true } }
   return { code: 200, body: await extract(key, image) }
 }

@@ -27,11 +27,16 @@ export async function prepareImage(file: File, maxSide = 2048): Promise<{ dataUr
   }
 }
 
+/** Sends one photo. Never throws on the network: a fetch that got no answer comes back as `offline`, and an HTTP refusal keeps its status
+ *  and the server's `limited` flag, so the queue can hold the photo instead of failing it (spec v3 L11). */
 export async function extractBrick(prepared: { dataUrl: string; width: number; height: number }, dry = false): Promise<{ brick?: Brick; result: ExtractResult | { dry: true; request: unknown } }> {
-  const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: prepared.dataUrl, dry }) })
-  const result = await res.json()
+  let res: Response
+  try { res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: prepared.dataUrl, dry }) }) }
+  catch { return { result: { ok: false, error: 'offline', latency_ms: 0, offline: true } } }
+  const result = await res.json().catch(() => null)
+  if (!res.ok) return { result: { ok: false, error: result?.error ?? `HTTP ${res.status}`, latency_ms: 0, http: res.status, limited: !!result?.limited } }
+  if (!result) return { result: { ok: false, error: `HTTP ${res.status}: the answer was not JSON`, latency_ms: 0, http: res.status } }
   if (result.dry) return { result }
-  if (!res.ok) return { result: { ok: false, error: result.error ?? `HTTP ${res.status}`, latency_ms: 0 } }
   if (!result.ok) return { result }
   const x = result.extraction
   const brick: Brick = {
