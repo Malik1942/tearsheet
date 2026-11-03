@@ -1,4 +1,4 @@
-import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, normalize, type ParameterKey, type ParamValue, type Params } from '../shell/params'
+import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, RELATIONSHIP_KEYS, normalize, type ParameterKey, type ParamValue, type Params } from '../shell/params'
 import type { Brick, Composition, ParameterValue, Provenance, Relation, Unexpressed } from './types'
 
 /** Resolve a hand-authored composition (fixtures) into the full parameter set. Keys no brick sets fall back to a neutral default labeled adapted. */
@@ -43,7 +43,7 @@ const percentRange = (s: string): number | null => {
 export function proposeValue(key: ParameterKey, rel: { rule: string; target: string }): ParamValue | null {
   const spec = PARAM_SPEC[key]
   const texts = [rel.target, rel.rule]
-  if (spec.kind === 'enum' && typeof spec.values[0] === 'string' && key !== 'accent_coverage' && key !== 'hierarchy_mode') {
+  if (spec.kind === 'enum' && typeof spec.values[0] === 'string' && key !== 'accent_coverage' && key !== 'hierarchy_mode' && key !== 'rhythm') {
     for (const t of texts) {
       const low = t.toLowerCase()
       for (const v of spec.values as readonly string[]) if (low.includes(v.replace('<=', ''))) return v
@@ -55,7 +55,7 @@ export function proposeValue(key: ParameterKey, rel: { rule: string; target: str
       for (const t of texts) {
         const low = t.toLowerCase()
         if (/\b(type|headline|title|wordmark|text|display)\b.*\b(lead|first|dominant|largest|hero)/.test(low) || /\bhero (headline|title|type|wordmark)/.test(low)) return 'type-led'
-        if (/\bhero (object|image|photo|subject|product)|\b(image|photo|subject)\b.*\b(lead|dominant|fill|span)|image alone|no text overlay|without text/.test(low)) return 'image-led'
+        if (/\bhero (object|image|photo|subject|product)|\b(image|photo|subject|object)\b.*\b(lead|dominan|fill|span|at least|larger|sharp)|primary subject|image alone|no text overlay|without text/.test(low)) return 'image-led'
         if (/balanced|equal weight|side by side/.test(low)) return 'balanced'
       }
       return null
@@ -66,13 +66,29 @@ export function proposeValue(key: ParameterKey, rel: { rule: string; target: str
       return null
     }
     case 'image_text_dominance': {
-      for (const t of texts) { const p = percentRange(t); if (p !== null) return Math.round(p * 100) / 100 }
+      for (const t of texts) {
+        const p = percentRange(t)
+        if (p === null) continue
+        const idx = t.search(/\d+\s*(?:-|–|to)?\s*\d*\s*%|two[- ]thirds|three[- ]quarters|half|one[- ]third|quarter/i)
+        const before = t.slice(Math.max(0, idx - 48), idx).toLowerCase()
+        const textShare = /\b(text|type|lettering|label|badge|caption|title|headline|copy)\b[^.]*$/.test(before)
+        return Math.round((textShare ? 1 - p : p) * 100) / 100
+      }
+      return null
+    }
+    case 'rhythm': {
+      for (const t of texts) {
+        const low = t.toLowerCase()
+        if (/alternat/.test(low)) return 'alternating'
+        if (/featured|first (item|row|element) (larger|bigger|taller)|hero first|decreasing (scale|size)|primary .* ~?\d+x|stepping/.test(low)) return 'featured-first'
+        if (/uniform|equal gaps?|same (size|height|shape)|repeats? .* (equal|same)/.test(low)) return 'uniform'
+      }
       return null
     }
     case 'density': {
       for (const t of texts) {
         const p = percentRange(t)
-        if (p !== null && /empty|negative|white ?space|clear/i.test(t)) return p >= 0.5 ? 1 : p >= 0.3 ? 2 : p >= 0.15 ? 4 : 6
+        if (p !== null && /empty|negative|white ?space|clear|open|breathing|background (above|around|surround)/i.test(t)) return p >= 0.5 ? 1 : p >= 0.3 ? 2 : p >= 0.15 ? 4 : 6
         const n = firstNumber(t); if (n !== null && /item|per (screen|view|viewport)/i.test(t)) return normalize(key, n)
       }
       return null
@@ -84,7 +100,9 @@ export function proposeValue(key: ParameterKey, rel: { rule: string; target: str
     case 'palette_hue_count': {
       for (const t of texts) {
         if (/monochrome|achromatic|zero saturated|no saturated/i.test(t) && !/plus|\+|accent/i.test(t)) return 1
-        const n = firstNumber(t.replace(/\d+\s*%/g, '')); if (n !== null && n >= 1 && n <= 3) return n
+        const near = t.toLowerCase().match(/\b(one|two|three|single|[123])\b[^.;]{0,40}\b(hues?|colou?rs?)\b|\b(hues?|colou?rs?)\b[^.;]{0,12}\bto\b\s*(one|two|three|[123])\b/)
+        if (near) { const w = (near[1] ?? near[4]) as string; const n = /\d/.test(w) ? parseInt(w) : WORD_NUM[w]; if (n >= 1 && n <= 3) return n }
+        const n = firstNumber(t.replace(/\d+\s*%/g, '').replace(/\d+\s*-\s*\d+/g, '')); if (n !== null && n >= 1 && n <= 3) return n
         if (/monochrome|neutral/i.test(t) && /accent/i.test(t)) return 2
       }
       return null
@@ -115,7 +133,7 @@ export type Project = {
   manual: Partial<Record<ParameterKey, ParamValue>>      // values set by hand; provenance interpreted, source user
 }
 
-export type Candidate = ParameterValue & { ref: RelationRef; relation: Relation }
+export type Candidate = ParameterValue & { ref: RelationRef; relation?: Relation }
 
 export type Resolved = {
   params: Params
@@ -123,7 +141,11 @@ export type Resolved = {
   candidates: Partial<Record<ParameterKey, Candidate[]>>
   conflicts: ParameterKey[]
   unexpressed: Unexpressed[]
+  /** Candidates switched off by the cap of three relationship parameters per brick. */
+  capped: Candidate[]
 }
+
+export const CAP_PER_BRICK = 3
 
 /** Provenance per the brief: a relation whose rests_on chain reaches a measurement is measured; otherwise interpreted. */
 export function provenanceOf(brick: Brick, rel: Relation): { provenance: Provenance; measurementIds: string[] } {
@@ -131,6 +153,24 @@ export function provenanceOf(brick: Brick, rel: Relation): { provenance: Provena
   const mIds = new Set(brick.measurements.map(m => m.id))
   const measurementIds = (hyp?.rests_on ?? []).filter(id => mIds.has(id))
   return { provenance: measurementIds.length ? 'measured' : 'interpreted', measurementIds }
+}
+
+/** The model measures where text aligns but, in every run so far, never proposes it as a transferable rule. The product fills the slot by rule and says so. */
+export function alignmentByRule(brick: Brick): Candidate | null {
+  for (const m of brick.measurements) {
+    const text = `${m.statement} ${m.value}`.toLowerCase()
+    if (/no text|0 text/.test(text)) continue
+    if (!/\b(text|type|title|headline|lines?|copy|label|caption|wordmark|lettering|credits?|tagline|subtitle)\b/.test(text)) continue
+    let edge: 'left' | 'right' | 'center' | null = null
+    if (/flush[- ]left|left[- ]aligned|left edge|left-hand edge|share(s|d)? (one|a|the same) left|starts? in the left|hugs? the left|ragged[- ]right/.test(text)) edge = 'left'
+    else if (/flush[- ]right|right[- ]aligned|hugs? the right edge|anchored (to|at) the right/.test(text) && /text|type|title|headline|line/.test(text)) edge = 'right'
+    else if (/\b(text|title|headline|type|lines?)\b.*\bcent(er|re)(ed|d)?\b|\bcent(er|re)(ed|d)? (text|title|headline|block|type)/.test(text)) edge = 'center'
+    if (!edge) continue
+    return { key: 'alignment_edge', value: edge, provenance: 'adapted', locked: false, ref: relRef(brick.id, 'rule-align'),
+      source: { brickId: brick.id, measurementIds: [m.id], regionLabels: brick.regions.filter(r => r.measurement_ids.includes(m.id)).map(r => r.label),
+        note: `by rule: ${m.id} measures the text edge; the model did not propose it as a relation, so the product fills alignment_edge from the measurement` } }
+  }
+  return null
 }
 
 export function candidatesOf(brick: Brick): { candidates: Candidate[]; unexpressed: Unexpressed[] } {
@@ -146,6 +186,8 @@ export function candidatesOf(brick: Brick): { candidates: Candidate[]; unexpress
     candidates.push({ key, value, provenance, locked: false, ref: relRef(brick.id, rel.id), relation: rel,
       source: { brickId: brick.id, relationId: rel.id, relationRule: rel.rule, measurementIds, regionLabels } })
   }
+  const align = alignmentByRule(brick)
+  if (align && !candidates.some(c => c.key === 'alignment_edge')) candidates.push(align)
   if (brick.fragile_if_changed) unexpressed.push({ brickId: brick.id, rule: brick.fragile_if_changed, reason: 'fragile' })
   return { candidates, unexpressed }
 }
@@ -202,12 +244,18 @@ export function resolveProject(project: Project, bricks: Brick[]): Resolved {
   const inProject = ordered.map(id => bricks.find(b => b.id === id)).filter((b): b is Brick => !!b)
   const candidates: Partial<Record<ParameterKey, Candidate[]>> = {}
   const unexpressed: Unexpressed[] = []
+  const capped: Candidate[] = []
   const skins: Partial<Record<ParameterKey, ParameterValue[]>> = {}
   for (const brick of inProject) {
     const c = candidatesOf(brick)
     unexpressed.push(...c.unexpressed)
+    let active = 0
     for (const cand of c.candidates) {
       if (project.disabled[cand.ref]) continue
+      if ((RELATIONSHIP_KEYS as readonly string[]).includes(cand.key)) {
+        if (active >= CAP_PER_BRICK) { capped.push(cand); continue }
+        active++
+      }
       ;(candidates[cand.key] ??= []).push(cand)
     }
     for (const [k, pv] of Object.entries(skinOf(brick))) (skins[k as ParameterKey] ??= []).push(pv)
@@ -221,12 +269,20 @@ export function resolveProject(project: Project, bricks: Brick[]): Resolved {
     if (manual !== undefined) { values[key] = { key, value: manual, provenance: 'interpreted', locked: false, source: { brickId: 'user', note: 'set by hand' } }; continue }
     const cands = candidates[key] ?? []
     if (cands.length > 1) conflicts.push(key)
-    const chosen = cands.find(c => c.ref === project.choice[key]) ?? cands[0]
-    if (chosen) { values[key] = { key: chosen.key, value: chosen.value, provenance: chosen.provenance, locked: false, source: chosen.source }; continue }
+    const picked = cands.find(c => c.ref === project.choice[key])
+    const chosen = picked ?? cands[0]
+    if (chosen) {
+      if (picked && cands.length > 1) {
+        // a conflict resolved by hand: the value keeps the winner's evidence, the provenance says a person chose between sources
+        const others = cands.filter(c => c !== picked).map(c => `${c.ref} = ${c.value} (${c.provenance})`).join('; ')
+        values[key] = { key, value: picked.value, provenance: 'adapted', locked: false, source: { ...picked.source, brickId: picked.source?.brickId ?? '', note: `by you: chose ${picked.ref} = ${picked.value} (${picked.provenance}) over ${others}` } }
+      } else values[key] = { key: chosen.key, value: chosen.value, provenance: chosen.provenance, locked: false, source: chosen.source }
+      continue
+    }
     const skin = skins[key]
     if (skin?.length) { values[key] = skin[0]; continue }   // first brick's measured skin; the panel can pick another
     values[key] = adaptedDefault(key)
   }
   const params = Object.fromEntries(PARAMETER_KEYS.map(k => [k, values[k].value])) as Params
-  return { params, values, candidates, conflicts, unexpressed }
+  return { params, values, candidates, conflicts, unexpressed, capped }
 }

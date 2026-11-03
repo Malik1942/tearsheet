@@ -40,6 +40,7 @@ export function ComposeScreen({ id }: { id: string }) {
   const swap = (from: string, to: string) => { update(p => ({ brickIds: p.brickIds.map(b => b === from ? to : b) })); setSwapping(null) }
   const remove = (bid: string) => update(p => { const lk = { ...(p.lockedBricks ?? {}) }; delete lk[bid]; return { brickIds: p.brickIds.filter(b => b !== bid), lockedBricks: lk } })
   const toggleRelation = (ref: ReturnType<typeof relRef>) => update(p => { const d = { ...p.disabled }; if (d[ref]) delete d[ref]; else d[ref] = true; return { disabled: d } })
+  const thumbOf = (pv: ParameterValue) => store.bricks.find(b => b.id === pv.source?.brickId)?.photo.url
   const byBrick = (bid: string) => PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === bid && resolved.values[k].provenance !== 'adapted')
 
   return (
@@ -117,8 +118,8 @@ export function ComposeScreen({ id }: { id: string }) {
 
         {/* Parameter sheet (block 3 version; block 4 adds conflicts and the cap rows) */}
         <aside className="flex flex-col gap-3">
-          <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} />)}</Section>
-          <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} swatch={k.startsWith('color')} />)}</Section>
+          <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} thumb={thumbOf(resolved.values[k])} />)}</Section>
+          <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} swatch={k.startsWith('color')} thumb={thumbOf(resolved.values[k])} />)}</Section>
           {resolved.conflicts.length > 0 && (
             <Section title="Conflicts">
               {resolved.conflicts.map(k => (
@@ -130,9 +131,26 @@ export function ComposeScreen({ id }: { id: string }) {
                       <span className="mono">{c.ref}</span><span className="mono">= {String(c.value)}</span><span className="ink-2">· {c.provenance}</span>
                     </label>
                   ))}
-                  {!project.choice[k] && <div className="ink-2 text-[11px]">{COPY.conflictDefault}</div>}
+                  {!project.choice[k] ? <div className="ink-2 text-[11px]">{COPY.conflictDefault}</div> : <div className="pt-1"><ProvenanceChip pv={resolved.values[k]} showKey={false} /></div>}
                 </div>
               ))}
+            </Section>
+          )}
+          {resolved.capped.length > 0 && (
+            <Section title="Switched off: cap of three">
+              <ul className="space-y-1 text-[12px]">
+                {resolved.capped.map(c => {
+                  const bid = c.ref.split('/')[0]
+                  const active = (resolved.candidates[c.key] ?? []).concat(...Object.values(resolved.candidates).map(x => x ?? [])).filter(x => x.ref.startsWith(bid + '/') && x.ref !== c.ref)
+                  const last = [...new Set(active.map(x => x.ref))].pop()
+                  return (
+                    <li key={c.ref} className="flex items-center gap-2">
+                      <span className="mono">{c.key}</span><span className="mono">= {String(c.value)}</span><span className="ink-2">· {c.provenance} · {c.ref}</span>
+                      <button type="button" className="btn btn-quiet ml-auto px-2 py-0.5 text-[11px]" disabled={!last} title={last ? `Switches ${last} off so this one takes its place` : 'No active row of this brick to switch off'} onClick={() => last && update(p => ({ disabled: { ...p.disabled, [last as ReturnType<typeof relRef>]: true } }))}>swap in</button>
+                    </li>
+                  )
+                })}
+              </ul>
             </Section>
           )}
           <Section title="Could not be expressed">
@@ -157,10 +175,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return <section className="panel p-3"><h2 className="mb-2 text-[13px]">{title}</h2>{children}</section>
 }
 
-function Row({ k, pv, swatch }: { k: ParameterKey; pv: ParameterValue; swatch?: boolean }) {
+function Row({ k, pv, swatch, thumb }: { k: ParameterKey; pv: ParameterValue; swatch?: boolean; thumb?: string }) {
   return (
     <div className="flex items-center gap-2 py-1 text-[12px]" style={{ borderTop: '1px solid var(--line)' }}>
-      <span className="mono w-40 shrink-0 truncate" title={k}>{k}</span>
+      <span className="mono w-36 shrink-0 truncate" title={k}>{k}</span>
+      {thumb ? <Photo src={thumb} className="h-4 w-4 shrink-0 rounded-sm object-cover" /> : <span className="inline-block h-4 w-4 shrink-0" />}
       {swatch && <span className="inline-block h-3 w-3 rounded-sm" style={{ background: String(pv.value), border: '1px solid var(--line)' }} />}
       {pv.provenance === 'adapted' && !pv.source?.measurementIds?.length && pv.source?.brickId !== 'user'
         ? <span className="ink-2"><span className="mono">{String(pv.value)}</span> · default</span>

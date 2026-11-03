@@ -15,6 +15,8 @@ Built for the Meta Global AI Developer Hackathon (Indie track) on the Meta Model
 
 ## Parameters
 
+One parameter is filled in by rule rather than by the model: `alignment_edge`. The model measures where text aligns ("all text starts in the left sixth", "three lines left-aligned") but, in every run so far, never proposes alignment as a transferable relation. When a measurement about text names an edge, the product emits an `alignment_edge` candidate labeled `adapted · by rule` with that measurement as its source, so the chip says the rule did it, not the model. The same pattern maps a measured type description ("heavy wide low-contrast sans") onto a substitute font stack, and falls back to `system-ui` marked `no match` rather than guess.
+
 Relationship parameters carry character: `type_scale_ratio`, `hierarchy_mode`, `density`, `grouping`, `rhythm`, `alignment_edge`, `image_text_dominance`, `accent_placement`, `accent_coverage`, `palette_hue_count`. Appearance parameters are the skin: `color_bg`, `color_fg`, `color_accent`, `radius`, `type_family`, `spacing_unit`. See `src/shell/params.ts`. All of them become CSS custom properties plus six data-attribute switches; one JSON in, one render out, no generator.
 
 ## Run

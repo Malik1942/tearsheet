@@ -13,7 +13,7 @@ export function ProvenanceChip({ pv, showKey = true, onClick }: { pv: ParameterV
   const src = pv.source
   const srcId = src?.relationId ?? src?.measurementIds?.[0]
   const label = pv.provenance === 'adapted'
-    ? (src?.brickId === 'user' ? 'by you' : src?.note?.startsWith('by rule') ? 'by rule' : srcId ? srcId : 'default')
+    ? (src?.brickId === 'user' || src?.note?.startsWith('by you') ? 'by you' : src?.note?.startsWith('by rule') ? 'by rule' : srcId ? srcId : 'default')
     : srcId ?? (src?.brickId ? src.brickId : '')
   const title = [MEANING[pv.provenance], src?.relationRule, src?.note, src?.measurementIds?.length ? `measurements: ${src.measurementIds.join(', ')}` : ''].filter(Boolean).join('\n')
   const href = src?.brickId && src.brickId !== 'user' && srcId ? `/brick/${src.brickId}#${srcId}` : null

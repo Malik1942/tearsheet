@@ -5,6 +5,7 @@ import { BrickScreen } from './screens/Brick'
 import { Compare } from './Compare'
 import { ProjectsScreen } from './screens/Projects'
 import { ComposeScreen } from './screens/Compose'
+import { ExportScreen } from './screens/Export'
 import { Solo } from './Solo'
 
 function Routes() {
@@ -14,7 +15,9 @@ function Routes() {
   const brick = match('/brick/:id', path)
   if (brick) return <BrickScreen id={brick.id} />
   if (path === '/projects') return <ProjectsScreen />
-  const proj = match('/project/:id', path) ?? match('/project/:id/export', path)
+  const exp = match('/project/:id/export', path)
+  if (exp) return <ExportScreen id={exp.id} />
+  const proj = match('/project/:id', path)
   if (proj) return <ComposeScreen id={proj.id} />
   if (path === '/compare') return <div className="chrome min-h-full"><Nav /><Compare /></div>
   return <Library />
