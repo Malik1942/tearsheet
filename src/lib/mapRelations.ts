@@ -34,6 +34,7 @@ const percentRange = (s: string): number | null => {
   if (p) return parseInt(p[1]) / 100
   const frac = s.match(/(\d+)\s*\/\s*(\d+)/)
   if (frac && parseInt(frac[2]) >= 10) return parseInt(frac[1]) / (parseInt(frac[1]) + parseInt(frac[2]))
+  if (frac && parseInt(frac[2]) <= 4 && parseInt(frac[1]) < parseInt(frac[2])) return parseInt(frac[1]) / parseInt(frac[2])
   const words: [RegExp, number][] = [[/two[- ]thirds/, 0.67], [/three[- ]quarters/, 0.75], [/half/, 0.5], [/one[- ]third/, 0.33], [/quarter/, 0.25]]
   for (const [re, v] of words) if (re.test(s)) return v
   return null
@@ -160,9 +161,12 @@ const TYPE_STACKS: [RegExp, string, string][] = [
 
 export function typeFamilyOf(brick: Brick): ParameterValue | null {
   for (const m of brick.measurements) {
-    const text = `${m.statement} ${m.value}`.toLowerCase()
-    if (!/\b(sans|serif|typeface|font|letterspac|grotesque|geometric|condensed|mono)/.test(text)) continue
-    if (/no text|0 text|not visible/.test(text)) continue
+    const full = `${m.statement} ${m.value}`.toLowerCase()
+    if (!/\b(sans|serif|typeface|font|letterspac|grotesque|geometric|condensed|mono)/.test(full)) continue
+    if (/no text|0 text|not visible/.test(full)) continue
+    // the primary description: the first clause that names a type class; later clauses usually describe secondary text
+    const clause = full.split(/[;.]|\bwhile\b|\bwhereas\b|,\s*(?=(?:cast|body|plate|tagline|subtitle|secondary|small))/).find(c => /\b(sans|serif|mono|script)/.test(c)) ?? full
+    const text = /\b(wide|extended|heavy|extra-bold|black)\b/.test(clause) && !/\b(condensed|narrow)\b/.test(clause) ? clause.replace(/narrow/g, '') : clause
     for (const [re, stack, label] of TYPE_STACKS) {
       if (re.test(text)) {
         return { key: 'type_family', value: stack, provenance: 'adapted', locked: false,
