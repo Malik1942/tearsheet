@@ -2,7 +2,7 @@
  *  These are the pure halves (what is stripped, what is looked up, what is put back); the wrapper has its own test. Run: npm test */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { IDB, hydrate, needsHydration, persistState, toPersisted } from '../src/lib/persist.ts'
+import { IDB, PHOTO_GONE, hydrate, hydrationOutcome, needsHydration, persistState, readPhotos, settleHydration, toPersisted, unreadBrickIds } from '../src/lib/persist.ts'
 import type { State } from '../src/lib/store.tsx'
 import type { Brick } from '../src/lib/types.ts'
 
@@ -151,5 +151,117 @@ describe('persistState', () => {
     await persistState(pending, io)
     assert.deepEqual(calls, ['write'])
     assert.deepEqual((JSON.parse(written[0]) as State).bricks.map(b => b.photo.url), ['idb:b_1', 'idb:b_2', '/samples/g1.jpg'])
+  })
+})
+
+describe('hydrationOutcome: a failed read is not "photo gone"', () => {
+  const ids = ['b_1', 'b_2', 'b_3']
+  it('a successful read: the photos found, and the ids with no key are gone', () => {
+    const o = hydrationOutcome(true, new Map([['b_1', jpeg(1)], ['b_3', jpeg(3)]]), ids)
+    assert.deepEqual([...o.photos.keys()], ['b_1', 'b_3'])
+    assert.deepEqual(o.gone, ['b_2'])
+    assert.deepEqual(o.unread, [])
+  })
+  it('a failed read (rejected or timed out): nothing is gone, every id is unread', () => {
+    const o = hydrationOutcome(false, new Map(), ids)
+    assert.equal(o.photos.size, 0)
+    assert.deepEqual(o.gone, [])
+    assert.deepEqual(o.unread, ids)
+  })
+  it('a failed read ignores whatever the map holds', () => {
+    const o = hydrationOutcome(false, new Map([['b_1', jpeg(1)]]), ids)
+    assert.equal(o.photos.size, 0)
+    assert.deepEqual(o.unread, ids)
+  })
+  it('a successful read with every photo there has nothing gone and nothing unread', () => {
+    const o = hydrationOutcome(true, new Map(ids.map(i => [i, jpeg(1)])), ids)
+    assert.deepEqual([o.gone, o.unread], [[], []])
+  })
+  it('a successful read of nothing found: all gone', () => {
+    assert.deepEqual(hydrationOutcome(true, new Map(), ids).gone, ids)
+  })
+})
+
+describe('readPhotos', () => {
+  it('reads through: ok, with the map', async () => {
+    const o = await readPhotos(async () => new Map([['b_1', jpeg(1)]]), ['b_1', 'b_2'], 50)
+    assert.deepEqual([...o.photos.keys()], ['b_1'])
+    assert.deepEqual([o.gone, o.unread], [['b_2'], []])
+  })
+  it('a rejected read is a failure, not a missing photo', async () => {
+    const o = await readPhotos(() => Promise.reject(new Error('InvalidStateError')), ['b_1'], 50)
+    assert.deepEqual([o.gone, o.unread], [[], ['b_1']])
+  })
+  it('a read that throws before returning a promise is a failure too', async () => {
+    const o = await readPhotos(() => { throw new Error('no indexedDB') }, ['b_1'], 50)
+    assert.deepEqual([o.gone, o.unread], [[], ['b_1']])
+  })
+  it('a read that never answers is a failure after the timeout', async () => {
+    const t0 = Date.now()
+    const o = await readPhotos(() => new Promise<Map<string, string>>(() => {}), ['b_1'], 30)
+    assert.deepEqual([o.gone, o.unread], [[], ['b_1']])
+    assert.ok(Date.now() - t0 < 1000)
+  })
+  it('a late answer after the timeout changes nothing', async () => {
+    const o = await readPhotos(() => new Promise(r => setTimeout(() => r(new Map([['b_1', jpeg(1)]])), 80)), ['b_1'], 20)
+    assert.deepEqual(o.unread, ['b_1'])
+    assert.equal(o.photos.size, 0)
+  })
+})
+
+describe('settleHydration', () => {
+  const pending = (id: string, url = IDB + id, status: Brick['status'] = 'pending'): Brick => ({ ...brick(id, url), status })
+  const lib = (...bricks: Brick[]): State => ({ bricks, projects: [], activeProjectId: null })
+  const byId = (s: State, id: string) => s.bricks.find(b => b.id === id)!
+
+  it('a photo that was read comes back and its brick stays as it was', () => {
+    const s = settleHydration(lib(pending('b_1')), hydrationOutcome(true, new Map([['b_1', jpeg(5)]]), ['b_1']))
+    assert.equal(byId(s, 'b_1').photo.url, jpeg(5))
+    assert.equal(byId(s, 'b_1').status, 'pending')
+  })
+  it('read ok and the key absent: a queued brick is marked "not on this device" (unparsed, with the sentence)', () => {
+    for (const status of ['pending', 'extracting'] as const) {
+      const s = settleHydration(lib(pending('b_1', IDB + 'b_1', status)), hydrationOutcome(true, new Map(), ['b_1']))
+      assert.equal(byId(s, 'b_1').status, 'unparsed', status)
+      assert.equal(byId(s, 'b_1').error, PHOTO_GONE)
+      assert.equal(byId(s, 'b_1').held, undefined)
+    }
+    assert.equal(PHOTO_GONE, 'The photo is not on this device any more.')
+  })
+  it('read ok and the key absent: a ready brick is kept as it is', () => {
+    const s = settleHydration(lib(pending('b_1', IDB + 'b_1', 'ready')), hydrationOutcome(true, new Map(), ['b_1']))
+    assert.equal(byId(s, 'b_1').status, 'ready')
+    assert.equal(byId(s, 'b_1').error, undefined)
+  })
+  it('read failed: queued bricks stay pending (mid-flight ones go back to pending), never unparsed, no error', () => {
+    const o = hydrationOutcome(false, new Map(), ['b_1', 'b_2'])
+    const s = settleHydration(lib(pending('b_1', IDB + 'b_1', 'pending'), pending('b_2', IDB + 'b_2', 'extracting')), o)
+    for (const id of ['b_1', 'b_2']) {
+      assert.equal(byId(s, id).status, 'pending', id)
+      assert.equal(byId(s, id).error, undefined, id)
+      assert.equal(byId(s, id).photo.url, IDB + id, id)
+    }
+  })
+  it('read failed: ready and unparsed bricks are left alone', () => {
+    const o = hydrationOutcome(false, new Map(), ['b_1', 'b_2'])
+    const s = settleHydration(lib(pending('b_1', IDB + 'b_1', 'ready'), pending('b_2', IDB + 'b_2', 'unparsed')), o)
+    assert.deepEqual(s.bricks.map(b => b.status), ['ready', 'unparsed'])
+  })
+  it('bricks that never had a pointer are untouched', () => {
+    const s = settleHydration(lib(pending('g1', '/samples/g1.jpg')), hydrationOutcome(false, new Map(), []))
+    assert.equal(byId(s, 'g1').status, 'pending')
+  })
+  it('does not touch the state it was given', () => {
+    const before = lib(pending('b_1', IDB + 'b_1', 'extracting')), json = JSON.stringify(before)
+    settleHydration(before, hydrationOutcome(true, new Map(), ['b_1']))
+    assert.equal(JSON.stringify(before), json)
+  })
+})
+
+describe('unreadBrickIds', () => {
+  it('lists the bricks whose pointer is among the unread ids, and nothing after a successful read', () => {
+    const s: State = { bricks: [brick('b_1', IDB + 'b_1'), brick('b_2', jpeg(1)), brick('b_3', IDB + 'b_3')], projects: [], activeProjectId: null }
+    assert.deepEqual(unreadBrickIds(s, hydrationOutcome(false, new Map(), ['b_1', 'b_3'])), ['b_1', 'b_3'])
+    assert.deepEqual(unreadBrickIds(s, hydrationOutcome(true, new Map(), ['b_1', 'b_3'])), [])
   })
 })
