@@ -83,3 +83,33 @@ describe('A2 spacing: landsOn says the padding density sets', () => {
     assert.equal(landsOn('spacing_unit', p({ density: 6, spacing_unit: '10px' })), 'Padding and gaps step in 10px; list items pad 1.5×.')
   })
 })
+
+/** The declarations shell.css gives a selector, from every rule whose selector list names it exactly (comments dropped). */
+const declsOf = (selector: string): string => {
+  const css = readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+  return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].split(',').map(s => s.trim()).includes(selector)).map(m => m[2]).join(';')
+}
+
+describe('A6 year review hierarchy', () => {
+  it('the year and the three totals are display size; their labels are captions', () => {
+    for (const s of ['.screen-title', '.stats strong']) assert.match(declsOf(s), /font-size: var\(--t-display\)/, s)
+    assert.match(declsOf('.stats li'), /font-size: var\(--t-caption\)/)
+  })
+  it('month headings are caption labels: uppercase, 0.06em, muted, not large bold headings', () => {
+    assert.match(declsOf('.group-title'), /font-size: var\(--t-caption\)/)
+    assert.match(declsOf('.group-title'), /text-transform: uppercase/)
+    assert.match(declsOf('.group-title'), /letter-spacing: 0\.06em/)
+    assert.match(declsOf('.group-title'), /color: var\(--color-muted\)/)
+    assert.equal(declsOf('.review-section .group-title'), '', 'no review-only heading size')
+  })
+  it('rows: title size, caption meta, a date that never wraps, 12 px vertical padding', () => {
+    assert.match(declsOf('.row .title'), /font-size: var\(--t-title\)/)
+    assert.match(declsOf('.row .meta'), /font-size: var\(--t-caption\)/)
+    assert.match(declsOf('.row .when'), /white-space: nowrap; min-width: 5ch/)
+    assert.match(declsOf('.row'), /padding: calc\(var\(--space\) \* 1\.5\) var\(--side\)/)
+  })
+  it('the totals follow the alignment: centered under center, at the right edge under right', () => {
+    assert.match(declsOf('.shell[data-align="center"] .stats'), /justify-content: center/)
+    assert.match(declsOf('.shell[data-align="right"] .stats'), /justify-content: flex-end/)
+  })
+})
