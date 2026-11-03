@@ -38,7 +38,7 @@
   align-items: center;
   border-bottom: 1px solid var(--color-line);
 }
-.item .pic { aspect-ratio: 4 / 3; max-height: calc(var(--item-h) - var(--space) * 4); min-height: 48px; align-self: start; } /* 4:3 is adapted: no brick measures the thumbnail's shape */
+.item .pic { aspect-ratio: 16 / 10; max-height: calc(var(--item-h) - var(--space) * 4); min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
 .item .text { min-width: 0; }
 .item .title { font-size: var(--title-size); font-weight: 700; line-height: 1.05; margin: 0 0 calc(var(--space) * 0.75); letter-spacing: -0.01em; overflow-wrap: anywhere; hyphens: auto; }
 .item .meta { color: var(--color-muted); font-size: var(--body-size); margin: 0; }

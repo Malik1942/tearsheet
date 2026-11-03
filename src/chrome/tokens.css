@@ -32,12 +32,15 @@
 .btn:disabled { opacity: 0.5; cursor: default; }
 
 /* provenance chips, used everywhere a value appears */
-.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 16px; border: 1px solid transparent; white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 16px; border: 1px solid transparent; white-space: nowrap; max-width: 100%; min-width: 0; overflow: hidden; }
+.chip > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.chip > span:first-child { flex-shrink: 0; }
 .chip .mono { font-size: 11.5px; }
 .chip-measured { background: var(--measured); color: #fff; }
 .chip-interpreted { border: 1px dotted var(--interpreted); color: var(--ink); }
 .chip-adapted { border: 1px solid var(--adapted); color: var(--ink-2); }
 .chip .src { opacity: 0.75; text-decoration: underline dotted; cursor: pointer; }
+.chip > span:last-of-type { overflow: hidden; text-overflow: ellipsis; }
 
 /* library card states */
 .card-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--line); overflow: hidden; }

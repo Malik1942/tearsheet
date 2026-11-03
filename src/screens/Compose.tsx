@@ -58,18 +58,18 @@ export function ComposeScreen({ id }: { id: string }) {
       </header>
       <div className="px-4 py-1 text-[12px] ink-2 min-[960px]:hidden" style={{ borderBottom: '1px solid var(--line)' }}>{COPY.phone}</div>
 
-      <div className="grid gap-4 p-4 min-[960px]:grid-cols-[260px_minmax(0,1fr)_320px]">
+      <div className="grid min-w-0 gap-4 p-4 min-[960px]:grid-cols-[260px_minmax(0,1fr)_320px]">
         {/* Materials */}
-        <aside className="flex flex-col gap-2">
+        <aside className="flex min-w-0 flex-col gap-2">
           <div className="flex items-baseline justify-between"><h2 className="text-[13px]">Materials</h2><span className="ink-2 text-[11px]">top brick wins conflicts</span></div>
           {materials.map(b => (
             <div key={b.id} className="panel p-2" style={locked[b.id] ? { borderColor: 'var(--ink)' } : undefined}>
               <div className="flex items-center gap-2">
-                <Link href={`/brick/${b.id}`}><Photo src={b.photo.url} className="h-10 w-14 rounded object-cover" /></Link>
+                <Link href={`/brick/${b.id}`} aria-label={`Open brick ${b.id}`}><Photo src={b.photo.url} className="h-10 w-14 rounded object-cover" /></Link>
                 <div className="min-w-0 flex-1"><div className="mono text-[12px]">{b.id}</div><div className="ink-2 text-[11px]">saved {b.saved_at}</div></div>
                 {locked[b.id] && <span title="Locked: keeps its values through Swap and Rotate">🔒</span>}
               </div>
-              <div className="mt-2 flex flex-wrap gap-1">
+              <div className="mt-2 flex min-w-0 flex-wrap gap-1">
                 {byBrick(b.id).map(k => <ProvenanceChip key={k} pv={resolved.values[k]} />)}
                 {byBrick(b.id).length === 0 && <span className="ink-2 text-[11px]">contributes nothing right now</span>}
               </div>
@@ -109,7 +109,7 @@ export function ComposeScreen({ id }: { id: string }) {
         {/* Shell */}
         <main className="flex flex-wrap justify-center gap-4 self-start">
           {(screen === 'both' ? (['list', 'review'] as const) : [screen]).map(s => (
-            <div key={s} className="w-[320px] overflow-hidden rounded-[20px]" style={{ border: '1px solid var(--line)', background: '#111', padding: 6, height: 652 }}>
+            <div key={s} className="w-full max-w-[320px] overflow-hidden rounded-[20px]" style={{ border: '1px solid var(--line)', background: '#111', padding: 6, height: 652 }}>
               <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} /></div>
             </div>
           ))}
@@ -117,7 +117,7 @@ export function ComposeScreen({ id }: { id: string }) {
         </main>
 
         {/* Parameter sheet (block 3 version; block 4 adds conflicts and the cap rows) */}
-        <aside className="flex flex-col gap-3">
+        <aside className="flex min-w-0 flex-col gap-3">
           <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} thumb={thumbOf(resolved.values[k])} />)}</Section>
           <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} swatch={k.startsWith('color')} thumb={thumbOf(resolved.values[k])} />)}</Section>
           {resolved.conflicts.length > 0 && (
@@ -183,7 +183,7 @@ function Row({ k, pv, swatch, thumb }: { k: ParameterKey; pv: ParameterValue; sw
       {swatch && <span className="inline-block h-3 w-3 rounded-sm" style={{ background: String(pv.value), border: '1px solid var(--line)' }} />}
       {pv.provenance === 'adapted' && !pv.source?.measurementIds?.length && pv.source?.brickId !== 'user'
         ? <span className="ink-2"><span className="mono">{String(pv.value)}</span> · default</span>
-        : <ProvenanceChip pv={pv} showKey={false} />}
+        : <span className="min-w-0 flex-1 overflow-hidden"><ProvenanceChip pv={pv} showKey={false} /></span>}
     </div>
   )
 }

@@ -10,7 +10,7 @@ const COPY = {
   hint: "Add a photo of anything you like the look of. You don't need to know what it's for.",
   extracting: 'Reading… usually 15–25 s',
   unparsed: "Couldn't read this one.",
-  composePhone: 'Compose needs a wider screen. Your library is here on your phone.',
+  composePhone: 'Open on a larger screen to compose.',
   full: `The library holds ${LIBRARY_CAP} bricks. Remove one to add another.`,
 }
 

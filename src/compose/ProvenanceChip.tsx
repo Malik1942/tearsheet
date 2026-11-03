@@ -4,7 +4,7 @@ import { Link } from '../lib/router'
 const MEANING: Record<ParameterValue['provenance'], string> = {
   measured: 'Read off the image by the model in this run; another run may differ.',
   interpreted: "The model's reading; rests on the measurements listed.",
-  adapted: 'Set by you or by the shell.',
+  adapted: 'Set by you.',
 }
 
 /** One value with its provenance. Spec: measured = filled ink, interpreted = dotted outline, adapted = light outline.
