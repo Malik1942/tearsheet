@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
@@ -18,8 +18,10 @@ import { ComposePanel } from './Compose'
 import { FilesView } from './Export'
 
 const MAX_BRICKS = 5
+/** Autofocus the field on a desktop only: on a phone the keyboard would open over the page (Web Interface Guidelines). */
+const finePointer = () => typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches
 /** Space kept under the screens for the photo row and its line, so screens + photos fit one 1440x900 viewport. */
-const RESERVE = 176
+const RESERVE = 236
 const COPY = {
   field: 'What are you making?',
   examples: 'For example:',
@@ -30,7 +32,7 @@ const COPY = {
   startingFrom: 'Starting from',
   clearAnchor: 'Clear the starting point',
   more: 'More for this page',
-  fineTune: 'Fine-tune', style: 'Adjust style', arrangement: 'Try another arrangement', neutral: 'Neutral skin', pick: 'Pick photos myself', rename: 'Rename',
+  fineTune: 'Fine-tune…', style: 'Adjust style…', arrangement: 'Try another arrangement…', neutral: 'Neutral skin', pick: 'Pick photos myself…', rename: 'Rename…',
   turnOff: 'Turn this photo off', turnOn: 'Turn this photo back on', swap: 'Swap this photo',
   couldnt: (n: number) => `${n} ${n === 1 ? 'thing' : 'things'} couldn't carry over`,
   files: 'Files', versions: 'Versions',
@@ -105,7 +107,9 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
     setBusy(false)
     if (!out.ok) { if (out.disabled) setEnabled(false); return openPick(out.disabled ? COPY.off : COPY.noProposal, out.reason) }
     const first: ProposalPick[] = lean.anchor_id ? [{ brickId: lean.anchor_id, quotedRule: '', why: '', status: 'anchor' }] : []
-    const picks = [...first, ...orderOwnFirst(out.picks.map((p): ProposalPick => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' })), ready)].slice(0, MAX_BRICKS)
+    // the starting point is never proposed twice: when the model also picks it, the anchor entry stands for it
+    const proposed = out.picks.filter(p => p.brickId !== lean.anchor_id).map((p): ProposalPick => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' }))
+    const picks = [...first, ...orderOwnFirst(proposed, ready)].slice(0, MAX_BRICKS)
     const proposal: Proposal = { at: new Date().toISOString(), model: out.model, effort: out.effort, intent: sent, latency_ms: out.latency_ms, dropped: out.dropped, picks, ...(lean.chips.length || lean.anchor_id ? { lean } : {}) }
     navigate(`/project/${store.createProject(sent, picks.map(p => p.brickId), autoName(sent) || undefined, { proposal })}`)
   }
@@ -122,20 +126,22 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const params = resolved ? (neutral ? { ...resolved.params, ...NEUTRAL_SKIN } : resolved.params) : null
   const menu = [
     ...(project ? [{ label: COPY.fineTune, onSelect: () => setDialog('tune') }] : []),
-    { label: COPY.style, onSelect: () => setDialog('style'), disabled: withRules.length === 0 },
+    { label: COPY.style, onSelect: () => setDialog('style'), disabled: withRules.length === 0, sep: !!project },
     ...(project ? [
       { label: COPY.arrangement, onSelect: () => setDialog('arrange'), disabled: project.brickIds.length < 2 },
       { label: COPY.neutral, onSelect: () => setNeutral(v => !v), pressed: neutral },
     ] : []),
-    { label: COPY.pick, onSelect: () => openPick() },
+    { label: COPY.pick, onSelect: () => openPick(), sep: true },
     ...(project ? [{ label: COPY.rename, onSelect: () => setDialog('rename') }] : []),
   ]
 
   return (
     <div className="chrome min-h-full">
       <div className="gutter mx-auto flex w-full max-w-6xl flex-col gap-4 py-4">
-        <div className="flex items-center gap-2">
-          <input value={intent} disabled={busy} maxLength={300} autoFocus={!project} aria-label={COPY.field} placeholder={COPY.field}
+        <h1 className="sr-only">{project ? project.name || autoName(project.intent) || COPY.field : COPY.field}</h1>
+        {/* the field and its two controls share the screens' width, so Share and ⋯ sit over what they act on */}
+        <div className="mx-auto flex w-full max-w-[680px] items-center gap-2">
+          <input value={intent} disabled={busy} maxLength={300} autoFocus={!project && finePointer()} aria-label={COPY.field} placeholder={COPY.field}
             onChange={e => setIntent(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) void run() }}
             className="min-w-0 flex-1 rounded border px-3 py-2.5 text-[15px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
@@ -143,40 +149,62 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
           <MoreMenu label={COPY.more} items={menu} />
         </div>
         {(busy || (!project && (anchorBrick || !intent))) && (
-          <div className="ink-2 flex min-h-5 flex-wrap items-center gap-x-4 gap-y-1 text-[13px]" aria-live="polite">
-            {busy ? <span>{COPY.finding}</span> : !intent && !project && <span>{COPY.examples} <span style={{ color: 'var(--ink)' }}>{INTENT_EXAMPLES[example]}</span></span>}
+          <div className="ink-2 mx-auto flex min-h-5 w-full max-w-[680px] flex-wrap items-center gap-x-4 gap-y-1 text-[13px]" aria-live="polite">
+            {busy ? <span className="sr-only">{COPY.finding}</span> : !intent && !project && <span>{COPY.examples} <span style={{ color: 'var(--ink)' }}>{INTENT_EXAMPLES[example]}</span></span>}
             {anchorBrick && !project && (
-              <span className="inline-flex items-center gap-1.5">{COPY.startingFrom} <Photo src={anchorBrick.photo.url} className="h-5 w-5 rounded object-cover" /><button type="button" className="btn btn-quiet px-1 py-0 text-[14px]" aria-label={COPY.clearAnchor} title={COPY.clearAnchor} onClick={() => setAnchor(null)}>×</button></span>
+              <span className="inline-flex items-center gap-1.5">{COPY.startingFrom} <Photo src={anchorBrick.photo.url} className="h-5 w-5 rounded object-cover" /><button type="button" className="btn btn-quiet icon-btn text-[14px]" aria-label={COPY.clearAnchor} title={COPY.clearAnchor} onClick={() => setAnchor(null)}>×</button></span>
             )}
           </div>
         )}
 
-        {project && resolved && params && (
+        {busy && (
+          // while the photos are found: the two frames at their final size and the photo slots, quiet, so the result lands where the eye already is
+          <div aria-hidden="true" className="flex flex-col items-center gap-4">
+            <div className="finding pulse w-full">
+              <div className="finding-frame" style={{ width: 300, height: 600, maxWidth: '100%' }}>{COPY.finding}</div>
+              <div className="finding-frame" style={{ width: 300, height: 600 }} />
+            </div>
+            <div className="photo-row pulse">{[0, 1, 2].map(i => <div key={i} className="mx-auto h-16 w-16 rounded" style={{ background: 'color-mix(in oklab, var(--ink) 8%, var(--paper))' }} />)}</div>
+          </div>
+        )}
+
+        {!busy && project && resolved && params && (
           <>
             <ScaledScreens params={params} flash={flash} reserve={RESERVE} />
-            <ul className="m-0 flex list-none flex-wrap justify-center gap-5 p-0" aria-label="Photos">
-              {photos.map(({ brick, muted, label }) => (
-                <li key={brick.id} className="group relative flex w-[104px] flex-col items-center gap-1.5">
-                  <button type="button" aria-pressed={!muted} aria-label={`${label ?? photoLine(brick)}: ${muted ? 'off' : 'on'}`} title={muted ? COPY.turnOn : COPY.turnOff}
-                    onClick={() => update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, brick.id) }))}
-                    className="cursor-pointer rounded border-0 bg-transparent p-0 transition-opacity" style={{ opacity: muted ? 0.35 : 1 }}>
-                    <Photo src={brick.photo.url} className="block h-16 w-16 rounded object-cover" style={{ boxShadow: muted ? '0 0 0 1px var(--line)' : '0 0 0 2px var(--ink)' }} />
-                  </button>
-                  <span className="text-center text-[12px] leading-4" style={{ color: muted ? 'var(--ink-2)' : 'var(--ink)', textDecoration: muted ? 'line-through' : undefined }}>{label}</span>
-                  <button type="button" className="btn absolute -right-2 -top-2 px-1.5 py-0.5 text-[12px] leading-none opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 max-md:opacity-100 [@media(hover:none)]:opacity-100"
-                    aria-label={COPY.swap} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>⇄</button>
-                </li>
-              ))}
-            </ul>
-            {resolved.unexpressed.length > 0 && (
-              <Fold summary={COPY.couldnt(resolved.unexpressed.length)} className="self-center">
-                <ul className="m-0 flex max-w-2xl list-none flex-col gap-2 p-0 text-[12px]">
-                  {resolved.unexpressed.map((u, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="chip chip-adapted shrink-0 px-1.5 text-[10px]">{u.reason === 'fragile' ? 'fragile if changed' : 'no slot'}</span>
-                      <span><Link href={`/brick/${u.brickId}`} className="mono ink-2">{u.brickId}</Link> {u.rule}<span className="ink-2 mt-0.5 block text-[11px]">{standInLine(u.rule)}</span></span>
+            {/* each photo is one switch: the thumbnail, its label and a switch in one target. The slots are fixed, so a photo never moves when another one appears */}
+            <div className="photo-dock">
+              <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">
+                {photos.map(({ brick, muted, label }) => {
+                  const why = project.proposal?.picks.find(p => p.brickId === brick.id)?.why
+                  return (
+                    <li key={brick.id} className="photo-cell">
+                      <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={label ?? photoLine(brick)} title={why || (muted ? COPY.turnOn : COPY.turnOff)}
+                        onClick={() => update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, brick.id) }))}>
+                        <Photo src={brick.photo.url} alt="" />
+                        <span className="photo-label"><span className="switch" data-on={!muted || undefined} aria-hidden="true" />{label}</span>
+                      </button>
+                      <span className="photo-meta tnum">{photoLine(brick)}</span>
+                      <button type="button" className="photo-swap icon-btn" aria-label={`${COPY.swap}: ${label ?? photoLine(brick)}`} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13" /></svg>
+                      </button>
                     </li>
-                  ))}
+                  )
+                })}
+              </ul>
+            </div>
+            {resolved.unexpressed.length > 0 && (
+              <Fold summary={COPY.couldnt(resolved.unexpressed.length)} className="w-full text-center">
+                <ul className="mx-auto m-0 flex max-w-2xl list-none flex-col gap-2 p-0 text-left text-[12px]">
+                  {resolved.unexpressed.map((u, i) => {
+                    const from = store.bricks.find(b => b.id === u.brickId)
+                    return (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="chip chip-adapted shrink-0 self-start px-1.5 text-[10px]">{u.reason === 'fragile' ? 'fragile if changed' : 'no slot'}</span>
+                        {from && <Link href={`/brick/${u.brickId}`} className="shrink-0" aria-label={`The photo it comes from, ${photoLine(from)}`}><Photo src={from.photo.url} alt="" className="h-5 w-5 rounded object-cover" /></Link>}
+                        <span>{u.rule}<span className="ink-2 mt-0.5 block text-[11px]">{standInLine(u.rule)}</span></span>
+                      </li>
+                    )
+                  })}
                 </ul>
               </Fold>
             )}

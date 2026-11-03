@@ -51,7 +51,7 @@ export function Arrangements({ project, onClose, onPick }: { project: Project; o
 export function Rename({ initial, onClose, onSave }: { initial: string; onClose: () => void; onSave: (name: string) => void }) {
   const [value, setValue] = useState(initial)
   return (
-    <Overlay title={COPY.rename} onClose={onClose}>
+    <Overlay title={COPY.rename} onClose={onClose} closeLabel="Cancel">
       <form className="flex flex-wrap items-center gap-2" onSubmit={e => { e.preventDefault(); if (value.trim()) onSave(value.trim()) }}>
         <input value={value} onChange={e => setValue(e.target.value)} autoFocus maxLength={80} aria-label="Project name" className="min-w-0 flex-1 rounded border px-3 py-2 text-[15px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
         <button type="submit" className="btn btn-accent" disabled={!value.trim()}>{COPY.save}</button>
@@ -126,7 +126,7 @@ export function PickMyself({ pool, initial, max, note, canCreate, onClose, onDon
   const [picked, setPicked] = useState(() => initial.filter(id => pool.some(b => b.id === id)).slice(0, max))
   const toggle = (id: string) => setPicked(p => p.includes(id) ? p.filter(x => x !== id) : p.length < max ? [...p, id] : p)
   return (
-    <Overlay title={COPY.pick} onClose={onClose} actions={<span className="ink-2 text-[13px] tabular-nums">{COPY.count(picked.length, max)}</span>}>
+    <Overlay title={COPY.pick} onClose={onClose} closeLabel="Cancel" actions={<span className="ink-2 text-[13px] tabular-nums">{COPY.count(picked.length, max)}</span>}>
       {note && <p className="ink-2 m-0 mb-3 text-[13px]" role="status" title={note.detail}>{note.line}</p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {pool.map(b => {

@@ -68,8 +68,8 @@ export function BrickDetails({ brick, variant = 'page', open = true, summary, on
         const [x1, y1, x2, y2] = r.box_1000
         return (
           <div key={r.label} className="absolute" title={`${r.label} · ${r.measurement_ids.join(', ')}`}
-            style={{ left: `${x1 / 10}%`, top: `${y1 / 10}%`, width: `${(x2 - x1) / 10}%`, height: `${(y2 - y1) / 10}%`, border: `${on ? 2 : 1}px solid var(--accent)`, background: on ? 'rgba(200,80,42,0.18)' : 'transparent' }}>
-            <span className="mono absolute left-0 top-0 px-1 text-[10px]" style={{ background: 'var(--accent)', color: '#fff' }}>{r.measurement_ids.join(' ')}</span>
+            style={{ left: `${x1 / 10}%`, top: `${y1 / 10}%`, width: `${(x2 - x1) / 10}%`, height: `${(y2 - y1) / 10}%`, border: on ? '2px solid var(--accent)' : '1px solid rgba(255,255,255,0.9)', boxShadow: on ? undefined : '0 0 0 1px rgba(0,0,0,0.35)', background: on ? 'rgba(200,80,42,0.18)' : 'transparent' }}>
+            <span className="mono absolute left-0 top-0 px-1 text-[10px]" style={{ background: on ? 'var(--accent)' : 'var(--ink)', color: '#fff' }}>{r.measurement_ids.join(' ')}</span>
           </div>
         )
       })}
@@ -84,7 +84,7 @@ export function BrickDetails({ brick, variant = 'page', open = true, summary, on
   /* the failed card's controls (Try again, Remove, the error note) now live here; on the route `Use in Make` is the primary, in the sheet it sits above the fold */
   const footer = (
     <footer className="flex flex-wrap items-center gap-2">
-      {page && read && <button type="button" className="btn btn-accent" onClick={() => navigate(`/make?brick=${brick.id}`)}>Use in Make</button>}
+      {page && read && <Link href={`/make?brick=${encodeURIComponent(brick.id)}`} className="btn btn-accent no-underline">Use in Make</Link>}
       {page && status === 'unparsed' && <button type="button" className="btn btn-accent" onClick={() => store.retry(brick.id)} disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']}>Try again</button>}
       <button type="button" className="btn btn-quiet" disabled={starter} title={starter ? STARTER_KEEP : undefined} onClick={remove}>Remove</button>
       {brick.error && <span className="ink-2 min-w-0 text-[11px] [overflow-wrap:anywhere]">{brick.error}</span>}
@@ -160,8 +160,8 @@ export function BrickDetails({ brick, variant = 'page', open = true, summary, on
                     <div className="mt-1 flex flex-wrap items-center gap-2 pl-8 text-[12px]">
                       <span className="inline-block h-1 w-24 overflow-hidden rounded" style={{ background: 'var(--line)' }}><span className="block h-full" style={{ width: `${Math.round(h.confidence * 100)}%`, background: 'var(--ink-2)' }} /></span>
                       <span className="mono ink-2">{Math.round(h.confidence * 100)}%</span>
-                      <span className="ink-2 min-w-0 [overflow-wrap:anywhere]">rests on {h.rests_on.length ? h.rests_on.map(x => <a key={x} href={`#${x}`} className="mono mr-1" style={mIds.has(x) ? undefined : { color: 'var(--accent)' }}>{x}</a>) : <span style={{ color: 'var(--accent)' }}>nothing</span>}</span>
-                      {(dangling.length > 0 || h.rests_on.length === 0) && <span style={{ color: 'var(--accent)' }}>no support</span>}
+                      <span className="ink-2 min-w-0 [overflow-wrap:anywhere]">rests on {h.rests_on.length ? h.rests_on.map(x => <a key={x} href={`#${x}`} className="mono mr-1" style={mIds.has(x) ? undefined : { color: 'var(--ink)', fontWeight: 600 }}>{x}</a>) : <span style={{ color: 'var(--ink)', fontWeight: 600 }}>nothing</span>}</span>
+                      {(dangling.length > 0 || h.rests_on.length === 0) && <span style={{ color: 'var(--ink)', fontWeight: 600 }}>no support</span>}
                     </div>
                   </li>
                 )
@@ -171,7 +171,7 @@ export function BrickDetails({ brick, variant = 'page', open = true, summary, on
 
           <section className="panel p-3">
             <h2 className="mb-1 text-[13px] font-semibold">Fragile if changed</h2>
-            <blockquote className="m-0 border-l-2 pl-3 italic" style={{ borderColor: 'var(--accent)' }}>{brick.fragile_if_changed}</blockquote>
+            <blockquote className="m-0 border-l pl-3 italic" style={{ borderColor: 'var(--line)' }}>{brick.fragile_if_changed}</blockquote>
           </section>
 
     </>

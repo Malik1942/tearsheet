@@ -43,7 +43,7 @@ export function ScaledScreens({ params, flash, reserve }: { params: Params; flas
     return () => window.removeEventListener('resize', on)
   }, [measure, wide])
 
-  const go = (i: number) => { const el = pane.current; if (!el) return; el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }); setActive(i) }
+  const go = (i: number) => { const el = pane.current; if (!el) return; el.scrollTo({ left: i * el.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); setActive(i) }
   // the dot follows the pane once it rests on a snap point, so a tapped dot does not flicker back mid-scroll
   const onScroll = () => { const el = pane.current; if (!el || wide) return; const i = Math.round(el.scrollLeft / el.clientWidth); if (i !== active && Math.abs(el.scrollLeft - i * el.clientWidth) < 2) setActive(i) }
 
@@ -53,15 +53,21 @@ export function ScaledScreens({ params, flash, reserve }: { params: Params; flas
         {SCREENS.map(([key, label]) => (
           <div key={key} className="flex w-full shrink-0 snap-center justify-center md:w-auto" role="group" aria-label={label}>
             <div className="relative" style={{ width: FRAME_W * scale, height: FRAME_H * scale }}>
-              <div className="absolute left-0 top-0 overflow-hidden rounded-[22px]" style={{ width: FRAME_W, height: FRAME_H, padding: PAD, background: '#111', border: '1px solid var(--line)', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+              {/* inert: the preview's own controls ("Add show", its Share) are a picture of the user's product, not this page's; they leave the tab order and the page outline */}
+              <div inert className="absolute left-0 top-0 overflow-hidden rounded-[22px]" style={{ width: FRAME_W, height: FRAME_H, padding: PAD, background: '#111', border: '1px solid var(--line)', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
                 <div className="h-full overflow-hidden rounded-[16px]"><Shell params={params} screen={key} height={SHELL_H} flash={flash} /></div>
               </div>
             </div>
           </div>
         ))}
       </div>
-      <div className="flex gap-2 md:hidden" role="tablist" aria-label="Screen">
-        {SCREENS.map(([key, label], i) => <button key={key} type="button" role="tab" aria-selected={active === i} aria-label={label} onClick={() => go(i)} className="h-2 w-2 cursor-pointer rounded-full border-0 p-0" style={{ background: active === i ? 'var(--ink)' : 'var(--line)' }} />)}
+      <div className="flex md:hidden" role="tablist" aria-label="Screen">
+        {/* a 44 px target round an 8 px dot; the current one is longer as well as darker, so it never rests on color alone */}
+        {SCREENS.map(([key, label], i) => (
+          <button key={key} type="button" role="tab" aria-selected={active === i} aria-label={label} onClick={() => go(i)} className="flex h-11 w-11 cursor-pointer items-center justify-center border-0 bg-transparent p-0">
+            <span aria-hidden="true" className="block h-2 rounded-full" style={{ width: active === i ? 16 : 8, background: active === i ? 'var(--ink)' : 'var(--ink-2)', opacity: active === i ? 1 : 0.5 }} />
+          </button>
+        ))}
       </div>
     </div>
   )

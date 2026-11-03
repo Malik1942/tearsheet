@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { MoreIcon } from '../make/Steps'
 import { Link, usePath } from '../lib/router'
 import { useStore } from '../lib/store'
 import { useAddPhotos } from '../bricks/AddPhotos'
@@ -15,11 +16,11 @@ const COPY = {
   more: 'More',
   projects: 'Projects',
   sync: 'Sync',
-  addMany: 'Add from library',
+  addMany: 'Add from library…',
   /** SB3: the toggle that hides every starter (Library, proposals, Compose's swap and add lists). */
   includeStarters: 'Include starters',
   includeTitle: 'Starters fill your proposals only while you have fewer than three bricks of your own.',
-  about: 'About',
+  about: 'About…',
   aboutTitle: 'About Tearsheet',
   aboutLine: 'Save photos you like the look of. Tearsheet reads what makes them work and carries it into screens you can share.',
   credits: 'Sample photos keep their credits:',
@@ -43,9 +44,10 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const tab = tabOf(path)
   return (
     <div className="chrome flex min-h-full flex-col">
+      <a href="#content" className="skip-link">Skip to content</a>
       <AppHeader tab={tab} />
       <AddNotice />
-      <main className="with-bar flex min-w-0 flex-1 flex-col">{children}</main>
+      <main id="content" tabIndex={-1} className="with-bar flex min-w-0 flex-1 flex-col outline-none">{children}</main>
       <BottomBar tab={tab} />
     </div>
   )
@@ -132,7 +134,7 @@ function MoreMenu() {
   const close = () => setOpen(false)
   return (
     <div ref={root} className="relative">
-      <button ref={button} type="button" className="btn btn-quiet" style={{ fontSize: 18, lineHeight: '16px', padding: '6px 10px' }} aria-haspopup="menu" aria-expanded={open} aria-label={COPY.more} title={COPY.more} onClick={() => setOpen(v => !v)}>⋯</button>
+      <button ref={button} type="button" className="btn btn-quiet icon-btn" aria-haspopup="menu" aria-expanded={open} aria-label={COPY.more} title={COPY.more} onClick={() => setOpen(v => !v)}><MoreIcon /></button>
       {open && (
         <div role="menu" aria-label={COPY.more} className="menu">
           <Link role="menuitem" href="/projects" className="menu-item" onClick={close}>{COPY.projects}</Link>
@@ -172,7 +174,7 @@ function AddNotice() {
   return (
     <div role="status" className="notice gutter">
       <span className="min-w-0 flex-1">{notice}</span>
-      <button type="button" className="btn btn-quiet" aria-label={COPY.dismiss} title={COPY.dismiss} onClick={dismiss}>×</button>
+      <button type="button" className="btn btn-quiet icon-btn" aria-label={COPY.dismiss} title={COPY.dismiss} onClick={dismiss}>×</button>
     </div>
   )
 }
@@ -181,7 +183,7 @@ function BottomBar({ tab }: { tab: Tab }) {
   return (
     <nav aria-label="Main" className="bottom-bar">
       <Link href="/" className="tab justify-self-center" aria-current={tab === 'library' ? 'page' : undefined}>{COPY.library}</Link>
-      <ShootButton />
+      <ShootButton className={tab === 'make' ? 'shoot-quiet' : ''} />
       <Link href="/make" className="tab justify-self-center" aria-current={tab === 'make' ? 'page' : undefined}>{COPY.make}</Link>
     </nav>
   )
