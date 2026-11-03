@@ -30,6 +30,11 @@ The dev server serves `/api/extract` itself (same handler as the Vercel function
 
 Deploy: Vercel, with `META_API_KEY` set as an environment variable. `api/extract.ts` is the serverless proxy (`maxDuration` 120 s; a medium-effort extraction takes 10 to 26 s).
 
+## Verification
+
+- **UI checks** (`scripts/check-ui.js`): paste it into the browser console on the public URL and run `checkUI({ all: true })`. It reports page overflow with the offending elements, controls without a label, and images without alt text, for every main route, at whatever viewport the window has. The acceptance record in `docs/ACCEPTANCE.md` quotes its output at 375 px and 1440 px.
+- **Extraction harness** (`../meta-eval`): `scripts/gate.sh --send --effort medium fixtures/images/<photo>` reproduces a brick from a photo with the same request the product sends; `PROMPT_FILE=fixtures/prompts/extract_brick_v3.md` selects the production prompt. Every live call is appended to `ledger.csv`.
+
 ## Evidence
 
 Prompt in production: v3, sha256 `2a2e7fa5684fe352cf5ecfd8476776c07ff7c9878baa0168b05a61f1a4beba60` (`src/lib/extractPrompt.ts`). It is the gated prompt (sha256 `5cb75981a5b31e823d6037af31173c8b6ba2542455a5143ccd1eecfd7bd197f4`) plus one instruction to describe the type when text is visible. A v2 that forced a layout relation was tried on the same three photos and rejected. Measured values are the model's reading in one run; another run can differ (one accent coverage moved from under 6% to under 15% between runs), which is why every value carries its provenance and nothing is treated as a single truth.
