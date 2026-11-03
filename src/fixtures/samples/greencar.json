@@ -1,0 +1,168 @@
+{
+  "id": "greencar",
+  "photo": {
+    "url": "/samples/greencar.jpg",
+    "width": 2048,
+    "height": 1365
+  },
+  "saved_at": "2025-05-24",
+  "measurements": [
+    {
+      "how_measured": "divided frame into quarters and estimated bounding box of green car versus frame",
+      "id": "m1",
+      "statement": "foreground green car is cropped by the left edge and dominates the frame in low three-quarter front view",
+      "value": "spans left edge to ~75% width, ~1/4 to ~4/5 height, ~60% frame area"
+    },
+    {
+      "how_measured": "traced skyline, building roofline and ground line against vertical thirds",
+      "id": "m2",
+      "statement": "frame is horizontally banded with sky on top, cars plus building in middle, pavers below",
+      "value": "sky top ~40%, ground bottom ~30%, building occupies right third mid-band"
+    },
+    {
+      "how_measured": "counted distinct front grilles, headlights and plates and compared bumper positions along depth axis",
+      "id": "m3",
+      "statement": "exactly three cars recede diagonally from front-left to back-right with decreasing apparent size",
+      "value": "3 cars, front bumper overlaps middle car, diagonal recession to right edge"
+    },
+    {
+      "how_measured": "compared area of green and blue paint versus gray sky, pavers and dark building and glass",
+      "id": "m4",
+      "statement": "most of frame is desaturated grays with only two saturated car colors",
+      "value": "neutrals ~75-80% frame, emerald green ~25% and medium blue ~12%, black third car <8%"
+    },
+    {
+      "how_measured": "observed cloud cover, absence of hard cast shadows under cars, and elongated highlights on hood and fender",
+      "id": "m5",
+      "statement": "light is soft overcast daylight with no hard shadows and broad glossy reflections on paint",
+      "value": "diffused daylight, shadowless, strong hood speculars"
+    },
+    {
+      "how_measured": "compared header versus code cap-height on front plate and noted weight, form, spacing and color contrast",
+      "id": "m6",
+      "statement": "license plate type uses tiny upper line and large lower code in low-contrast sans with uniform stroke",
+      "value": "header height : code height ~1:4, medium-bold sans with even stroke, wide letterspacing, dark blue on white with small color emblem"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.88,
+      "id": "h1",
+      "rests_on": [
+        "m1",
+        "m3"
+      ],
+      "statement": "Low close three-quarter view plus left-edge cropping makes the green car hierarchically dominant, with size and sharpness stepping down to blue then black to create depth"
+    },
+    {
+      "confidence": 0.85,
+      "id": "h2",
+      "rests_on": [
+        "m4",
+        "m2",
+        "m5"
+      ],
+      "statement": "Muted gray sky, pavers and building form a quiet field that lets the two saturated paints carry emphasis, so the eye lands on green then slides to blue"
+    },
+    {
+      "confidence": 0.72,
+      "id": "h3",
+      "rests_on": [
+        "m5",
+        "m3",
+        "m2"
+      ],
+      "statement": "Soft shadowless light and orderly diagonal recession give a calm premium showroom-like mood despite an outdoor lot"
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "hierarchy_mode",
+      "rule": "Keep primary subject at least ~2x apparent size of next subject, cropped by frame edge and viewed from below its midline to enforce dominance",
+      "source_hypothesis": "h1",
+      "target": "primary subject"
+    },
+    {
+      "id": "r2",
+      "parameter": "palette_hue_count",
+      "rule": "Limit saturated hues to two covering <40% of frame, holding remaining 60-80% to desaturated neutrals",
+      "source_hypothesis": "h2",
+      "target": "palette"
+    },
+    {
+      "id": "r3",
+      "parameter": "rhythm",
+      "rule": "Place repeating subjects along a single diagonal depth line with decreasing scale and overlapping edges to create stepping rhythm",
+      "source_hypothesis": "h3",
+      "target": "secondary subjects"
+    }
+  ],
+  "fragile_if_changed": "Raising the camera to eye level in bright direct sun would destroy the low heroic dominance and quiet neutral field that lets the glossy green paint dominate.",
+  "regions": [
+    {
+      "box_1000": [
+        0,
+        238,
+        775,
+        885
+      ],
+      "label": "foreground green car",
+      "measurement_ids": [
+        "m1"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        240,
+        1000,
+        885
+      ],
+      "label": "three-car lineup",
+      "measurement_ids": [
+        "m3"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "label": "environment bands and palette field",
+      "measurement_ids": [
+        "m2",
+        "m4",
+        "m5"
+      ]
+    },
+    {
+      "box_1000": [
+        525,
+        550,
+        635,
+        650
+      ],
+      "label": "front license plate type",
+      "measurement_ids": [
+        "m6"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 48432,
+    "input_tokens": 4191,
+    "output_tokens": 4405,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#060707",
+    "color_fg": "#DFE5EA",
+    "color_accent": "#1C525C",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'environment bands and palette field'"
+  }
+}

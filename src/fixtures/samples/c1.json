@@ -1,0 +1,170 @@
+{
+  "id": "c1",
+  "photo": {
+    "url": "/samples/c1.jpg",
+    "width": 2048,
+    "height": 1084
+  },
+  "saved_at": "2025-08-16",
+  "measurements": [
+    {
+      "how_measured": "estimated bumper-to-rear extent versus frame width and roof-to-ground versus frame height",
+      "id": "m1",
+      "statement": "main dark coupe dominates foreground stretching from near left edge to right third in the lower half",
+      "value": "width \u224885% of frame, height \u224850% of frame height"
+    },
+    {
+      "how_measured": "estimated vertical band from top edge down to roofline and background structures across full width",
+      "id": "m2",
+      "statement": "upper frame is flat overcast gray sky with almost no detail",
+      "value": "\u224845% of frame is empty sky"
+    },
+    {
+      "how_measured": "visually segmented main car plus pavement plus sky versus yellow car area versus signal lenses",
+      "id": "m3",
+      "statement": "palette is near-monochrome grays except one saturated mustard-yellow car on left third and two tiny amber signals on main car",
+      "value": "gray \u224885%, yellow \u224812%, amber \u22482%"
+    },
+    {
+      "how_measured": "compared plate glyph height to front bumper height and inspected stroke, serif, spacing in plate area",
+      "id": "m4",
+      "statement": "license plate text at front is small condensed sans with medium weight, low stroke contrast, tight letterspacing, dark on light",
+      "value": "plate height \u22482% of frame height; plate text height : car height \u22481:25"
+    },
+    {
+      "how_measured": "traced occlusion where main car occludes yellow car and people and tents flank right edge while sculpture sits center-background",
+      "id": "m5",
+      "statement": "scene layers in depth from foreground coupe to midground yellow car and people to background sculpture and tents",
+      "value": "3 depth layers; foreground center, midground left and right thirds"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.85,
+      "id": "h1",
+      "rests_on": [
+        "m1",
+        "m3"
+      ],
+      "statement": "Scale hierarchy makes the dark coupe the unmistakable hero while the smaller yellow car acts as a contrasting foil that pulls the eye left then returns to the hero."
+    },
+    {
+      "confidence": 0.8,
+      "id": "h2",
+      "rests_on": [
+        "m2",
+        "m3"
+      ],
+      "statement": "Large flat gray sky and pavement envelope the scene in a muted, calm mood that makes the small warm yellows and ambers feel more vivid and nostalgic."
+    },
+    {
+      "confidence": 0.7,
+      "id": "h3",
+      "rests_on": [
+        "m1",
+        "m5"
+      ],
+      "statement": "Low front three-quarter viewpoint with overlapping depth layers creates an informal gathering rhythm moving diagonally from background sculpture through cars to right-edge crowd."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "image_text_dominance",
+      "rule": "Keep photography dominant and confine any legible text to a tiny functional label under 3% of frame height near the bottom edge.",
+      "source_hypothesis": "h1",
+      "target": "new composition"
+    },
+    {
+      "id": "r2",
+      "parameter": "palette_hue_count",
+      "rule": "Restrict palette to desaturated grays plus exactly one saturated warm hue for a secondary element.",
+      "source_hypothesis": "h2",
+      "target": "new composition"
+    },
+    {
+      "id": "r3",
+      "parameter": "density",
+      "rule": "Preserve 40-50% open muted background above the subject to isolate the silhouette.",
+      "source_hypothesis": "h2",
+      "target": "new composition"
+    }
+  ],
+  "fragile_if_changed": "Replace the flat overcast gray sky with bright blue or make the yellow car equal in size to the dark coupe and the muted single-hero car-meet mood would collapse.",
+  "regions": [
+    {
+      "box_1000": [
+        55,
+        285,
+        898,
+        855
+      ],
+      "label": "main coupe hero",
+      "measurement_ids": [
+        "m1"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        380
+      ],
+      "label": "overcast sky band",
+      "measurement_ids": [
+        "m2"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "label": "overall palette with yellow foil left",
+      "measurement_ids": [
+        "m3"
+      ]
+    },
+    {
+      "box_1000": [
+        90,
+        645,
+        145,
+        745
+      ],
+      "label": "front license plate type",
+      "measurement_ids": [
+        "m4"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        225,
+        1000,
+        650
+      ],
+      "label": "layered background gathering",
+      "measurement_ids": [
+        "m5"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 39110,
+    "input_tokens": 3451,
+    "output_tokens": 3655,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#43403E",
+    "color_fg": "#CAD0D0",
+    "color_accent": "#8B5F38",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'overall palette with yellow foil left'"
+  }
+}

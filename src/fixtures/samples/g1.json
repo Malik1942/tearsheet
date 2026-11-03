@@ -1,0 +1,172 @@
+{
+  "id": "g1",
+  "photo": {
+    "url": "/samples/g1.jpg",
+    "width": 2048,
+    "height": 1365
+  },
+  "saved_at": "2025-04-06",
+  "measurements": [
+    {
+      "how_measured": "gridded the frame into thirds and estimated area covered by white floral clusters versus sky and building",
+      "id": "m_foreground_coverage",
+      "statement": "white cherry-blossom branches dominate the left two-thirds, dense hugging the left edge and thinning to isolated sprigs toward center-right",
+      "value": "\u224860% of frame, densest on left third"
+    },
+    {
+      "how_measured": "compared edge definition of blossom clusters and thin branches against edges of tower windows and rooflines",
+      "id": "m_focus_split",
+      "statement": "foreground blossoms on the left are relatively sharp with branch detail while building and tower on right and bottom are heavily blurred",
+      "value": "sharp vs blurred split \u2248 left 2/3 sharp : right 1/3 + lower half blurred"
+    },
+    {
+      "how_measured": "traced contiguous cloud-free sky area and estimated its share of the frame",
+      "id": "m_sky_void",
+      "statement": "empty pale blue sky sits in top-center to top-right with no clouds, the only large empty background",
+      "value": "\u224830-35% of frame in upper third"
+    },
+    {
+      "how_measured": "counted distinct vertical structures and measured its horizontal extent against total frame width",
+      "id": "m_tower_edge",
+      "statement": "one out-of-focus historic tower hugs the extreme right edge running full height top to bottom",
+      "value": "count 1, width \u224820% of frame, hugging right edge"
+    },
+    {
+      "how_measured": "scanned the frame for distinct hues and any vivid saturated area and estimated coverage",
+      "id": "m_palette",
+      "statement": "palette is limited to near-white blossoms, pale cyan-blue sky, and dark muted warm-gray building with no saturated accent",
+      "value": "\u22483 low-saturation hues, 0% saturated accent"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.88,
+      "id": "h_focus_hierarchy",
+      "rests_on": [
+        "m_foreground_coverage",
+        "m_focus_split",
+        "m_tower_edge"
+      ],
+      "statement": "Hierarchy is carried by focus rather than size: sharp blossoms feel intimate and primary while the large but blurred tower stays as quiet context."
+    },
+    {
+      "confidence": 0.78,
+      "id": "h_branch_rhythm",
+      "rests_on": [
+        "m_foreground_coverage",
+        "m_sky_void"
+      ],
+      "statement": "A diagonal branching rhythm moves from dense mass hugging the left edge to thin isolated sprigs reaching center-right, creating left-to-right movement into open sky."
+    },
+    {
+      "confidence": 0.82,
+      "id": "h_soft_mood",
+      "rests_on": [
+        "m_palette",
+        "m_sky_void",
+        "m_tower_edge"
+      ],
+      "statement": "A soft high-key spring mood comes from dominant near-white and pale blue against a dark muted anchor at bottom-right, with no saturated color to break calm."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "hierarchy_mode",
+      "rule": "Keep primary subject sharp in foreground occupying ~60% on one side while keeping contextual architecture heavily blurred and subordinate",
+      "source_hypothesis": "h_focus_hierarchy",
+      "target": "foreground-background hierarchy"
+    },
+    {
+      "id": "r2",
+      "parameter": "rhythm",
+      "rule": "Arrange dense mass on one edge thinning to isolated sprigs reaching into ~1/3 empty sky void",
+      "source_hypothesis": "h_branch_rhythm",
+      "target": "subject arrangement"
+    },
+    {
+      "id": "r3",
+      "parameter": "palette_hue_count",
+      "rule": "Limit palette to ~3 desaturated hues with near-white dominant and zero saturated accent coverage",
+      "source_hypothesis": "h_soft_mood",
+      "target": "canvas palette"
+    }
+  ],
+  "fragile_if_changed": "Bringing the background building and tower into sharp equal focus with the blossoms would destroy the soft foreground-intimacy and depth contrast that define the image.",
+  "regions": [
+    {
+      "box_1000": [
+        0,
+        0,
+        805,
+        1000
+      ],
+      "label": "blossom mass on left",
+      "measurement_ids": [
+        "m_foreground_coverage"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "label": "sharp foreground vs blurred background",
+      "measurement_ids": [
+        "m_focus_split"
+      ]
+    },
+    {
+      "box_1000": [
+        310,
+        0,
+        880,
+        440
+      ],
+      "label": "empty sky void",
+      "measurement_ids": [
+        "m_sky_void"
+      ]
+    },
+    {
+      "box_1000": [
+        805,
+        15,
+        1000,
+        1000
+      ],
+      "label": "right-edge tower",
+      "measurement_ids": [
+        "m_tower_edge"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "label": "overall palette",
+      "measurement_ids": [
+        "m_palette"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 44209,
+    "input_tokens": 4191,
+    "output_tokens": 4008,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#D4DFE0",
+    "color_fg": "#171818",
+    "color_accent": "#A6D4E3",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'overall palette'"
+  }
+}

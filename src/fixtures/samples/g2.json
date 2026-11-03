@@ -1,0 +1,211 @@
+{
+  "id": "g2",
+  "photo": {
+    "url": "/samples/g2.jpg",
+    "width": 2048,
+    "height": 1365
+  },
+  "saved_at": "2025-06-21",
+  "measurements": [
+    {
+      "how_measured": "estimated bounding box of car body versus full frame",
+      "id": "m1",
+      "statement": "Silver convertible occupies the center diagonal from left edge to right-center, rear bumper near bottom third",
+      "value": "car bounding box ~75% of frame width and ~65% of frame height, ~50% of frame area"
+    },
+    {
+      "how_measured": "visual area estimate of near-black curtain, carpet and shadows versus lit car",
+      "id": "m2",
+      "statement": "Right half and bottom are near-black curtain and carpet surrounding the lit car, lit from upper left",
+      "value": "about 60% of frame is very dark; brightest highlight on left rear fender"
+    },
+    {
+      "how_measured": "area estimate of saturated color patches versus frame",
+      "id": "m3",
+      "statement": "Only two saturated hues: red taillights on rear and deep blue doors in far upper-left background",
+      "value": "red ~4% of frame on rear; blue ~10% of frame in background"
+    },
+    {
+      "how_measured": "compared letter height to frame height and described stroke and spacing by eye",
+      "id": "m4",
+      "statement": "Rear badges RWB and PORSCHE plus plate ST2 22P are small sans with bold low-contrast strokes and tight spacing, black on silver and blue on white",
+      "value": "each glyph height <2% of frame height, on right half of rear, image-dominant over text"
+    },
+    {
+      "how_measured": "noted camera height relative to trunk and intrusions at frame edges",
+      "id": "m5",
+      "statement": "Low rear three-quarter view just above trunk height, close crop with out-of-focus dark car part intruding at bottom-right and rail on far left",
+      "value": "foreground blur ~25% of frame width in bottom-right; left rail hugs left edge"
+    },
+    {
+      "how_measured": "compared surface sheen on body, wheels and fabrics by highlight behavior",
+      "id": "m6",
+      "statement": "Matte low-gloss silver body with soft specular sweep contrasts matte black fabrics and highly reflective polished wheel lips on left third",
+      "value": "body mid-gray with white highlight; wheels mirror-bright on ~5% of frame"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.88,
+      "id": "h1",
+      "rests_on": [
+        "m1",
+        "m2",
+        "m6"
+      ],
+      "statement": "A bright matte-silver volume isolated against near-black surround creates single-subject hierarchy and premium nighttime-show mood."
+    },
+    {
+      "confidence": 0.85,
+      "id": "h2",
+      "rests_on": [
+        "m3",
+        "m1"
+      ],
+      "statement": "Small saturated red taillights and distant blue doors act as color accents that anchor attention on the rear without competing with the car form."
+    },
+    {
+      "confidence": 0.78,
+      "id": "h3",
+      "rests_on": [
+        "m5",
+        "m2",
+        "m3"
+      ],
+      "statement": "Layered depth from blurred foreground intrusion to sharp car to receding blue hall gives diagonal rhythm and enclosure."
+    },
+    {
+      "confidence": 0.82,
+      "id": "h4",
+      "rests_on": [
+        "m4",
+        "m1"
+      ],
+      "statement": "Tiny low-contrast badging keeps the image form-dominant, with text as texture rather than message."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "image_text_dominance",
+      "rule": "Keep subject image >95% of visual weight; keep any lettering <2% frame height and confined to one quadrant of subject.",
+      "source_hypothesis": "h4",
+      "target": "any subject with small labels"
+    },
+    {
+      "id": "r2",
+      "parameter": "accent_coverage",
+      "rule": "Restrict saturated color to <5% red focal accent plus <10% distant cool background accent, all else neutral.",
+      "source_hypothesis": "h2",
+      "target": "any neutral subject on dark ground"
+    },
+    {
+      "id": "r3",
+      "parameter": "palette_hue_count",
+      "rule": "Limit palette to silvery neutrals + black plus at most two saturated hues, with darkness covering ~60% of frame.",
+      "source_hypothesis": "h1",
+      "target": "any spotlight product shot"
+    }
+  ],
+  "fragile_if_changed": "Brightening the black curtain and carpet surround to daylight levels would collapse the spotlight isolation that makes the silver body read as luminous.",
+  "regions": [
+    {
+      "box_1000": [
+        114,
+        143,
+        855,
+        830
+      ],
+      "label": "car body",
+      "measurement_ids": [
+        "m1"
+      ]
+    },
+    {
+      "box_1000": [
+        490,
+        0,
+        1000,
+        1000
+      ],
+      "label": "dark curtain and carpet surround",
+      "measurement_ids": [
+        "m2"
+      ]
+    },
+    {
+      "box_1000": [
+        318,
+        505,
+        538,
+        614
+      ],
+      "label": "red taillights accent",
+      "measurement_ids": [
+        "m3"
+      ]
+    },
+    {
+      "box_1000": [
+        194,
+        0,
+        502,
+        240
+      ],
+      "label": "blue doors background accent",
+      "measurement_ids": [
+        "m3"
+      ]
+    },
+    {
+      "box_1000": [
+        630,
+        509,
+        738,
+        730
+      ],
+      "label": "rear badging and plate text",
+      "measurement_ids": [
+        "m4"
+      ]
+    },
+    {
+      "box_1000": [
+        537,
+        677,
+        1000,
+        1000
+      ],
+      "label": "foreground blur intrusion",
+      "measurement_ids": [
+        "m5"
+      ]
+    },
+    {
+      "box_1000": [
+        192,
+        380,
+        515,
+        536
+      ],
+      "label": "fender highlight and wheel sheen",
+      "measurement_ids": [
+        "m6"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 30533,
+    "input_tokens": 4191,
+    "output_tokens": 2628,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#060605",
+    "color_fg": "#E6DFD7",
+    "color_accent": "#D11D1B",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'red taillights accent'"
+  }
+}

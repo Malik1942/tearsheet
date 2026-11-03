@@ -1,0 +1,176 @@
+{
+  "id": "calmmouse",
+  "photo": {
+    "url": "/samples/calmmouse.jpg",
+    "width": 1200,
+    "height": 630
+  },
+  "saved_at": "2025-09-14",
+  "measurements": [
+    {
+      "how_measured": "inspected stroke weight, absence of serifs, stroke contrast and inter-letter gaps on headline vs sublines",
+      "id": "m1",
+      "statement": "visible type style across three text lines",
+      "value": "headline is heavy bold wide low-contrast sans with tight letterspacing; middle and bottom lines are medium-weight low-contrast sans with looser spacing"
+    },
+    {
+      "how_measured": "compared vertical extent of 'C' in CalmMouse to 'F' in Free line",
+      "id": "m2",
+      "statement": "headline cap-height to smallest line cap-height ratio",
+      "value": "\u2248 2.2 : 1"
+    },
+    {
+      "how_measured": "estimated area not covered by text block or mouse render across full frame",
+      "id": "m3",
+      "statement": "proportion of frame that is empty white background",
+      "value": "\u2248 75-80% empty"
+    },
+    {
+      "how_measured": "traced leftmost and rightmost glyph edges relative to frame width",
+      "id": "m4",
+      "statement": "horizontal placement of text block",
+      "value": "all text starts in left sixth and ends near middle; right 40% of frame has no text"
+    },
+    {
+      "how_measured": "measured render bounding box against frame height and horizontal thirds",
+      "id": "m5",
+      "statement": "product render size and position",
+      "value": "one top-view mouse occupies right third, height \u2248 75% of frame height, vertically centered"
+    },
+    {
+      "how_measured": "counted distinct saturated hues and located blue glyphs versus black and gray text",
+      "id": "m6",
+      "statement": "saturated accent hue count and coverage",
+      "value": "exactly one saturated hue (medium blue) covering \u2248 3% of frame used only on bottom line Free & open source"
+    },
+    {
+      "how_measured": "compared interline white space to subline glyph height in left block",
+      "id": "m7",
+      "statement": "vertical stacking of text lines",
+      "value": "three lines left-aligned in tight stack with gap \u2248 0.5x subline height, headline above two smaller lines"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.9,
+      "id": "h1",
+      "rests_on": [
+        "m1",
+        "m2",
+        "m7"
+      ],
+      "statement": "A bold oversized headline over two smaller lighter lines creates a fast top-down hierarchy: name first, explanation second, offer last."
+    },
+    {
+      "confidence": 0.88,
+      "id": "h2",
+      "rests_on": [
+        "m3",
+        "m4",
+        "m5"
+      ],
+      "statement": "Extreme whitespace with text confined left and a single soft object isolated right creates a calm, airy, minimal mood that matches the product name."
+    },
+    {
+      "confidence": 0.82,
+      "id": "h3",
+      "rests_on": [
+        "m1",
+        "m3",
+        "m6"
+      ],
+      "statement": "A single small blue line at the bottom of a black-gray stack provides emphasis and action without breaking the monochrome calm."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "type_scale_ratio",
+      "rule": "Keep headline cap-height about 2x subcopy height with heavier weight and tighter spacing to preserve top-down hierarchy.",
+      "source_hypothesis": "h1",
+      "target": "headline to supporting text"
+    },
+    {
+      "id": "r2",
+      "parameter": "image_text_dominance",
+      "rule": "Keep text block confined to left half and a single product render isolated in the right third on a mostly empty field.",
+      "source_hypothesis": "h2",
+      "target": "text-image split layout"
+    },
+    {
+      "id": "r3",
+      "parameter": "accent_coverage",
+      "rule": "Restrict a single saturated accent hue to the bottom line only, covering under 5% of the frame.",
+      "source_hypothesis": "h3",
+      "target": "accent line"
+    }
+  ],
+  "fragile_if_changed": "Replacing the vast empty white background with color, texture, or additional content would destroy the calm minimal contrast that defines the image.",
+  "regions": [
+    {
+      "box_1000": [
+        110,
+        300,
+        580,
+        690
+      ],
+      "label": "headline and sublines block",
+      "measurement_ids": [
+        "m1",
+        "m2",
+        "m4",
+        "m7"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "label": "full frame background",
+      "measurement_ids": [
+        "m3"
+      ]
+    },
+    {
+      "box_1000": [
+        610,
+        130,
+        850,
+        905
+      ],
+      "label": "mouse render on right",
+      "measurement_ids": [
+        "m5"
+      ]
+    },
+    {
+      "box_1000": [
+        110,
+        640,
+        330,
+        690
+      ],
+      "label": "blue accent line",
+      "measurement_ids": [
+        "m6"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 28420,
+    "input_tokens": 1489,
+    "output_tokens": 2746,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#FFFFFF",
+    "color_fg": "#2B2B2B",
+    "color_accent": "#5D9CCD",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'blue accent line'"
+  }
+}

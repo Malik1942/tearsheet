@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import bricksJson from '../fixtures/bricks.json'
+import { SAMPLES } from '../fixtures/samples'
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
 
-const KEY = 'bricks.v1'
-const SEED = bricksJson as unknown as Brick[]
+const KEY = 'bricks.v2'   // v2: the library is seeded from the v3 sample bricks (own photos only); v1 held the step-2 fixtures
+const SEED: Brick[] = SAMPLES
 
 export type State = { bricks: Brick[]; projects: Project[]; activeProjectId: string | null }
 
