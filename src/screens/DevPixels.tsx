@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
 import { SAMPLES } from '../fixtures/samples'
 import { Link } from '../lib/router'
-import { COVERAGE_BAND_LABELS, MEASURE_VERSION, PX_PARAMS, coverageBand, fieldsEqualTo2dp, type PixelFields } from '../lib/pixels'
+import { COVERAGE_BAND_LABELS, MEASURE_VERSION, PX_PARAMS, PX_TONE, coverageBand, fieldsEqualTo2dp, type PixelFields } from '../lib/pixels'
 import { measurePhoto, measurePhotoVariant } from '../lib/pixelsBrowser'
+import { flagsOf, summarize, type ReportRow } from '../lib/pixelsReport'
 import { deriveSkin } from '../lib/skinRule'
 
 /** Dev only (/dev/pixels): spec §1b validation steps 1 and 2 on the sample library. Step 1: the same file measured twice must agree to two decimals.
  *  Step 2: a slight white-balance shift and a heavier JPEG re-save must not change hue_count or move coverage across a band edge.
  *  Step 3 (end-to-end on g2) is a person's check, after this. Nothing here replaces a sample skin: the colors are candidates and evidence. */
 
-type Row = {
-  id: string; url: string; state: 'waiting' | 'measuring' | 'done' | 'error'; error?: string
-  first?: PixelFields; second?: PixelFields; wb?: PixelFields; jpeg?: PixelFields
-}
+type Row = ReportRow & { id: string; url: string; error?: string }
 
 const cell = 'border-b px-2 py-1 align-top text-left font-normal'
 const head = 'border-b px-2 py-1 text-left text-[11px] font-semibold uppercase tracking-wide ink-2'
@@ -20,17 +18,6 @@ const frac = (x: number) => x.toFixed(4)
 
 function Sw({ hex }: { hex: string }) {
   return <span className="inline-flex items-center gap-1"><span className="inline-block h-3 w-3 rounded-sm border hairline" style={{ background: hex }} /><span className="mono">{hex}</span></span>
-}
-
-function flagsOf(o: PixelFields, variants: [string, PixelFields | undefined][]): string[] {
-  const out: string[] = []
-  for (const [name, v] of variants) {
-    if (!v) continue
-    if (v.hue_count !== o.hue_count) out.push(`${name}: hue_count ${o.hue_count} → ${v.hue_count}`)
-    const [bo, bv] = [coverageBand(o.high_chroma_coverage), coverageBand(v.high_chroma_coverage)]
-    if (bo !== bv) out.push(`${name}: coverage band ${COVERAGE_BAND_LABELS[bo]} → ${COVERAGE_BAND_LABELS[bv]}`)
-  }
-  return out
 }
 
 export function DevPixels() {
@@ -59,9 +46,7 @@ export function DevPixels() {
     return () => { dead = true }
   }, [])
 
-  const done = rows.filter(r => r.state === 'done').length
-  const flagged = rows.filter(r => r.first && flagsOf(r.first, [['wb', r.wb], ['jpeg', r.jpeg]]).length > 0).length
-  const notIdentical = rows.filter(r => r.first && r.second && !fieldsEqualTo2dp(r.first, r.second)).length
+  const summary = summarize(rows)
 
   return (
     <div className="chrome min-h-full p-4">
@@ -75,10 +60,8 @@ export function DevPixels() {
         Distribution is measured; which place is the focal point is judged elsewhere. Photo contrast describes the photo; readability is checked on the interface pairs.
         Skins below are candidates by rule. Until step 3 passes, the sample library keeps its harness-measured skins.
       </p>
-      <p className="mono mb-3 ink-2">{JSON.stringify(PX_PARAMS)} · white balance R×1.04 B×0.96 · JPEG re-encode quality 0.5 · bands {COVERAGE_BAND_LABELS.join(' ')}</p>
-      <p className="mb-4">
-        {done} of {rows.length} measured · step 1: {notIdentical === 0 ? 'every repeat identical' : `${notIdentical} not identical`} · step 2: {flagged === 0 ? 'no brick flagged' : `${flagged} flagged`}
-      </p>
+      <p className="mono mb-3 ink-2">{JSON.stringify({ ...PX_PARAMS, tone: PX_TONE })} · white balance R×1.04 B×0.96 · JPEG re-encode quality 0.5 · bands {COVERAGE_BAND_LABELS.join(' ')}</p>
+      <p className="mb-4">{summary.line}</p>
 
       <h2 className="mb-1">Step 1 repeatability, step 2 robustness</h2>
       <div className="mb-6 overflow-x-auto panel">

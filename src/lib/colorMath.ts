@@ -19,14 +19,15 @@ const LMS_TO_OKLAB: Mat3 = [[0.210454268309314, 0.7936177747023054, -0.004072043
 const OKLAB_TO_LMS: Mat3 = [[1, 0.3963377773761749, 0.2158037573099136], [1, -0.1055613458156586, -0.0638541728258133], [1, -0.0894841775298119, -1.2914855480194092]]
 const LMS_TO_XYZ: Mat3 = [[1.2268798758459243, -0.5578149944602171, 0.2813910456659647], [-0.0405757452148008, 1.112286803280317, -0.0716110580655164], [-0.0763729366746601, -0.4214933324022432, 1.5869240198367816]]
 
-const RGB_TO_LMS = mm(XYZ_TO_LMS, LIN_SRGB_TO_XYZ)
-const LMS_TO_RGB = mm(XYZ_TO_LIN_SRGB, LMS_TO_XYZ)
+/* The top-level calls below are marked pure so a bundle that imports this module and uses none of it drops them. */
+const RGB_TO_LMS = /*#__PURE__*/ mm(XYZ_TO_LMS, LIN_SRGB_TO_XYZ)
+const LMS_TO_RGB = /*#__PURE__*/ mm(XYZ_TO_LIN_SRGB, LMS_TO_XYZ)
 
 /** sRGB transfer function, 0..1 -> linear light. */
 export const srgbToLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
 export const linearToSrgb = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)
 /** The 256 8-bit values decoded once. */
-export const SRGB8_TO_LINEAR: Float64Array = (() => { const t = new Float64Array(256); for (let i = 0; i < 256; i++) t[i] = srgbToLinear(i / 255); return t })()
+export const SRGB8_TO_LINEAR: Float64Array = /*#__PURE__*/ (() => { const t = new Float64Array(256); for (let i = 0; i < 256; i++) t[i] = srgbToLinear(i / 255); return t })()
 
 export type Oklab = { L: number; a: number; b: number }
 export type Oklch = { L: number; C: number; h: number }
