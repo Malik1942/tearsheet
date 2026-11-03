@@ -4,6 +4,7 @@ import { Library } from './Library'
 import { BrickScreen } from './screens/Brick'
 import { Compare } from './Compare'
 import { ProjectsScreen } from './screens/Projects'
+import { MakeScreen } from './screens/Make'
 import { SyncScreen } from './screens/Sync'
 import { OpenScreen } from './screens/Open'
 import { PreviewScreen } from './screens/Preview'
@@ -23,6 +24,7 @@ function Routes() {
   const brick = match('/brick/:id', path)
   if (brick) return <BrickScreen id={brick.id} />
   if (path === '/projects') return <ProjectsScreen />
+  if (path === '/make') return <MakeScreen />
   if (path === '/sync') return <SyncScreen />
   if (DevPixels && path === '/dev/pixels') return <Suspense fallback={null}><DevPixels /></Suspense>
   if (path === '/open') return <OpenScreen />
