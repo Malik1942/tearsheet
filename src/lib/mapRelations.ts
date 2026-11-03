@@ -40,9 +40,26 @@ const percentRange = (s: string): number | null => {
   return null
 }
 
+/** Read an alignment edge out of free text. Negated phrases are removed first; a sentence that names two different edges,
+ *  or justifies to both edges (not in the vocabulary), yields null rather than a guess. */
+export function readAlignment(raw: string): 'left' | 'right' | 'center' | 'split' | null {
+  let s = raw.toLowerCase()
+  // drop negations: "no left- or right-aligned elements", "not left-aligned", "without a left edge", "rather than left"
+  s = s.replace(/\b(no|not|without|never|rather than|instead of)\b[^.;,]{0,12}\b(left|right|cent(?:er|re))[- ]?(?:aligned|hand|edge|justified|ed)?(?:\s*(?:or|and|\/)\s*(?:left|right|cent(?:er|re))[- ]?(?:aligned|hand|edge|justified|ed)?)*/g, ' ')
+  if (/justif(y|ied)[^.;]*\b(both|two)\b|\bboth (left and right|edges)\b|flush to both/.test(s)) return null
+  if (/\bsplit\b|title[^.;]{0,30}left[^.;]{0,40}(meta|date|right)[^.;]{0,20}right/.test(s)) return 'split'
+  const found = new Set<'left' | 'right' | 'center'>()
+  if (/flush[- ]left|left[- ]aligned|left[- ]justified|\bleft edge\b|left-hand edge|hugs? the left|ragged[- ]right|starts? (in|at|from) (the )?left|\bleft (sixth|fifth|quarter|third|half)\b|share(s|d)? (one|a|the same) left|(on|to|along) the left (edge|margin|side)/.test(s)) found.add('left')
+  if (/flush[- ]right|right[- ]aligned|right[- ]justified|hugs? the right|ragged[- ]left|anchored (to|at|on) the right|(on|to|along) the right (edge|margin|side)/.test(s)) found.add('right')
+  if (/\bcent(er|re)(ed|d)?\b|\bmidline\b|\bcentral axis\b|\bmiddle axis\b|\bcentered on\b/.test(s)) found.add('center')
+  if (found.size !== 1) return null
+  return [...found][0]
+}
+
 export function proposeValue(key: ParameterKey, rel: { rule: string; target: string }): ParamValue | null {
   const spec = PARAM_SPEC[key]
   const texts = [rel.target, rel.rule]
+  if (key === 'alignment_edge') { for (const t of texts) { const a = readAlignment(t); if (a) return a } return null }
   if (spec.kind === 'enum' && typeof spec.values[0] === 'string' && key !== 'accent_coverage' && key !== 'hierarchy_mode' && key !== 'rhythm') {
     for (const t of texts) {
       const low = t.toLowerCase()
@@ -161,10 +178,7 @@ export function alignmentByRule(brick: Brick): Candidate | null {
     const text = `${m.statement} ${m.value}`.toLowerCase()
     if (/no text|0 text/.test(text)) continue
     if (!/\b(text|type|title|headline|lines?|copy|label|caption|wordmark|lettering|credits?|tagline|subtitle)\b/.test(text)) continue
-    let edge: 'left' | 'right' | 'center' | null = null
-    if (/flush[- ]left|left[- ]aligned|left edge|left-hand edge|share(s|d)? (one|a|the same) left|starts? in the left|hugs? the left|ragged[- ]right/.test(text)) edge = 'left'
-    else if (/flush[- ]right|right[- ]aligned|hugs? the right edge|anchored (to|at) the right/.test(text) && /text|type|title|headline|line/.test(text)) edge = 'right'
-    else if (/\b(text|title|headline|type|lines?)\b.*\bcent(er|re)(ed|d)?\b|\bcent(er|re)(ed|d)? (text|title|headline|block|type)/.test(text)) edge = 'center'
+    const edge = readAlignment(text)
     if (!edge) continue
     return { key: 'alignment_edge', value: edge, provenance: 'adapted', locked: false, ref: relRef(brick.id, 'rule-align'),
       source: { brickId: brick.id, measurementIds: [m.id], regionLabels: brick.regions.filter(r => r.measurement_ids.includes(m.id)).map(r => r.label),
