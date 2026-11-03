@@ -48,7 +48,7 @@ src/export/             parameters.json, tokens.css, handoff.md
 src/fixtures/           the three gate bricks and the step-2 compositions
 ```
 
-Reference photos and screenshots that show downloaded material are kept out of the repository. The only exceptions are the public-domain and free-to-use images under Sample credits, which are kept with their credit.
+The sample library holds Malik's own photos and licensed public-domain works, each with a credit line. The downloaded posters used in the gate and probe runs are not in the repository. The only exceptions are the public-domain and free-to-use images under Sample credits, which are kept with their credit.
 
 ## Sample credits
 
