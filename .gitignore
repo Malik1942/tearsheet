@@ -28,3 +28,4 @@ docs/screens/*.jpg
 !public/fixtures/g2.jpg
 !public/fixtures/c1.jpg
 !public/samples/*.jpg
+.env*
