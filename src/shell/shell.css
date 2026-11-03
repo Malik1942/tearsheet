@@ -31,7 +31,7 @@
 /* ---------- list items ---------- */
 .item {
   display: grid;
-  grid-template-columns: var(--img-col, calc(var(--image-share) * 100%)) 1fr;
+  grid-template-columns: minmax(0, calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words */
   gap: calc(var(--space) * 2);
   padding: calc(var(--space) * 2) calc(var(--space) * 2);
   min-height: var(--item-h);
