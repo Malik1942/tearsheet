@@ -1,28 +1,17 @@
-import { StoreProvider, useStore } from './lib/store'
+import { StoreProvider } from './lib/store'
 import { match, usePath, Link } from './lib/router'
 import { Library } from './Library'
-import { BrickCard } from './bricks/BrickCard'
+import { BrickScreen } from './screens/Brick'
 import { Compare } from './Compare'
 import { ProjectPage } from './Project'
 import { Solo } from './Solo'
-
-function BrickRoute({ id }: { id: string }) {
-  const store = useStore()
-  const brick = store.bricks.find(b => b.id === id)
-  return (
-    <div className="chrome min-h-full p-4">
-      <div className="mb-3 text-[12px]"><Link href="/" className="ink-2">← Library</Link></div>
-      {brick ? <div className="mx-auto max-w-3xl"><BrickCard brick={brick} actions={<Link href="/projects" className="btn">Use in a project →</Link>} /></div> : <p className="ink-2">No brick with id {id}.</p>}
-    </div>
-  )
-}
 
 function Routes() {
   const path = usePath()
   const solo = match('/solo/:target/:screen', path)
   if (solo) return <Solo target={solo.target} screen={solo.screen as 'list' | 'review'} />
   const brick = match('/brick/:id', path)
-  if (brick) return <BrickRoute id={brick.id} />
+  if (brick) return <BrickScreen id={brick.id} />
   if (path === '/projects' || path.startsWith('/project/')) return <div className="chrome min-h-full"><Nav /><ProjectPage /></div>
   if (path === '/compare') return <div className="chrome min-h-full"><Nav /><Compare /></div>
   return <Library />

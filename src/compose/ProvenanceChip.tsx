@@ -1,22 +1,28 @@
 import type { ParameterValue } from '../lib/types'
+import { Link } from '../lib/router'
 
-const COLORS: Record<ParameterValue['provenance'], string> = {
-  measured: 'bg-emerald-50 text-emerald-900 border-emerald-500',
-  interpreted: 'bg-amber-50 text-amber-900 border-amber-500 border-dotted',
-  adapted: 'bg-stone-100 text-stone-600 border-stone-300',
+const MEANING: Record<ParameterValue['provenance'], string> = {
+  measured: 'Read off the image by the model in this run; another run may differ.',
+  interpreted: "The model's reading; rests on the measurements listed.",
+  adapted: 'Set by you or by the shell.',
 }
 
-/** One parameter value with its provenance class. Interpreted values get a dotted outline so the difference is visible at a glance. */
-export function ProvenanceChip({ pv, onClick }: { pv: ParameterValue; onClick?: (pv: ParameterValue) => void }) {
-  const MEANING = { measured: 'Read off the image by the model in this run; another run may differ.', interpreted: "The model's reading; rests on the measurements listed.", adapted: 'Set by you or by the shell.' }
-  const title = [MEANING[pv.provenance], pv.source?.relationRule, pv.source?.note, pv.source?.measurementIds?.length ? `measurements: ${pv.source.measurementIds.join(', ')}` : ''].filter(Boolean).join('\n')
+/** One value with its provenance. Spec: measured = filled ink, interpreted = dotted outline, adapted = light outline.
+ *  The source id is always shown and links to the Brick screen scrolled to that item. */
+export function ProvenanceChip({ pv, showKey = true, onClick }: { pv: ParameterValue; showKey?: boolean; onClick?: (pv: ParameterValue) => void }) {
+  const src = pv.source
+  const srcId = src?.relationId ?? src?.measurementIds?.[0]
+  const label = pv.provenance === 'adapted'
+    ? (src?.brickId === 'user' ? 'by you' : src?.note?.startsWith('by rule') ? 'by rule' : srcId ? srcId : 'default')
+    : srcId ?? (src?.brickId ? src.brickId : '')
+  const title = [MEANING[pv.provenance], src?.relationRule, src?.note, src?.measurementIds?.length ? `measurements: ${src.measurementIds.join(', ')}` : ''].filter(Boolean).join('\n')
+  const href = src?.brickId && src.brickId !== 'user' && srcId ? `/brick/${src.brickId}#${srcId}` : null
   return (
-    <button type="button" onClick={() => onClick?.(pv)} title={title}
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-4 ${COLORS[pv.provenance]} ${onClick ? 'cursor-pointer hover:brightness-95' : 'cursor-default'}`}>
-      <span className="font-medium">{pv.key}</span>
-      <span>= {String(pv.value)}</span>
-      <span className="opacity-70">· {pv.provenance}</span>
+    <span className={`chip chip-${pv.provenance}`} title={title} onClick={onClick ? () => onClick(pv) : undefined} style={onClick ? { cursor: 'pointer' } : undefined}>
+      {showKey && <span className="mono">{pv.key}</span>}
+      <span className="mono">{showKey ? '= ' : ''}{String(pv.value)}</span>
+      <span style={{ opacity: 0.8 }}>· {pv.provenance}{label ? ' · ' : ''}{label && (href ? <Link href={href} className="src mono" onClick={e => e.stopPropagation()} style={{ color: 'inherit' }}>{label}</Link> : <span className="mono">{label}</span>)}</span>
       {pv.locked && <span aria-label="locked">🔒</span>}
-    </button>
+    </span>
   )
 }
