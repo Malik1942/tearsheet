@@ -1,6 +1,7 @@
 /** Rule before number (spec v2 C4′): the sentence a parameter's value reads as on the two prototype screens, and the row text built from it.
  *  Pure: no React, no model call. Each sentence was written from shell.css, ListScreen.tsx and DetailScreen.tsx; change one of those and change its sentence here. */
-import { DEFAULT_PARAMS, type ParameterKey, type Params } from '../shell/params'
+import { DEFAULT_PARAMS, RELATIONSHIP_KEYS, type ParameterKey, type Params } from '../shell/params'
+import type { Project, Resolved } from './mapRelations'
 import type { Brick, Measurement, ParameterValue } from './types'
 
 const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1)
@@ -200,3 +201,14 @@ export function footnoteFor(brick: Brick | undefined, measurementIds: string[] |
 
 /** The footnote of a value: `footnoteFor` its brick and the measurements it cites. */
 export const footnoteOf = (pv: ParameterValue, bricks: Brick[]): string | null => footnoteFor(bricks.find(b => b.id === pv.source?.brickId), pv.source?.measurementIds)
+
+/** The conclusion the phone preview leads with (V1, "What changed and why"): up to three relationship values that a brick of this project set by a rule, so the person reads what the references did.
+ *  Not `user` and not a shell default; ordered by the brick's position in `project.brickIds`, then by the vocabulary's key order. */
+export function whatChanged(project: Project, resolved: Resolved, bricks: Brick[]): ParameterValue[] {
+  const position = (pv: ParameterValue) => bricks.some(b => b.id === pv.source?.brickId) ? project.brickIds.indexOf(pv.source?.brickId ?? '') : -1
+  return RELATIONSHIP_KEYS.map((k, order) => ({ pv: resolved.values[k], order, at: position(resolved.values[k]) }))
+    .filter(({ pv, at }) => at >= 0 && ruleTextOf(pv, bricks) !== null)
+    .sort((a, b) => a.at - b.at || a.order - b.order)
+    .slice(0, 3)
+    .map(({ pv }) => pv)
+}
