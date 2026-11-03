@@ -27,6 +27,13 @@ export function datesLabel(b: Pick<Brick, 'saved_at' | 'taken_at'>, today: Date 
   return b.taken_at && b.taken_at !== b.saved_at ? `taken ${dayLabel(b.taken_at, today)} · ${saved}` : saved
 }
 
+/** 15_SIMPLIFY §2: the one line under a Library card and on the Brick sheet. "Dec 27, 2025" when the photo's EXIF gave a capture date (the day it was taken is the date that matters),
+ *  else "saved Nov 3"; a starter shows its credit line instead (spec v3 SB2: the credit travels with the photo). `originLabel` keeps both dates for Make. */
+export function dateLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {
+  if (originOf(b) === 'starter') return creditLine(b)
+  return b.taken_at ? dayLabel(b.taken_at, today) : savedLabel(b.saved_at, today)
+}
+
 /** The one credit line a starter carries wherever its photo is shown (spec v3 SB2). The licensed works have their own (README, Sample credits); a starter without one is the author's own work. */
 export const creditLine = (b: Pick<Brick, 'credit' | 'saved_at'>): string => b.credit ?? `Malik Zhang, ${b.saved_at.slice(0, 4)}`
 

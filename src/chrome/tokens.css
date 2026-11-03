@@ -47,3 +47,64 @@
 .card-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--line); overflow: hidden; }
 .card-progress::after { content: ''; position: absolute; left: -40%; width: 40%; height: 100%; background: var(--accent); animation: card-progress 1.6s linear infinite; }
 @keyframes card-progress { to { left: 100%; } }
+
+/* 15_SIMPLIFY §1 and §5: one header for every screen, the type scale, the gutters. */
+:root {
+  --type-title: 24px;      /* one page or step title */
+  --type-em: 15px;         /* emphasis */
+  --type-body: 13px;
+  --type-caption: 12px;
+  --gutter: 32px;          /* page gutter, desktop */
+  --section-gap: 32px;
+  --bar-h: 64px;           /* the phone's bottom bar */
+}
+@media (max-width: 767.98px) { :root { --gutter: 20px; } }
+
+.chrome .title { font-size: var(--type-title); line-height: 30px; font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.chrome .em { font-size: var(--type-em); line-height: 20px; font-weight: 600; margin: 0; }
+.chrome .caption { font-size: var(--type-caption); line-height: 16px; }
+.gutter { padding-left: var(--gutter); padding-right: var(--gutter); }
+
+.app-header { display: flex; align-items: center; gap: 24px; height: 56px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
+.wordmark { font-size: var(--type-em); font-weight: 600; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
+.tab { position: relative; display: inline-flex; align-items: center; height: 56px; padding: 0 2px; font-weight: 500; color: var(--ink-2); text-decoration: none; }
+.tab:hover { color: var(--ink); }
+.tab[aria-current="page"] { color: var(--accent); }
+.tab[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent); }
+.shoot { position: relative; }
+.count-badge { position: absolute; top: -8px; right: -8px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-size: 11px; line-height: 16px; font-weight: 600; text-align: center; }
+.status-pill { border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font: inherit; font-size: var(--type-caption); line-height: 16px; color: var(--ink-2); background: var(--paper); cursor: pointer; }
+
+.menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(26, 25, 23, 0.12); padding: 4px; z-index: 40; }
+.menu-item { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 4px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.menu-item:hover, .menu-item:focus-visible { background: var(--paper); outline: none; }
+.menu-sep { height: 1px; background: var(--line); margin: 4px 6px; }
+
+.bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding: 0 var(--gutter) env(safe-area-inset-bottom); background: var(--panel); border-top: 1px solid var(--line); }
+.bottom-bar .tab { height: var(--bar-h); justify-content: center; }
+.bottom-bar .tab[aria-current="page"]::after { top: -1px; bottom: auto; }
+.bottom-bar .shoot { padding: 11px 28px; border-radius: 999px; font-size: var(--type-em); }
+@media (min-width: 768px) { .bottom-bar { display: none; } }
+
+/* a toggle switch: accent only when on (§5) */
+.switch { position: relative; flex-shrink: 0; width: 30px; height: 18px; border-radius: 999px; background: var(--line); transition: background 0.15s; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 0.15s; }
+.switch[data-on] { background: var(--accent); }
+.switch[data-on]::after { transform: translateX(12px); }
+@media (max-width: 767.98px) { .with-bar { padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); } }
+
+.notice { display: flex; align-items: center; gap: 8px; padding-top: 8px; padding-bottom: 8px; font-size: var(--type-caption); background: var(--panel); border-bottom: 1px solid var(--line); }
+
+/* the Brick sheet (side panel on desktop, bottom sheet on a phone) and the About sheet: native <dialog>, opened modal */
+.sheet { position: fixed; margin: 0; padding: 0; border: 0; background: var(--panel); color: var(--ink); max-width: none; max-height: none; overflow: auto; overscroll-behavior: contain; }
+.sheet::backdrop { background: rgba(26, 25, 23, 0.28); }
+.sheet-side { inset: 0 0 0 auto; width: min(480px, 100vw); height: 100dvh; border-left: 1px solid var(--line); }
+@media (max-width: 767.98px) { .sheet-side { inset: auto 0 0 0; width: 100vw; height: auto; max-height: 88dvh; border-left: 0; border-radius: 12px 12px 0 0; } }
+.sheet-center { inset: 0; margin: auto; width: min(400px, calc(100vw - 40px)); height: fit-content; border-radius: var(--radius); border: 1px solid var(--line); }
+
+/* Library cards: the photo, one date line, and the state on the photo itself */
+.card-tile { position: relative; display: block; overflow: hidden; border-radius: var(--radius); background: #2a2a2a; aspect-ratio: 4 / 5; }
+.card-tile .card-progress::after { background: var(--ink); }
+.card-tile .card-progress[data-held]::after { animation: none; left: 0; background: var(--ink-2); }
+.alert-badge { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 999px; border: 1px solid var(--panel); background: var(--ink); color: #fff; font: inherit; font-weight: 700; font-size: 13px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.alert-pop { position: absolute; top: 40px; right: 8px; left: 8px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 18px rgba(26, 25, 23, 0.14); font-size: var(--type-caption); }

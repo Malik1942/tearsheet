@@ -1,5 +1,8 @@
 import { StoreProvider } from './lib/store'
-import { match, usePath, Link } from './lib/router'
+import { match, usePath } from './lib/router'
+import { hasHeader } from './lib/nav'
+import { AppChrome } from './chrome/AppChrome'
+import { AddPhotosProvider } from './bricks/AddPhotos'
 import { Library } from './Library'
 import { BrickScreen } from './screens/Brick'
 import { Compare } from './Compare'
@@ -34,25 +37,24 @@ function Routes() {
   if (instr) return <InstructionsScreen id={instr.id} />
   const proj = match('/project/:id', path)
   if (proj) return <ComposeScreen id={proj.id} />
-  if (path === '/compare') return <div className="chrome min-h-full"><Nav /><Compare /></div>
+  // the step-2 comparison: still a route, no longer in any navigation (15_SIMPLIFY §1)
+  if (path === '/compare') return <Compare />
   return <Library />
 }
 
-function Nav() {
+/** 15_SIMPLIFY §1: one shared header above every route but the solo shell renders. */
+function Page() {
   const path = usePath()
-  const items = [['/', 'Library'], ['/projects', 'Projects'], ['/compare', 'Compare (step 2)']] as const
-  return (
-    <nav className="flex items-center gap-1 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
-      <Link href="/" className="mr-3 font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-      {items.map(([h, label]) => <Link key={h} href={h} className={`btn btn-quiet ${path === h ? 'font-semibold' : ''}`} style={path === h ? { color: 'var(--ink)' } : undefined}>{label}</Link>)}
-    </nav>
-  )
+  if (!hasHeader(path)) return <Routes />
+  return <AppChrome><Routes /></AppChrome>
 }
 
 export default function App() {
   return (
     <StoreProvider>
-      <Routes />
+      <AddPhotosProvider>
+        <Page />
+      </AddPhotosProvider>
     </StoreProvider>
   )
 }

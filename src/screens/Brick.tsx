@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
@@ -9,61 +9,90 @@ import { MiniPreview } from '../shell/MiniPreview'
 import { brickParams } from '../lib/brickPreview'
 import { originLabel } from '../lib/brickLabels'
 import { originOf } from '../lib/starters'
+import { retryBlocked } from '../lib/queue'
+import type { Brick } from '../lib/types'
+import { RETRY_TITLE } from '../bricks/retryCopy'
 
 /** A starter ships with Tearsheet: it cannot be removed, only hidden. */
-const STARTER_KEEP = 'Starters ship with Tearsheet; hide them with the Starters toggle.'
+const STARTER_KEEP = 'Starters ship with Tearsheet; hide them with Include starters in ⋯.'
 
-/** Brick screen (spec v3 B2, B3): one photo; on the right a mini-preview of the List screen made from this brick alone (its three parameters, its own skin, the shell's defaults for the rest),
- *  then the transferable relations (rule → where it would land, `none` last as `no slot`), the measurements they rest on, the letterform description,
- *  the hypotheses, and the fragile sentence. Every item has an id anchor (#m3, #h2, #r1) so a provenance chip anywhere can land here. */
+/** Brick screen (spec v3 B2, B3): the `/brick/:id` route, which provenance chips and the Brick sheet's labels link to (`#m3`). Its body is `BrickDetails`, the same one the Library's Brick sheet folds under `Details ▸`. */
 export function BrickScreen({ id }: { id: string }) {
   const store = useStore()
   const brick = store.bricks.find(b => b.id === id)
+  if (!brick) return <div className="chrome min-h-full p-4"><Link href="/" className="ink-2 text-[12px]">← Library</Link><p className="mt-4 ink-2">No brick with id {id}.</p></div>
+  return <div className="chrome min-h-full"><BrickDetails key={brick.id} brick={brick} /></div>
+}
+
+/** One brick in full (spec v3 B2, B3): one photo; a mini-preview of the List screen made from this brick alone (its three parameters, its own skin, the shell's defaults for the rest),
+ *  then the transferable relations (rule → where it would land, `none` last as `no slot`), the measurements they rest on, the letterform description,
+ *  the hypotheses, and the fragile sentence. Every item has an id anchor (#m3, #h2, #r1) so a provenance chip anywhere can land here.
+ *  `page`: the route's two columns, photo left. `sheet` (15_SIMPLIFY §2): one column for the Brick sheet; the sheet's own photo, then `summary` (what it carries, the primary),
+ *  then, while `open`, everything below and the region boxes on that photo. The content is the same either way. */
+export function BrickDetails({ brick, variant = 'page', open = true, summary, onRemoved }: { brick: Brick; variant?: 'page' | 'sheet'; open?: boolean; summary?: ReactNode; onRemoved?: () => void }) {
+  const store = useStore()
+  const page = variant === 'page'
   const [regions, setRegions] = useState(true)
   const [hl, setHl] = useState<string | null>(null)
-  const target = typeof location !== 'undefined' ? location.hash.slice(1) : ''
+  const target = page && typeof location !== 'undefined' ? location.hash.slice(1) : ''
   useEffect(() => {
     if (!target) return
     const el = document.getElementById(target)
     if (el) { el.scrollIntoView({ block: 'center' }); setHl(target) }
-  }, [target, id])
+  }, [target, brick.id])
 
-  if (!brick) return <div className="chrome min-h-full p-4"><Link href="/" className="ink-2 text-[12px]">← Library</Link><p className="mt-4 ink-2">No brick with id {id}.</p></div>
   const mIds = new Set(brick.measurements.map(m => m.id))
   const relations = [...brick.relations].sort((a, b) => (a.parameter === 'none' ? 1 : 0) - (b.parameter === 'none' ? 1 : 0))
   const mini = brickParams(brick)
   const starter = originOf(brick) === 'starter'
+  const status = brick.status ?? 'ready'
+  /** A brick that was never read (failed, or still waiting) has no lists to show: only its line, its note and Remove. */
+  const read = status === 'ready'
+  const blocked = retryBlocked(brick)
+  const remove = () => { if (confirm(`Remove ${brick.id}? Projects using it lose its parameters and unexpressed items.`)) { store.removeBrick(brick.id); if (onRemoved) onRemoved(); else navigate('/') } }
+  const boxes = open && regions
+  const ratio = brick.photo.width / brick.photo.height
 
-  return (
-    <div className="chrome min-h-full">
-      <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
-        <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-        <span className="ink-2 min-w-0 truncate">/ <span className="mono">{brick.id}</span> · {originLabel(brick)}</span>
-        <div className="ml-auto flex items-center gap-2">
-          <button type="button" className={`btn ${regions ? '' : 'btn-quiet'}`} onClick={() => setRegions(v => !v)}>Regions {regions ? 'on' : 'off'}</button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="lg:sticky lg:top-4 lg:self-start">
-          <div className="relative overflow-hidden rounded-[6px]" style={{ background: '#1f1e1c', aspectRatio: `${brick.photo.width} / ${brick.photo.height}` }}>
-            <Photo src={brick.photo.url} className="h-full w-full object-cover" />
-            {regions && brick.regions.map(r => {
-              const on = hl !== null && (r.measurement_ids.includes(hl) || r.label === hl)
-              const [x1, y1, x2, y2] = r.box_1000
-              return (
-                <div key={r.label} className="absolute" title={`${r.label} · ${r.measurement_ids.join(', ')}`}
-                  style={{ left: `${x1 / 10}%`, top: `${y1 / 10}%`, width: `${(x2 - x1) / 10}%`, height: `${(y2 - y1) / 10}%`, border: `${on ? 2 : 1}px solid var(--accent)`, background: on ? 'rgba(200,80,42,0.18)' : 'transparent' }}>
-                  <span className="mono absolute left-0 top-0 px-1 text-[10px]" style={{ background: 'var(--accent)', color: '#fff' }}>{r.measurement_ids.join(' ')}</span>
-                </div>
-              )
-            })}
+  /* was the route's own header: the id, the origin line (with the version, which the old Library card showed), and the regions toggle */
+  const toolbar = (
+    <div className="flex items-center gap-3">
+      <span className="ink-2 min-w-0 flex-1 truncate"><span className="mono">{brick.id}</span> · {originLabel(brick)}{(brick.version ?? 1) > 1 ? ` · v${brick.version}` : ''}</span>
+      {brick.regions.length > 0 && <button type="button" className={`btn shrink-0 ${regions ? '' : 'btn-quiet'}`} onClick={() => setRegions(v => !v)}>Regions {regions ? 'on' : 'off'}</button>}
+    </div>
+  )
+  const photo = (
+    <div className={`relative overflow-hidden ${page ? 'rounded-[6px]' : 'mx-auto'}`} style={{ background: '#1f1e1c', aspectRatio: `${brick.photo.width} / ${brick.photo.height}`, ...(page ? {} : { width: `min(100%, calc(52dvh * ${ratio}))` }) }}>
+      <Photo src={brick.photo.url} className="h-full w-full object-cover" />
+      {boxes && brick.regions.map(r => {
+        const on = hl !== null && (r.measurement_ids.includes(hl) || r.label === hl)
+        const [x1, y1, x2, y2] = r.box_1000
+        return (
+          <div key={r.label} className="absolute" title={`${r.label} · ${r.measurement_ids.join(', ')}`}
+            style={{ left: `${x1 / 10}%`, top: `${y1 / 10}%`, width: `${(x2 - x1) / 10}%`, height: `${(y2 - y1) / 10}%`, border: `${on ? 2 : 1}px solid var(--accent)`, background: on ? 'rgba(200,80,42,0.18)' : 'transparent' }}>
+            <span className="mono absolute left-0 top-0 px-1 text-[10px]" style={{ background: 'var(--accent)', color: '#fff' }}>{r.measurement_ids.join(' ')}</span>
           </div>
-          {brick.credit && <p className="mt-2 text-[12px]">{brick.credit}</p>}
-          <p className="mono ink-2 mt-2 text-[11px]">{brick.model.id} · effort {brick.model.effort} · {(brick.model.latency_ms / 1000).toFixed(1)} s · {brick.model.input_tokens} in / {brick.model.output_tokens} out{brick.prompt_version ? ` · prompt ${brick.prompt_version}` : ''}</p>
-        </div>
+        )
+      })}
+    </div>
+  )
+  const meta = (
+    <div>
+      {brick.credit && <p className="mt-2 text-[12px]">{brick.credit}</p>}
+      <p className="mono ink-2 mt-2 text-[11px]">{brick.model.id} · effort {brick.model.effort} · {(brick.model.latency_ms / 1000).toFixed(1)} s · {brick.model.input_tokens} in / {brick.model.output_tokens} out{brick.prompt_version ? ` · prompt ${brick.prompt_version}` : ''}</p>
+    </div>
+  )
+  /* the failed card's controls (Try again, Remove, the error note) now live here; on the route `Use in Make` is the primary, in the sheet it sits above the fold */
+  const footer = (
+    <footer className="flex flex-wrap items-center gap-2">
+      {page && read && <button type="button" className="btn btn-accent" onClick={() => navigate(`/make?brick=${brick.id}`)}>Use in Make</button>}
+      {page && status === 'unparsed' && <button type="button" className="btn btn-accent" onClick={() => store.retry(brick.id)} disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']}>Try again</button>}
+      <button type="button" className="btn btn-quiet" disabled={starter} title={starter ? STARTER_KEEP : undefined} onClick={remove}>Remove</button>
+      {brick.error && <span className="ink-2 min-w-0 text-[11px] [overflow-wrap:anywhere]">{brick.error}</span>}
+    </footer>
+  )
 
-        <div className="flex flex-col gap-4">
+  const lists = read ? (
+    <>
           <div><MiniPreview params={mini.params} width={160} badge={mini.unexpressed} /></div>
           <section className="panel p-3">
             <h2 className="mb-2 text-[13px] font-semibold">Transferable relations</h2>
@@ -145,12 +174,20 @@ export function BrickScreen({ id }: { id: string }) {
             <blockquote className="m-0 border-l-2 pl-3 italic" style={{ borderColor: 'var(--accent)' }}>{brick.fragile_if_changed}</blockquote>
           </section>
 
-          <footer className="flex items-center gap-2">
-            <button type="button" className="btn btn-accent" onClick={() => navigate(`/projects?brick=${brick.id}`)}>Use in a project →</button>
-            <button type="button" className="btn btn-quiet" disabled={starter} title={starter ? STARTER_KEEP : undefined} onClick={() => { if (confirm(`Remove ${brick.id}? Projects using it lose its parameters and unexpressed items.`)) { store.removeBrick(brick.id); navigate('/') } }}>Remove</button>
-          </footer>
-        </div>
-      </div>
+    </>
+  ) : null
+
+  if (page) return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="flex flex-col gap-2 lg:sticky lg:top-[72px] lg:self-start">{toolbar}{photo}{meta}</div>
+      <div className="flex flex-col gap-4">{lists}{footer}</div>
+    </div>
+  )
+  return (
+    <div>
+      <div style={{ background: '#1f1e1c' }}>{photo}</div>
+      {summary}
+      {open && <div id={`details-${brick.id}`} className="flex flex-col gap-4 px-6 pb-8">{toolbar}{meta}{lists}{footer}</div>}
     </div>
   )
 }
