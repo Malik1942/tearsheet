@@ -1,8 +1,11 @@
 /* The prototype shell. Everything visual comes from CSS custom properties set by toCssVars() and the data-* switches from dataAttributes(). No generator. */
 
+/* ---------- spacing: a 4 px base (steps 4 8 12 16 24 32 48 at an 8 px spacing_unit, so every step is a multiple of --space), grouped by proximity:
+   inside an item (title → meta 4, meta → tags 8) < around an item (--item-pad, 32 24 16 12 as density goes 1 2 4 6) < between sections (32). Nothing sets a fixed height. */
 .shell {
   --viewport-h: 640px;
-  --item-h: calc(var(--viewport-h) / var(--density));
+  --side: calc(var(--space) * 2.5);                     /* side margins, 20 at an 8 px unit, on both screens */
+  --slot: calc(var(--viewport-h) / var(--density));    /* the share of the screen density gives one item: it caps a poster's height, it never sets an item's */
   --accent-weight: var(--accent-coverage);
   background: var(--color-bg);
   color: var(--color-fg);
@@ -40,16 +43,16 @@
   display: grid;
   grid-template-columns: minmax(0, calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words */
   gap: calc(var(--space) * 2);
-  padding: calc(var(--space) * 2) calc(var(--space) * 2);
-  min-height: var(--item-h);
+  padding: var(--item-pad) var(--side);   /* density sets this padding (params.ts ITEM_PAD), never a min-height: an item is as tall as what it holds */
   align-items: center;
   border-bottom: 1px solid var(--color-line);
 }
-.item .pic { aspect-ratio: 16 / 10; max-height: calc(var(--item-h) - var(--space) * 4); min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
+.item .pic { aspect-ratio: 16 / 10; min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
 .item .text { min-width: 0; }
-.item .title { margin: 0 0 calc(var(--space) * 0.75); overflow-wrap: anywhere; hyphens: auto; }
+.item .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; hyphens: auto; }   /* title → meta: 4 */
 .item .meta { color: var(--color-muted); margin: 0; }
-.item .note { margin: calc(var(--space) * 0.75) 0 0; color: var(--color-fg); }
+.item .note { margin: var(--space) 0 0; color: var(--color-fg); }   /* meta → note: 8 */
+.item .tags { margin: var(--space) 0 0; }                           /* → tags: 8 */
 .shell[data-density="6"] .item .note, .shell[data-density="4"] .item .note { display: none; }
 
 /* hierarchy: what leads */
@@ -58,17 +61,17 @@
 .shell[data-hierarchy="type-led"] .item .title { font-size: var(--t-display); font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
 .shell[data-hierarchy="type-led"] .item :is(.meta, .note) { font-size: var(--t-caption); font-weight: 500; line-height: 1.3; }   /* display names, caption details: three sizes with the top bar's title */
 .shell[data-hierarchy="image-led"] .item { grid-template-columns: 1fr; grid-template-rows: auto auto; }
-.shell[data-hierarchy="image-led"] .item .pic { aspect-ratio: 16 / 9; max-height: calc((var(--item-h) - var(--space) * 4) * var(--image-share)); }
+.shell[data-hierarchy="image-led"] .item .pic { width: 100%; aspect-ratio: 16 / 9; max-height: calc((var(--slot) - var(--item-pad) * 2) * var(--image-share)); }
 .shell[data-hierarchy="image-led"] .item .title { font-size: var(--t-body); }   /* the poster leads: names stay at body size, set apart by weight */
 
 /* rhythm */
 .shell[data-rhythm="alternating"] .item:nth-child(even) .pic { order: 2; }
 .shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type,
 .shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type {
-  grid-template-columns: 1fr; min-height: calc(var(--item-h) * 1.8);
+  grid-template-columns: 1fr;
 }
 .shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .pic,
-.shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .pic { order: 0; aspect-ratio: 16 / 9; max-height: calc(var(--item-h) * 1.1); }
+.shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .pic { order: 0; width: 100%; aspect-ratio: 16 / 9; max-height: calc(var(--slot) * 1.1); }
 /* the featured name is never under title size: under image-led it steps up from body to title; under balanced and type-led it already is title or display */
 .shell[data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
 .shell[data-hierarchy="image-led"][data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .title { font-size: var(--t-title); }
@@ -78,9 +81,10 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-muted);
-  padding: calc(var(--space) * 2) calc(var(--space) * 2) var(--space);
+  padding: calc(var(--space) * 4) var(--side) var(--space);   /* between sections 32, label → first row 8 */
   margin: 0;
 }
+.group:first-of-type > .group-title { padding-top: calc(var(--space) * 3); }
 
 /* ---------- accent: where and how much ---------- */
 .tag { display: inline-block; border-radius: var(--radius); padding: 1px calc(var(--space) * 0.75); margin-right: calc(var(--space) * 0.5); border: 1px solid var(--color-line); color: var(--color-muted); }
@@ -109,14 +113,14 @@
 .shell[data-accent="one-hero"][data-coverage="le15"][data-grouping="none"] .item:first-of-type * { color: var(--color-bg); }
 
 /* ---------- year review (detail) ---------- */
-.review-head { padding: calc(var(--space) * 3) calc(var(--space) * 2) calc(var(--space) * 2); }
+.review-head { padding: calc(var(--space) * 3) var(--side) var(--space); }
 .screen-title { margin: 0 0 calc(var(--space) * 2); }
 .stats { display: flex; gap: calc(var(--space) * 3); flex-wrap: wrap; color: var(--color-muted); margin: 0; padding: 0; list-style: none; }
 .stats strong { color: var(--color-fg); display: block; margin-bottom: calc(var(--space) * 0.5); }
 .shell[data-accent="labels"] .stats strong { color: var(--color-accent); }
-.review-section { padding: 0 0 calc(var(--space) * 2); }
+.review-section:last-child { padding-bottom: calc(var(--space) * 4); }
 
-.row { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--space) * 1.5); align-items: center; padding: var(--space) calc(var(--space) * 2); border-bottom: 1px solid var(--color-line); }
+.row { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--space) * 1.5); align-items: center; padding: calc(var(--space) * 1.5) var(--side); border-bottom: 1px solid var(--color-line); }   /* 12 px rows */
 .row .pic { width: calc(32px + var(--image-share) * 56px); height: calc(32px + var(--image-share) * 56px); }
 .row .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; }
 .row .meta { margin: 0; color: var(--color-muted); }
@@ -127,7 +131,7 @@
 .shell[data-hierarchy="type-led"] .row .pic { display: none; }
 .shell[data-rhythm="alternating"] .row:nth-child(even) .pic { order: 3; }
 .shell[data-rhythm="alternating"] .row:nth-child(even) .when { order: -1; }
-.feature { margin: 0 calc(var(--space) * 2) calc(var(--space) * 2); padding: calc(var(--space) * 2); background: var(--color-surface); border-radius: var(--radius); }
+.feature { margin: var(--space) var(--side) 0; padding: calc(var(--space) * 2); background: var(--color-surface); border-radius: var(--radius); }
 .feature .pic { height: calc(90px + var(--image-share) * 140px); margin-bottom: var(--space); }
 .feature .title { margin: 0 0 calc(var(--space) * 0.5); }
 .shell[data-align="right"] .feature, .shell[data-align="right"] .review-head { text-align: right; }
@@ -151,7 +155,7 @@
 .shell[data-flash~="type_scale_ratio"]:not([data-hierarchy="image-led"]) .item .title,
 .shell[data-flash~="type_scale_ratio"][data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
-/* hierarchy_mode: what leads a list item and a review row. spacing_unit: --space pads and gaps both. density: --item-h sizes the list item and hides its note at 4 and 6 */
+/* hierarchy_mode: what leads a list item and a review row. spacing_unit: --space pads and gaps both. density: --item-pad pads the list item and the note hides at 4 and 6 */
 .shell[data-flash~="hierarchy_mode"] :is(.item, .row),
 .shell[data-flash~="spacing_unit"] :is(.item, .row),
 .shell[data-flash~="density"] .item { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }

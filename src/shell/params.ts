@@ -74,6 +74,10 @@ export function normalize(key: ParameterKey, raw: ParamValue): ParamValue | null
 
 const COVERAGE_FRACTION: Record<string, number> = { '<=2%': 0.02, '<=5%': 0.05, '<=15%': 0.15 }
 
+/** Design pass A2: density sets the padding above and below a list item, in spacing units (32 24 16 12 px at 8 px), and never a min-height.
+ *  Fewer items per screen means more room around each, not empty space under it. */
+export const ITEM_PAD: Record<number, number> = { 1: 4, 2: 3, 4: 2, 6: 1.5 }
+
 /** The shell's type scale (design pass A1): four sizes generated from type_scale_ratio r on a 15 px body. Caption is body / r but never under 11 px;
  *  display is body × r² capped at 44 px, and title (body × r) never passes display. A screen shows three of the four. */
 export const BODY_PX = 15
@@ -106,7 +110,7 @@ export function toCssVars(p: Params): Record<string, string> {
     '--t-title': px(t.title),
     '--t-display': px(t.display),
     '--density': String(density),
-    '--item-vh': `${100 / density}svh`,
+    '--item-pad': `calc(var(--space) * ${ITEM_PAD[density] ?? ITEM_PAD[Number(PARAM_SPEC.density.default)]})`,
     '--image-share': String(layoutShare),
     '--image-share-pct': `${Math.round(layoutShare * 100)}%`,
     '--accent-coverage': String(COVERAGE_FRACTION[String(p.accent_coverage)] ?? 0.05),

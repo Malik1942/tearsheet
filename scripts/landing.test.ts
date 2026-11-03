@@ -200,10 +200,10 @@ describe('landsOn: the plain enums', () => {
       balanced: 'Poster and text sit side by side in each list item.',
     }],
     ['density', {
-      1: 'One list item fills the screen, with its note.',
-      2: 'Two list items per screen, with notes.',
-      4: 'Four list items per screen; notes are hidden.',
-      6: 'Six list items per screen; notes are hidden.',
+      1: 'The loosest list: 32 px above and below each item; notes show.',
+      2: 'A loose list: 24 px above and below each item; notes show.',
+      4: 'A compact list: 16 px above and below each item; notes are hidden.',
+      6: 'The tightest list: 12 px above and below each item; notes are hidden.',
     }],
     ['grouping', {
       none: 'One ungrouped list; the year review still groups by month.',
@@ -253,13 +253,13 @@ describe('landsOn: image_text_dominance', () => {
     for (const hierarchy_mode of ['image-led', 'balanced']) assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode, alignment_edge: 'right' })), landsOn('image_text_dominance', p({ hierarchy_mode, alignment_edge: 'left' })), hierarchy_mode)
   })
   it('image-led: full-width posters, the share as a percent of the item height', () => {
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.55 })), "Posters run full width above the text, 55% of the item's height; year-review images grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.55 })), "Posters run full width above the text, 55% as tall as the room density gives each item; year-review images grow with it.")
   })
   it('balanced: posters take the share of each list item width', () => {
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.4 })), "Posters take up to 40% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.")
   })
   it('adds the cap note above 0.8 and the raise note below 0.15, each after one space', () => {
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.95 })), "Posters run full width above the text, 80% of the item's height; year-review images grow with it. Capped at 80% so the text stays readable.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.95 })), "Posters run full width above the text, 80% as tall as the room density gives each item; year-review images grow with it. Capped at 80% so the text stays readable.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.1 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it. Raised to 15% so the poster stays visible.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 1 })), "The poster sits on the right as a square up to 48% of the item's width; year-review rows have no thumbnails. Capped at 80% so the text stays readable.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0 })), "The poster sits on the right as a square up to 9% of the item's width; year-review rows have no thumbnails. Raised to 15% so the poster stays visible.")
@@ -387,11 +387,11 @@ const resolved = resolveProject(project(), SAMPLES)
 const HEADLINES: Record<ParameterKey, string> = {
   type_scale_ratio: `${ruleOf('calmmouse', 'r1')} → List titles stay small under the poster; year-review rows are 2× and the “2025” headline and the totals are 44 px (the cap).`,
   hierarchy_mode: `${ruleOf('g1', 'r1')} → The poster leads each list item, full width above the text; year-review rows become full-width images.`,
-  density: 'Shell default → Four list items per screen; notes are hidden.',
+  density: 'Shell default → A compact list: 16 px above and below each item; notes are hidden.',
   grouping: 'Shell default → One ungrouped list; the year review still groups by month.',
   rhythm: 'Shell default → Every list item has the same shape.',
   alignment_edge: 'Shell default → Text hugs the left edge; posters stay full width above the text.',   // this project resolves image-led
-  image_text_dominance: `${ruleOf('g2', 'r1')} → Posters run full width above the text, 80% of the item's height; year-review images grow with it. Capped at 80% so the text stays readable.`,
+  image_text_dominance: `${ruleOf('g2', 'r1')} → Posters run full width above the text, 80% as tall as the room density gives each item; year-review images grow with it. Capped at 80% so the text stays readable.`,
   accent_placement: 'Shell default → Genre tags are outlined in light blue; year-review totals are light blue.',
   accent_coverage: `${ruleOf('g2', 'r2')} → At ≤5% coverage: genre tags are outlined in light blue; year-review totals are light blue.`,
   palette_hue_count: `${ruleOf('g1', 'r3')} → A third hue tints the genre tags on the list.`,
@@ -441,7 +441,7 @@ describe('ruleTextOf, rowHeadline and footnoteOf on g1 + g2 + calmmouse', () => 
   })
   it('a hand-set value starts with Set by you →', () => {
     const r = resolveProject(project({ manual: { density: 2 } }), SAMPLES)
-    assert.equal(rowHeadline(r.values.density, r.params, SAMPLES), 'Set by you → Two list items per screen, with notes.')
+    assert.equal(rowHeadline(r.values.density, r.params, SAMPLES), 'Set by you → A loose list: 24 px above and below each item; notes show.')
     assert.equal(ruleTextOf(r.values.density, SAMPLES), null)
     assert.equal(footnoteOf(r.values.density, SAMPLES), null)
   })
@@ -559,7 +559,7 @@ describe('exportCss', () => {
       assert.equal(commentOf(css, key), escaped(HEADLINES[key]), key)
       assert.ok(commentOf(css, key).startsWith('Shell default → '), key)
     }
-    assert.ok(css.includes('  --density: 4; /* Shell default → Four list items per screen; notes are hidden. */\n'))
+    assert.ok(css.includes('  --density: 4; /* Shell default → A compact list: 16 px above and below each item; notes are hidden. */\n'))
     assert.ok(!css.includes('shell default'), 'the lower-case origin is gone')
     for (const key of SHELL_DEFAULTS) assert.ok(!commentOf(css, key).includes('adapted'), `no adapted origin on the ${key} default`)
   })
@@ -586,7 +586,7 @@ describe('exportCss', () => {
     const r: Resolved = { ...resolved, values }
     const text = exportCss(r, [...SAMPLES, evil])
     const comment = commentOf(text, 'density')
-    assert.equal(comment, 'close * / early → Four list items per screen; notes are hidden. · measured · evil* /brick · r* /1 · from mx · mx: a * / b')
+    assert.equal(comment, 'close * / early → A compact list: 16 px above and below each item; notes are hidden. · measured · evil* /brick · r* /1 · from mx · mx: a * / b')
     assert.equal(count(text, '/*'), count(text, '*/'))
   })
 })

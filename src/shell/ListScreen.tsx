@@ -9,7 +9,7 @@ function Item({ c, hues, staticRender }: { c: Concert; hues: number; staticRende
         <h3 className="title">{c.artist}</h3>
         <p className="meta">{shortDate(c.date)} · {c.venue}, {c.city}</p>
         <p className="note">{c.note}</p>
-        <div className={hues >= 3 ? 'palette-3' : ''}>
+        <div className={hues >= 3 ? 'tags palette-3' : 'tags'}>
           {c.tags.map(t => <span key={t} className="tag">{t}</span>)}
           {staticRender ? <span className="action">Details</span> : <button className="action" type="button">Details</button>}
         </div>

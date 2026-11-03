@@ -1,6 +1,6 @@
 /** Rule before number (spec v2 C4′): the sentence a parameter's value reads as on the two prototype screens, and the row text built from it.
  *  Pure: no React, no model call. Each sentence was written from shell.css, ListScreen.tsx and DetailScreen.tsx; change one of those and change its sentence here. */
-import { DEFAULT_PARAMS, DISPLAY_CAP_PX, NEUTRAL_TEXT_FAMILY, PARAM_SPEC, RELATIONSHIP_KEYS, accentShows, typeScale, type ParameterKey, type Params } from '../shell/params'
+import { DEFAULT_PARAMS, DISPLAY_CAP_PX, ITEM_PAD, NEUTRAL_TEXT_FAMILY, PARAM_SPEC, RELATIONSHIP_KEYS, accentShows, typeScale, type ParameterKey, type Params } from '../shell/params'
 import type { Project, Resolved } from './mapRelations'
 import type { Brick, Measurement, ParameterValue } from './types'
 
@@ -36,11 +36,19 @@ const HIERARCHY = (side: string): Record<string, string> => ({
   'image-led': 'The poster leads each list item, full width above the text; year-review rows become full-width images.',
   balanced: 'Poster and text sit side by side in each list item.',
 })
-const DENSITY: Record<string, string> = {
-  1: 'One list item fills the screen, with its note.',
-  2: 'Two list items per screen, with notes.',
-  4: 'Four list items per screen; notes are hidden.',
-  6: 'Six list items per screen; notes are hidden.',
+/** Density sets the padding above and below each list item (params.ts ITEM_PAD, in spacing units) and whether the note shows; an item is as tall as what it holds, so the sentence never counts items per screen.
+ *  [how the list reads, what happens to the note]. */
+const DENSITY: Record<string, [string, string]> = {
+  1: ['The loosest list', 'notes show'],
+  2: ['A loose list', 'notes show'],
+  4: ['A compact list', 'notes are hidden'],
+  6: ['The tightest list', 'notes are hidden'],
+}
+/** A list item's padding at this density: in px when spacing_unit is in px, else as a multiple of it. */
+const itemPad = (params: Params): string => {
+  const m = ITEM_PAD[Number(params.density)] ?? ITEM_PAD[Number(DEFAULT_PARAMS.density)]
+  const unit = String(params.spacing_unit).trim(), px = /^(\d+(?:\.\d+)?)px$/.exec(unit)
+  return px ? `${Number((Number(px[1]) * m).toFixed(2))} px` : `${m} × ${unit}`
 }
 const GROUPING: Record<string, string> = {
   none: 'One ungrouped list; the year review still groups by month.',
@@ -127,13 +135,16 @@ export function landsOn(key: ParameterKey, params: Params): string {
       return params.rhythm === 'featured-first' && H === 'image-led' ? `${base} The first show's title is ${T}.` : base
     }
     case 'hierarchy_mode': return entry(HIERARCHY(side), key, params)
-    case 'density': return entry(DENSITY, key, params)
+    case 'density': {
+      const [list, note] = entry(DENSITY, key, params)
+      return `${list}: ${itemPad(params)} above and below each item; ${note}.`
+    }
     case 'grouping': return entry(GROUPING, key, params)
     case 'rhythm': return (params.rhythm === 'alternating' ? ALTERNATING(side)[String(H)] : undefined) ?? entry(RHYTHM, key, params)
     case 'alignment_edge': return entry(ALIGNMENT(String(H)), key, params)
     case 'image_text_dominance': {
       const base = H === 'type-led' ? `The poster sits on the ${side} as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
-        : H === 'image-led' ? `Posters run full width above the text, ${P}% of the item's height; year-review images grow with it.`
+        : H === 'image-led' ? `Posters run full width above the text, ${P}% as tall as the room density gives each item; year-review images grow with it.`
         : `Posters take up to ${P}% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.`
       return s > 0.8 ? `${base} Capped at 80% so the text stays readable.` : s < 0.15 ? `${base} Raised to 15% so the poster stays visible.` : base
     }
@@ -162,7 +173,7 @@ export function landsOn(key: ParameterKey, params: Params): string {
       const first = family.split(',')[0].trim().replace(/^["']|["']$/g, '')
       return `Every text on both screens is set in ${first}.`
     }
-    case 'spacing_unit': return `Padding and gaps step in ${String(params.spacing_unit)}; list items pad 2×.`
+    case 'spacing_unit': return `Padding and gaps step in ${String(params.spacing_unit)}; list items pad ${ITEM_PAD[Number(params.density)] ?? ITEM_PAD[Number(DEFAULT_PARAMS.density)]}×.`
   }
 }
 
