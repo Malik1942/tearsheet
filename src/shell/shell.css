@@ -1,21 +1,28 @@
 /* The prototype shell. Everything visual comes from CSS custom properties set by toCssVars() and the data-* switches from dataAttributes(). No generator. */
 
 .shell {
-  --body-size: 14px;
   --viewport-h: 640px;
   --item-h: calc(var(--viewport-h) / var(--density));
   --accent-weight: var(--accent-coverage);
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-family);
-  font-size: var(--body-size);
-  line-height: 1.35;
+  font-size: var(--t-body);
+  line-height: 1.4;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
 }
 .shell * { box-sizing: border-box; }
 .shell img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); }
+
+/* ---------- type: one scale from type_scale_ratio (params.ts typeScale), three sizes per screen ----------
+   List: title (names), body (meta, notes), caption (tags, group labels). Under type-led the names take display and meta and notes drop to caption, so it is still three.
+   Year review: display (year, totals), title (rows, feature), caption (months, row meta, dates, stat labels). */
+.t-caption, .tag, .group-title, .when, .stats li, .row .meta, .feature .meta, .action { font-size: var(--t-caption); font-weight: 500; line-height: 1.3; }
+.t-title, .item .title, .row .title, .feature .title { font-family: var(--font-display); font-size: var(--t-title); font-weight: 650; line-height: 1.15; letter-spacing: -0.01em; }
+.t-display, .screen-title, .stats strong { font-family: var(--font-display); font-size: var(--t-display); font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
+.meta, .when, .stats { font-variant-numeric: tabular-nums; }
 
 /* ---------- alignment: text hugs one edge, the opposite side stays empty ---------- */
 .shell[data-align="left"]   .text { text-align: left;   padding-right: calc(24% * (1 - var(--image-share))); }
@@ -40,18 +47,19 @@
 }
 .item .pic { aspect-ratio: 16 / 10; max-height: calc(var(--item-h) - var(--space) * 4); min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
 .item .text { min-width: 0; }
-.item .title { font-size: var(--title-size); font-weight: 700; line-height: 1.05; margin: 0 0 calc(var(--space) * 0.75); letter-spacing: -0.01em; overflow-wrap: anywhere; hyphens: auto; }
-.item .meta { color: var(--color-muted); font-size: var(--body-size); margin: 0; }
+.item .title { margin: 0 0 calc(var(--space) * 0.75); overflow-wrap: anywhere; hyphens: auto; }
+.item .meta { color: var(--color-muted); margin: 0; }
 .item .note { margin: calc(var(--space) * 0.75) 0 0; color: var(--color-fg); }
 .shell[data-density="6"] .item .note, .shell[data-density="4"] .item .note { display: none; }
 
 /* hierarchy: what leads */
 .shell[data-hierarchy="type-led"] .item { grid-template-columns: 1fr minmax(48px, calc(var(--image-share) * 60%)); }   /* 48px = the .pic min-height: a square never overflows its column at a low image share */
 .shell[data-hierarchy="type-led"] .item .pic { order: 2; aspect-ratio: 1 / 1; }
-.shell[data-hierarchy="type-led"] .item .title { font-size: var(--display-size); }
+.shell[data-hierarchy="type-led"] .item .title { font-size: var(--t-display); font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
+.shell[data-hierarchy="type-led"] .item :is(.meta, .note) { font-size: var(--t-caption); font-weight: 500; line-height: 1.3; }   /* display names, caption details: three sizes with the top bar's title */
 .shell[data-hierarchy="image-led"] .item { grid-template-columns: 1fr; grid-template-rows: auto auto; }
 .shell[data-hierarchy="image-led"] .item .pic { aspect-ratio: 16 / 9; max-height: calc((var(--item-h) - var(--space) * 4) * var(--image-share)); }
-.shell[data-hierarchy="image-led"] .item .title { font-size: calc(var(--body-size) * 1.15); }
+.shell[data-hierarchy="image-led"] .item .title { font-size: var(--t-body); }   /* the poster leads: names stay at body size, set apart by weight */
 
 /* rhythm */
 .shell[data-rhythm="alternating"] .item:nth-child(even) .pic { order: 2; }
@@ -61,22 +69,22 @@
 }
 .shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .pic,
 .shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .pic { order: 0; aspect-ratio: 16 / 9; max-height: calc(var(--item-h) * 1.1); }
-.shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
-.shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .title { font-size: var(--display-size); }
+/* the featured name is never under title size: under image-led it steps up from body to title; under balanced and type-led it already is title or display */
+.shell[data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
+.shell[data-hierarchy="image-led"][data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type .title { font-size: var(--t-title); }
 
 /* grouping */
 .group-title {
-  font-size: var(--body-size);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--color-muted);
   padding: calc(var(--space) * 2) calc(var(--space) * 2) var(--space);
   margin: 0;
 }
 
 /* ---------- accent: where and how much ---------- */
-.tag { display: inline-block; font-size: calc(var(--body-size) * 0.8); border-radius: var(--radius); padding: 1px calc(var(--space) * 0.75); margin-right: calc(var(--space) * 0.5); border: 1px solid var(--color-line); color: var(--color-muted); }
-.action { display: inline-block; font: inherit; border: 1px solid var(--color-line); background: transparent; color: var(--color-fg); border-radius: var(--radius); padding: calc(var(--space) * 0.5) calc(var(--space) * 1.5); margin-top: var(--space); }
+.tag { display: inline-block; border-radius: var(--radius); padding: 1px calc(var(--space) * 0.75); margin-right: calc(var(--space) * 0.5); border: 1px solid var(--color-line); color: var(--color-muted); }
+.action { display: inline-block; font-family: inherit; border: 1px solid var(--color-line); background: transparent; color: var(--color-fg); border-radius: var(--radius); padding: calc(var(--space) * 0.5) calc(var(--space) * 1.5); margin-top: var(--space); }
 .hero-mark { display: none; }
 
 .shell[data-accent="labels"] .tag { color: var(--color-accent); border-color: var(--color-accent); }
@@ -102,27 +110,26 @@
 
 /* ---------- year review (detail) ---------- */
 .review-head { padding: calc(var(--space) * 3) calc(var(--space) * 2) calc(var(--space) * 2); }
-.screen-title { font-size: var(--display-size); font-weight: 800; letter-spacing: -0.02em; line-height: 1; margin: 0 0 var(--space); }
-.stats { display: flex; gap: calc(var(--space) * 2); flex-wrap: wrap; color: var(--color-muted); margin: 0; padding: 0; list-style: none; }
-.stats strong { color: var(--color-fg); font-size: var(--title-size); display: block; line-height: 1.1; }
+.screen-title { margin: 0 0 calc(var(--space) * 2); }
+.stats { display: flex; gap: calc(var(--space) * 3); flex-wrap: wrap; color: var(--color-muted); margin: 0; padding: 0; list-style: none; }
+.stats strong { color: var(--color-fg); display: block; margin-bottom: calc(var(--space) * 0.5); }
 .shell[data-accent="labels"] .stats strong { color: var(--color-accent); }
 .review-section { padding: 0 0 calc(var(--space) * 2); }
-.review-section .group-title { font-size: var(--title-size); text-transform: none; letter-spacing: -0.01em; color: var(--color-fg); font-weight: 700; }
+
 .row { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--space) * 1.5); align-items: center; padding: var(--space) calc(var(--space) * 2); border-bottom: 1px solid var(--color-line); }
 .row .pic { width: calc(32px + var(--image-share) * 56px); height: calc(32px + var(--image-share) * 56px); }
-.row .title { font-size: var(--body-size); font-weight: 600; margin: 0; overflow-wrap: anywhere; }
-.row .meta { margin: 0; color: var(--color-muted); font-size: calc(var(--body-size) * 0.9); }
-.row .when { color: var(--color-muted); font-variant-numeric: tabular-nums; font-size: calc(var(--body-size) * 0.9); }
+.row .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; }
+.row .meta { margin: 0; color: var(--color-muted); }
+.row .when { color: var(--color-muted); white-space: nowrap; min-width: 5ch; text-align: right; }
 .shell[data-accent="dividers"] .row { border-bottom-color: var(--color-accent); }
 .shell[data-hierarchy="image-led"] .row { grid-template-columns: 1fr; }
 .shell[data-hierarchy="image-led"] .row .pic { width: 100%; height: calc(80px + var(--image-share) * 160px); }
 .shell[data-hierarchy="type-led"] .row .pic { display: none; }
-.shell[data-hierarchy="type-led"] .row .title { font-size: var(--title-size); }
 .shell[data-rhythm="alternating"] .row:nth-child(even) .pic { order: 3; }
 .shell[data-rhythm="alternating"] .row:nth-child(even) .when { order: -1; }
 .feature { margin: 0 calc(var(--space) * 2) calc(var(--space) * 2); padding: calc(var(--space) * 2); background: var(--color-surface); border-radius: var(--radius); }
 .feature .pic { height: calc(90px + var(--image-share) * 140px); margin-bottom: var(--space); }
-.feature .title { font-size: var(--title-size); font-weight: 700; margin: 0; }
+.feature .title { margin: 0 0 calc(var(--space) * 0.5); }
 .shell[data-align="right"] .feature, .shell[data-align="right"] .review-head { text-align: right; }
 .shell[data-align="center"] .feature, .shell[data-align="center"] .review-head { text-align: center; }
 .shell[data-align="center"] .stats { justify-content: center; }
@@ -139,12 +146,10 @@
    the accent family (below) is gated on data-accent that way, so a key outlines only what the shell's current placement colors.
    No transition or animation, so prefers-reduced-motion changes nothing: the outline is not motion and stays. */
 
-/* type_scale_ratio: --title-size and --display-size. A .row .title is body size and a list title is 1.15x body under image-led, except under type-led or on the featured first item */
-.shell[data-flash~="type_scale_ratio"] :is(.screen-title, .stats strong, .feature .title),
+/* type_scale_ratio: --t-title and --t-display. A list name is body size under image-led, except on the featured first item; every other title and display text takes the ratio */
+.shell[data-flash~="type_scale_ratio"] :is(.screen-title, .stats strong, .feature .title, .row .title),
 .shell[data-flash~="type_scale_ratio"]:not([data-hierarchy="image-led"]) .item .title,
-.shell[data-flash~="type_scale_ratio"][data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
-.shell[data-flash~="type_scale_ratio"][data-hierarchy="type-led"] .row .title { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
-.shell[data-flash~="type_scale_ratio"] .review-section .group-title { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell[data-flash~="type_scale_ratio"][data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
 /* hierarchy_mode: what leads a list item and a review row. spacing_unit: --space pads and gaps both. density: --item-h sizes the list item and hides its note at 4 and 6 */
 .shell[data-flash~="hierarchy_mode"] :is(.item, .row),

@@ -1,6 +1,6 @@
 /** Rule before number (spec v2 C4′): the sentence a parameter's value reads as on the two prototype screens, and the row text built from it.
  *  Pure: no React, no model call. Each sentence was written from shell.css, ListScreen.tsx and DetailScreen.tsx; change one of those and change its sentence here. */
-import { DEFAULT_PARAMS, RELATIONSHIP_KEYS, accentShows, type ParameterKey, type Params } from '../shell/params'
+import { DEFAULT_PARAMS, DISPLAY_CAP_PX, NEUTRAL_TEXT_FAMILY, PARAM_SPEC, RELATIONSHIP_KEYS, accentShows, typeScale, type ParameterKey, type Params } from '../shell/params'
 import type { Project, Resolved } from './mapRelations'
 import type { Brick, Measurement, ParameterValue } from './types'
 
@@ -115,11 +115,16 @@ export function landsOn(key: ParameterKey, params: Params): string {
   const side = params.alignment_edge === 'right' ? 'left' : 'right'
   switch (key) {
     case 'type_scale_ratio': {
-      const base = H === 'type-led' ? `Artist names lead at ${R}× the body text; the “2025” headline is ${R}× too.`
-        : H === 'image-led' ? `List titles stay small under the poster; year-review section titles are ${r}× and the “2025” headline is ${R}×.`
-        : `Artist names are ${r}× the body text; the “2025” headline is ${R}×.`
-      // the featured first show sets its title in the display size; under type-led every name already does
-      return params.rhythm === 'featured-first' && H !== 'type-led' ? `${base} The first show's title is ${R}×.` : base
+      // params.ts typeScale: title is body × r, display body × r², both capped at 44 px; a capped size is named in px
+      const t = typeScale(r)
+      const T = t.title >= DISPLAY_CAP_PX ? `${DISPLAY_CAP_PX} px (the cap)` : `${Number(r.toFixed(3))}×`
+      const D = t.display >= DISPLAY_CAP_PX ? `${DISPLAY_CAP_PX} px (the cap)` : `${R}×`
+      const ofBody = (x: string) => x.endsWith('×') ? `${x} the body text` : x
+      const base = H === 'type-led' ? `Artist names lead at ${ofBody(D)}; the “2025” headline and the totals are ${D} too.`
+        : H === 'image-led' ? `List titles stay small under the poster; year-review rows are ${T} and the “2025” headline and the totals are ${D}.`
+        : `Artist names are ${ofBody(T)}; the “2025” headline and the totals are ${D}.`
+      // the featured first show steps its name up to title size under image-led; under balanced and type-led every name already is at least that
+      return params.rhythm === 'featured-first' && H === 'image-led' ? `${base} The first show's title is ${T}.` : base
     }
     case 'hierarchy_mode': return entry(HIERARCHY(side), key, params)
     case 'density': return entry(DENSITY, key, params)
@@ -152,7 +157,9 @@ export function landsOn(key: ParameterKey, params: Params): string {
       return radius === '0px' || radius === '0' ? 'Posters, tags and buttons have square corners.' : `Corners of posters, tags and buttons are ${radius}.`
     }
     case 'type_family': {
-      const first = String(params.type_family).split(',')[0].trim().replace(/^["']|["']$/g, '')
+      // the shell's default family is the neutral skin, which toCssVars sets in Inter
+      const family = String(params.type_family) === PARAM_SPEC.type_family.default ? NEUTRAL_TEXT_FAMILY : String(params.type_family)
+      const first = family.split(',')[0].trim().replace(/^["']|["']$/g, '')
       return `Every text on both screens is set in ${first}.`
     }
     case 'spacing_unit': return `Padding and gaps step in ${String(params.spacing_unit)}; list items pad 2×.`

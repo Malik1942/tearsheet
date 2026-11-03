@@ -74,31 +74,33 @@ describe('colorName', () => {
 })
 
 describe('landsOn: type_scale_ratio', () => {
-  it('type-led: the names lead at the squared ratio', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 1.25 })), 'Artist names lead at 1.56× the body text; the “2025” headline is 1.56× too.')
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 2 })), 'Artist names lead at 4× the body text; the “2025” headline is 4× too.')
+  // design pass A1: on a 15 px body, title = 15 × r and display = 15 × r², both capped at 44 px
+  it('type-led: the names lead at the squared ratio, or at the cap', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 1.25 })), 'Artist names lead at 1.56× the body text; the “2025” headline and the totals are 1.56× too.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', type_scale_ratio: 2 })), 'Artist names lead at 44 px (the cap); the “2025” headline and the totals are 44 px (the cap) too.')
   })
-  it('image-led: list titles stay small; section titles take the ratio and the headline its square', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 1.414 })), 'List titles stay small under the poster; year-review section titles are 1.414× and the “2025” headline is 2×.')
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 2 })), 'List titles stay small under the poster; year-review section titles are 2× and the “2025” headline is 4×.')
+  it('image-led: list titles stay small; year-review rows take the ratio and the headline its square', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 1.414 })), 'List titles stay small under the poster; year-review rows are 1.414× and the “2025” headline and the totals are 2×.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', type_scale_ratio: 2 })), 'List titles stay small under the poster; year-review rows are 2× and the “2025” headline and the totals are 44 px (the cap).')
   })
   it('balanced: the names take the ratio and the headline its square', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', type_scale_ratio: 1.25 })), 'Artist names are 1.25× the body text; the “2025” headline is 1.56×.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', type_scale_ratio: 1.25 })), 'Artist names are 1.25× the body text; the “2025” headline and the totals are 1.56×.')
   })
-  it('squares every ratio of the vocabulary to two places', () => {
-    for (const [ratio, square] of [[1.125, '1.27'], [1.25, '1.56'], [1.414, '2'], [1.6, '2.56'], [2, '4'], [3, '9']] as const) {
-      assert.equal(landsOn('type_scale_ratio', p({ type_scale_ratio: ratio })), `Artist names are ${ratio}× the body text; the “2025” headline is ${square}×.`)
+  it('squares every ratio of the vocabulary to two places, and names the 44 px cap where it binds', () => {
+    for (const [ratio, square] of [[1.125, '1.27×'], [1.25, '1.56×'], [1.414, '2×'], [1.6, '2.56×'], [2, '44 px (the cap)']] as const) {
+      assert.equal(landsOn('type_scale_ratio', p({ type_scale_ratio: ratio })), `Artist names are ${ratio}× the body text; the “2025” headline and the totals are ${square}.`)
     }
+    assert.equal(landsOn('type_scale_ratio', p({ type_scale_ratio: 3 })), 'Artist names are 44 px (the cap); the “2025” headline and the totals are 44 px (the cap).')
   })
 })
 
 describe('landsOn: type_scale_ratio with a featured first show', () => {
-  it('balanced and image-led: the first show title takes the squared ratio, after one space', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', rhythm: 'featured-first', type_scale_ratio: 1.25 })), "Artist names are 1.25× the body text; the “2025” headline is 1.56×. The first show's title is 1.56×.")
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', rhythm: 'featured-first', type_scale_ratio: 2 })), "List titles stay small under the poster; year-review section titles are 2× and the “2025” headline is 4×. The first show's title is 4×.")
+  it('image-led: the first show title steps up to the ratio, after one space', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', rhythm: 'featured-first', type_scale_ratio: 2 })), "List titles stay small under the poster; year-review rows are 2× and the “2025” headline and the totals are 44 px (the cap). The first show's title is 2×.")
   })
-  it('type-led already says every name leads at that size, so nothing is added', () => {
-    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', rhythm: 'featured-first', type_scale_ratio: 2 })), 'Artist names lead at 4× the body text; the “2025” headline is 4× too.')
+  it('balanced and type-led already set every name at title or display size, so nothing is added', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', rhythm: 'featured-first', type_scale_ratio: 1.25 })), 'Artist names are 1.25× the body text; the “2025” headline and the totals are 1.56×.')
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', rhythm: 'featured-first', type_scale_ratio: 2 })), 'Artist names lead at 44 px (the cap); the “2025” headline and the totals are 44 px (the cap) too.')
   })
   it('uniform and alternating add nothing', () => {
     for (const rhythm of ['uniform', 'alternating']) for (const hierarchy_mode of ['balanced', 'image-led']) {
@@ -356,7 +358,7 @@ describe('landsOn: palette_hue_count and the skin', () => {
     assert.equal(landsOn('radius', p({ radius: '50%' })), 'Corners of posters, tags and buttons are 50%.')
   })
   it('type_family: the first family of the stack, trimmed, without its quotes', () => {
-    assert.equal(landsOn('type_family', p()), 'Every text on both screens is set in system-ui.')
+    assert.equal(landsOn('type_family', p()), 'Every text on both screens is set in Inter.')   // the default family is the neutral skin, set in Inter (design pass A1)
     assert.equal(landsOn('type_family', p({ type_family: '"Helvetica Neue", "Inter", Arial, sans-serif' })), 'Every text on both screens is set in Helvetica Neue.')
     assert.equal(landsOn('type_family', p({ type_family: "'Gill Sans', serif" })), 'Every text on both screens is set in Gill Sans.')
     assert.equal(landsOn('type_family', p({ type_family: '  Georgia , serif' })), 'Every text on both screens is set in Georgia.')
@@ -383,7 +385,7 @@ const resolved = resolveProject(project(), SAMPLES)
 
 /** What g1, g2 and calmmouse resolve to, row by row: the headline typed out from the spec, with rules and statements read from the fixtures. */
 const HEADLINES: Record<ParameterKey, string> = {
-  type_scale_ratio: `${ruleOf('calmmouse', 'r1')} → List titles stay small under the poster; year-review section titles are 2× and the “2025” headline is 4×.`,
+  type_scale_ratio: `${ruleOf('calmmouse', 'r1')} → List titles stay small under the poster; year-review rows are 2× and the “2025” headline and the totals are 44 px (the cap).`,
   hierarchy_mode: `${ruleOf('g1', 'r1')} → The poster leads each list item, full width above the text; year-review rows become full-width images.`,
   density: 'Shell default → Four list items per screen; notes are hidden.',
   grouping: 'Shell default → One ungrouped list; the year review still groups by month.',
@@ -572,7 +574,7 @@ describe('exportCss', () => {
     assert.ok(css.includes('  --type-scale-ratio: 2; /* '))
     assert.ok(css.includes('  --color-bg: #D4DFE0; /* '))
     assert.ok(css.includes('\n  /* resolved shell variables, what the two reference screens actually consume */\n'))
-    assert.ok(css.includes('  --title-size: calc(var(--body-size) * 2);\n'))
+    assert.ok(css.includes('  --t-title: 30px;\n'))   // 15 px body × ratio 2
   })
   it('opens and closes the same number of comments', () => {
     assert.equal(count(css, '/*'), count(css, '*/'))

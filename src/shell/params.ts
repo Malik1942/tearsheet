@@ -74,6 +74,21 @@ export function normalize(key: ParameterKey, raw: ParamValue): ParamValue | null
 
 const COVERAGE_FRACTION: Record<string, number> = { '<=2%': 0.02, '<=5%': 0.05, '<=15%': 0.15 }
 
+/** The shell's type scale (design pass A1): four sizes generated from type_scale_ratio r on a 15 px body. Caption is body / r but never under 11 px;
+ *  display is body × r² capped at 44 px, and title (body × r) never passes display. A screen shows three of the four. */
+export const BODY_PX = 15
+export const CAPTION_MIN_PX = 11
+export const DISPLAY_CAP_PX = 44
+export function typeScale(ratio: number): { caption: number; body: number; title: number; display: number } {
+  const display = Math.min(DISPLAY_CAP_PX, BODY_PX * ratio * ratio)
+  return { caption: Math.max(CAPTION_MIN_PX, BODY_PX / ratio), body: BODY_PX, title: Math.min(display, BODY_PX * ratio), display }
+}
+const px = (n: number) => `${Number(n.toFixed(2))}px`
+
+/** Under the shell's default family (the neutral skin) titles and display set in a display cut, body in Inter. Any other type_family (a letterform rule) sets both. */
+export const NEUTRAL_TEXT_FAMILY = 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif'
+export const NEUTRAL_DISPLAY_FAMILY = '"Inter Display", "SF Pro Display", Inter, system-ui, -apple-system, sans-serif'
+
 /** One JSON in, one set of CSS custom properties out. Layout switches ride as data attributes (see dataAttributes). */
 export function toCssVars(p: Params): Record<string, string> {
   const ratio = Number(p.type_scale_ratio)
@@ -82,10 +97,14 @@ export function toCssVars(p: Params): Record<string, string> {
   // the list item needs a readable text column: the layout uses at most 80% image share even when the measured value is higher; the sheet keeps the measured value
   const layoutShare = Math.min(0.8, Math.max(0.15, share))
   const hues = Number(p.palette_hue_count)
+  const t = typeScale(ratio)
+  const family = String(p.type_family), neutral = family === PARAM_SPEC.type_family.default
   return {
     '--type-scale-ratio': String(ratio),
-    '--title-size': `calc(var(--body-size) * ${ratio})`,
-    '--display-size': `calc(var(--body-size) * ${ratio} * ${ratio})`,
+    '--t-caption': px(t.caption),
+    '--t-body': px(t.body),
+    '--t-title': px(t.title),
+    '--t-display': px(t.display),
     '--density': String(density),
     '--item-vh': `${100 / density}svh`,
     '--image-share': String(layoutShare),
@@ -100,7 +119,8 @@ export function toCssVars(p: Params): Record<string, string> {
     '--color-surface': `color-mix(in oklab, ${p.color_fg} 6%, ${p.color_bg})`,
     '--color-tertiary': hues >= 3 ? `color-mix(in oklab, ${p.color_accent} 35%, ${p.color_bg})` : `color-mix(in oklab, ${p.color_fg} 10%, ${p.color_bg})`,
     '--radius': String(p.radius),
-    '--font-family': String(p.type_family),
+    '--font-family': neutral ? NEUTRAL_TEXT_FAMILY : family,
+    '--font-display': neutral ? NEUTRAL_DISPLAY_FAMILY : family,
     '--space': String(p.spacing_unit),
   }
 }
