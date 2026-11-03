@@ -76,7 +76,7 @@
 
 /* ---------- accent: where and how much ---------- */
 .tag { display: inline-block; font-size: calc(var(--body-size) * 0.8); border-radius: var(--radius); padding: 1px calc(var(--space) * 0.75); margin-right: calc(var(--space) * 0.5); border: 1px solid var(--color-line); color: var(--color-muted); }
-.action { font: inherit; border: 1px solid var(--color-line); background: transparent; color: var(--color-fg); border-radius: var(--radius); padding: calc(var(--space) * 0.5) calc(var(--space) * 1.5); margin-top: var(--space); }
+.action { display: inline-block; font: inherit; border: 1px solid var(--color-line); background: transparent; color: var(--color-fg); border-radius: var(--radius); padding: calc(var(--space) * 0.5) calc(var(--space) * 1.5); margin-top: var(--space); }
 .hero-mark { display: none; }
 
 .shell[data-accent="labels"] .tag { color: var(--color-accent); border-color: var(--color-accent); }
@@ -135,7 +135,8 @@
    Compose sets data-flash="key key ..." on .shell for one second after an accepted change. Each rule below outlines the elements that parameter restyles on the two screens, in the chrome accent
    (var(--accent) from chrome/tokens.css, never a --color-* of the shell: chrome and shell share no color).
    Blocks that run edge to edge (.item, .row, .review-head, .group-title, the shell itself) are outlined inside, at offset -2px, because .shell clips at its edges; everything else sits 2px outside.
-   An element the current attributes do not render (a .row on the list, a .feature without featured-first) has nothing to outline. A selector that names a data-* value restyles that element only under that value.
+   An element the current attributes do not render (a .row on the list, a .feature without featured-first) has nothing to outline. A selector that names a data-* value restyles that element only under that value:
+   the accent family (below) is gated on data-accent that way, so a key outlines only what the shell's current placement colors.
    No transition or animation, so prefers-reduced-motion changes nothing: the outline is not motion and stays. */
 
 /* type_scale_ratio: --title-size and --display-size. A .row .title is body size and a list title is 1.15x body under image-led, except under type-led or on the featured first item */
@@ -159,20 +160,28 @@
 .shell[data-flash~="rhythm"] :is(.item:nth-child(even), .row:nth-child(even), .group:first-of-type .item:first-of-type) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
 .shell[data-flash~="rhythm"] .feature { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
-/* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), tags, buttons and the feature card. palette_hue_count: the third hue tints the tags */
+/* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), tags, buttons and the feature card.
+   palette_hue_count at three hues: the third hue tints the tags, and .palette-3 is on the tag row only then (the other hue counts recolor the accent: see the accent family below) */
 .shell[data-flash~="image_text_dominance"] .pic,
 .shell[data-flash~="radius"] :is(.pic img, .tag, .action, .feature),
-.shell[data-flash~="palette_hue_count"] .tag { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+.shell[data-flash~="palette_hue_count"] .palette-3 .tag { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
-/* accent_placement and color_accent: the tags, the Details buttons and the review totals. accent_coverage: the tags and buttons (the totals ignore coverage). */
-.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"]) :is(.tag, .action, .stats strong),
-.shell[data-flash~="accent_coverage"] :is(.tag, .action) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+/* The accent family. What the accent colors depends on data-accent, so a rule names an element only under the placement that restyles it:
+   labels: the tags and the review totals. actions: the Details buttons. dividers: the line under every item and row. one-hero: the headline, the first item and, at 15%, the feature card.
+   color_accent recolors whichever of those the shell shows. palette_hue_count does the same (one hue makes the accent the text color, two or three make it color_accent).
+   accent_coverage changes how much is drawn: the tags (labels), the buttons (actions), the item's line width (dividers), the first item and the card (one-hero); the totals and the row lines ignore it.
+   accent_placement moves the accent from one placement to another and the one it left is not known, so it outlines every consumer on every placement: the one ungated union. */
+.shell[data-flash~="accent_placement"] :is(.tag, .action, .stats strong),
+.shell:is([data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="labels"] :is(.tag, .stats strong),
+.shell:is([data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="actions"] .action,
+.shell[data-flash~="accent_coverage"][data-accent="labels"] .tag,
+.shell[data-flash~="accent_coverage"][data-accent="actions"] .action { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 /* dividers draw the line under every item and row (coverage sets only the item's line width); one-hero colors the headline and the first item, and at 15% fills the first item and the feature card */
-.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"])[data-accent="dividers"] :is(.item, .row),
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="dividers"] :is(.item, .row),
 .shell[data-flash~="accent_coverage"][data-accent="dividers"] .item,
-.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="accent_coverage"])[data-accent="one-hero"] .group:first-of-type .item:first-of-type { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
-.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"])[data-accent="one-hero"] .screen-title,
-.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"])[data-accent="one-hero"][data-coverage="le15"] .feature,
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"], [data-flash~="accent_coverage"])[data-accent="one-hero"] .group:first-of-type .item:first-of-type { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="one-hero"] .screen-title,
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="palette_hue_count"])[data-accent="one-hero"][data-coverage="le15"] .feature,
 .shell[data-flash~="accent_coverage"][data-accent="one-hero"] .feature { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
 /* color_bg: the page background is the shell itself. color_fg and type_family: the text of titles and meta lines (type_family sets every text; these are the ones that read as text) */

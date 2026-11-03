@@ -7,7 +7,7 @@ import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS } from '../shell/params'
 import type { ParameterValue } from '../lib/types'
 import { Shell } from '../shell/Shell'
 import { MiniPreview } from '../shell/MiniPreview'
-import { conflictTiles } from '../lib/conflictPreview'
+import { choiceStands, conflictTiles } from '../lib/conflictPreview'
 import { Photo } from '../bricks/Photo'
 import { ProvenanceChip } from '../compose/ProvenanceChip'
 import { Section, Row } from '../compose/Sheet'
@@ -137,12 +137,14 @@ export function ComposeScreen({ id }: { id: string }) {
           <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} swatch={k.startsWith('color')} thumb={thumbOf(resolved.values[k])} flash={flash.includes(k)} />)}</Section>
           {resolved.conflicts.length > 0 && (
             <Section title="Conflicts">
-              {resolved.conflicts.map(k => (
+              {resolved.conflicts.map(k => {
+                const tiles = conflictTiles(resolved, k, project.choice[k])
+                return (
                 <div key={k} className="py-1 text-[12px]">
                   <div className="mono pb-1">{k}</div>
-                  {/* C6: choose by preview. One tile per candidate: a mini-screen rendered with that brick's value, the whole tile one button. */}
+                  {/* C6: choose by preview. One tile per candidate: a mini-screen rendered with that brick's value, the whole tile one button (the mini-screen is static, so the button holds nothing interactive). */}
                   <div role="group" aria-label={`Choose ${k}`} className="flex flex-wrap gap-2">
-                    {conflictTiles(resolved, k, project.choice[k]).map(t => (
+                    {tiles.map(t => (
                       <button key={t.ref} type="button" aria-pressed={t.pressed} aria-label={`Use ${t.brickId}'s ${k} = ${t.value}`} onClick={() => update(p => ({ choice: { ...p.choice, [k]: t.ref } }))}
                         className="flex cursor-pointer flex-col items-start gap-1 rounded p-1 text-left" style={{ width: CONFLICT_W + 12, background: 'transparent', color: 'var(--ink)', border: `2px solid ${t.pressed ? 'var(--ink)' : 'var(--line)'}` }}>
                         <MiniPreview params={t.params} width={CONFLICT_W} />
@@ -151,9 +153,10 @@ export function ComposeScreen({ id }: { id: string }) {
                       </button>
                     ))}
                   </div>
-                  {!project.choice[k] ? <div className="ink-2 pt-1 text-[11px]">{COPY.conflictDefault}</div> : <div className="pt-1"><ProvenanceChip pv={resolved.values[k]} showKey={false} /></div>}
+                  {!choiceStands(tiles, project.choice[k]) ? <div className="ink-2 pt-1 text-[11px]">{COPY.conflictDefault}</div> : <div className="pt-1"><ProvenanceChip pv={resolved.values[k]} showKey={false} /></div>}
                 </div>
-              ))}
+                )
+              })}
             </Section>
           )}
           {resolved.capped.length > 0 && (

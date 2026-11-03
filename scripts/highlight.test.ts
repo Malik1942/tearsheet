@@ -8,7 +8,7 @@ import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
 import { PARAMETER_KEYS, type ParameterKey } from '../src/shell/params.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import { footnoteMeasurement } from '../src/lib/landing.ts'
-import { PEEK_WIDTH, flashKeys, peekPosition, peekRegions, peekSize } from '../src/lib/highlight.ts'
+import { PEEK_WIDTH, flashKeys, nextFlash, peekPosition, peekRegions, peekSize } from '../src/lib/highlight.ts'
 
 const AT = '2026-11-02T10:00:00.000Z'
 const project = (patch: Partial<Project> = {}): Project => ({ id: 't', intent: 'x', createdAt: '', brickIds: ['g1', 'g2', 'calmmouse'], disabled: {}, choice: {}, locks: {}, manual: {}, ...patch })
@@ -83,6 +83,65 @@ describe('flashKeys', () => {
     const before = JSON.stringify(out)
     flashKeys(1, out)
     assert.equal(JSON.stringify(out), before)
+  })
+})
+
+/** The step `useChangeFlash` takes while rendering: what it has seen of the project, and the keys now flashing, in; the same two, updated, out. */
+describe('nextFlash', () => {
+  const prev = created()
+  const out = withNextVersion(prev, { ...prev, brickIds: ['g1', 'greencar', 'calmmouse'] }, SAMPLES, AT)   // v2, moved rhythm and more
+  const moved = flashKeys(1, out)
+  const running: ParameterKey[] = ['radius']
+
+  it('has something to flash in these tests', () => {
+    assert.ok(moved.length > 0)
+  })
+  it('flashes nothing on the first render of a project, whatever its version: what was saved is not a change', () => {
+    assert.deepEqual(nextFlash(null, out, []), { seen: { id: 't', v: 2 }, flash: [] })
+    assert.deepEqual(nextFlash(null, prev, []), { seen: { id: 't', v: 1 }, flash: [] })
+  })
+  it('flashes the keys the new version moved when the version goes up while the project is mounted', () => {
+    assert.deepEqual(nextFlash({ id: 't', v: 1 }, out, []), { seen: { id: 't', v: 2 }, flash: moved })
+  })
+  it('replaces a running highlight with the newer change\'s keys', () => {
+    assert.deepEqual(nextFlash({ id: 't', v: 1 }, out, running).flash, moved)
+  })
+  it('flashes nothing on an id change, and clears a highlight still running from the project it came from', () => {
+    const other = { ...out, id: 'u' }
+    assert.deepEqual(nextFlash({ id: 't', v: 1 }, other, []), { seen: { id: 'u', v: 2 }, flash: [] })
+    assert.deepEqual(nextFlash({ id: 't', v: 1 }, other, running), { seen: { id: 'u', v: 2 }, flash: [] })
+    assert.deepEqual(nextFlash({ id: 't', v: 2 }, { ...prev, id: 'u' }, moved), { seen: { id: 'u', v: 1 }, flash: [] })
+  })
+  it('flashes nothing when the version goes down, and follows it, so the next rise is read from there', () => {
+    assert.deepEqual(nextFlash({ id: 't', v: 3 }, out, []), { seen: { id: 't', v: 2 }, flash: [] })
+  })
+  it('leaves a running highlight alone when the version goes down or is the same, and when the rise moved nothing', () => {
+    assert.deepEqual(nextFlash({ id: 't', v: 3 }, out, running).flash, running)
+    const same = nextFlash({ id: 't', v: 2 }, out, running)
+    assert.deepEqual(same.flash, running)
+    const locked = withNextVersion(out, { ...out, lockedBricks: { g1: true } }, SAMPLES, AT)   // a lock is accepted and bumps the version, but moves no value
+    assert.equal(locked.version, 3)
+    assert.deepEqual(flashKeys(2, locked), [])
+    assert.deepEqual(nextFlash({ id: 't', v: 2 }, locked, running), { seen: { id: 't', v: 3 }, flash: running })
+  })
+  it('hands back the very same seen object and flash array when nothing changed, so the hook sets no state', () => {
+    const seen = { id: 't', v: 2 }
+    const step = nextFlash(seen, out, running)
+    assert.equal(step.seen, seen)
+    assert.equal(step.flash, running)
+  })
+  it('does nothing without a project', () => {
+    const seen = { id: 't', v: 2 }
+    const step = nextFlash(seen, undefined, running)
+    assert.equal(step.seen, seen)
+    assert.equal(step.flash, running)
+    assert.equal(nextFlash(null, undefined, []).seen, null)
+  })
+  it('does not change the project, or the highlight it is given', () => {
+    const before = JSON.stringify(out), flashBefore = [...running]
+    nextFlash({ id: 't', v: 1 }, out, running)
+    assert.equal(JSON.stringify(out), before)
+    assert.deepEqual(running, flashBefore)
   })
 })
 
@@ -212,5 +271,114 @@ describe('shell.css flash rules', () => {
   })
   it('adds no transition or animation', () => {
     assert.doesNotMatch(block.replace(/\/\*[\s\S]*?\*\//g, ''), /transition|animation/)
+  })
+
+  /* The accent family is gated on `data-accent`: a rule outlines an element only where the shell restyles it under the accent placement it is in.
+   * A small evaluator for the subset the block uses: split the selector list at top-level commas, expand each :is(...), split a simple selector into the `.shell` compound and what comes after it,
+   * and read the compound's attribute tests ([k~="v"], [k="v"], :not([k="v"])) against the attributes given. What it returns are the element selectors left standing. */
+  const splitTop = (s: string, at: (c: string) => boolean): string[] => {
+    const parts: string[] = []
+    let depth = 0, from = 0
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i]
+      if (c === '(' || c === '[') depth++
+      else if (c === ')' || c === ']') depth--
+      else if (depth === 0 && at(c)) { parts.push(s.slice(from, i)); from = i + 1 }
+    }
+    parts.push(s.slice(from))
+    return parts.map(p => p.trim()).filter(Boolean)
+  }
+  const expandIs = (sel: string): string[] => {
+    const open = sel.indexOf(':is(')
+    if (open < 0) return [sel]
+    let depth = 0, close = open + 3
+    for (let i = open + 3; i < sel.length; i++) {
+      if (sel[i] === '(') depth++
+      else if (sel[i] === ')' && --depth === 0) { close = i; break }
+    }
+    return splitTop(sel.slice(open + 4, close), c => c === ',').flatMap(alt => expandIs(sel.slice(0, open) + alt + sel.slice(close + 1)))
+  }
+  const holds = (compound: string, attrs: Record<string, string>): boolean => {
+    const not = [...compound.matchAll(/:not\(\[([a-z-]+)="([^"]*)"\]\)/g)]
+    const has = [...compound.replace(/:not\([^)]*\)/g, '').matchAll(/\[([a-z-]+)(~?)="([^"]*)"\]/g)]
+    return has.every(([, name, op, v]) => op === '~' ? (attrs[name] ?? '').split(' ').includes(v) : attrs[name] === v) && not.every(([, name, v]) => attrs[name] !== v)
+  }
+  /** The element selectors the flash rules outline for `key`, on a shell with these attributes (data-flash is set to `key`), sorted, each once. */
+  const outlined = (key: string, attrs: Record<string, string>): string[] => {
+    const all = { 'data-flash': key, ...attrs }
+    const out = new Set<string>()
+    for (const r of rules) for (const one of splitTop(r.selector, c => c === ',').flatMap(expandIs)) {
+      const [compound, ...rest] = splitTop(one, c => c === ' ')
+      if (holds(compound, all)) out.add(rest.join(' '))
+    }
+    return [...out].sort()
+  }
+  const PLACEMENTS = ['none', 'labels', 'actions', 'dividers', 'one-hero']
+  const FIRST = '.group:first-of-type .item:first-of-type'
+  const under = (key: string, accent: string, coverage = 'le5') => outlined(key, { 'data-accent': accent, 'data-coverage': coverage })
+
+  it('the evaluator reads the block: an ungated key outlines on every placement, a key of another family on none', () => {
+    for (const a of PLACEMENTS) {
+      assert.deepEqual(under('color_bg', a), [''], a)   // the shell itself: nothing after the compound
+      assert.deepEqual(under('grouping', a), ['.group-title'], a)
+    }
+  })
+
+  it('color_accent outlines the elements the accent colors under the placement the shell is in, and none under none', () => {
+    assert.deepEqual(under('color_accent', 'none'), [])
+    assert.deepEqual(under('color_accent', 'labels'), ['.stats strong', '.tag'])
+    assert.deepEqual(under('color_accent', 'actions'), ['.action'])
+    assert.deepEqual(under('color_accent', 'dividers'), ['.item', '.row'])
+    assert.deepEqual(under('color_accent', 'one-hero'), [FIRST, '.screen-title'])
+    assert.deepEqual(under('color_accent', 'one-hero', 'le15'), ['.feature', FIRST, '.screen-title'])
+  })
+  it('accent_coverage outlines only what coverage changes: the tags under labels, the buttons under actions, the item line under dividers, the first item and the card under one-hero', () => {
+    assert.deepEqual(under('accent_coverage', 'none'), [])
+    assert.deepEqual(under('accent_coverage', 'labels'), ['.tag'])
+    assert.deepEqual(under('accent_coverage', 'actions'), ['.action'])
+    assert.deepEqual(under('accent_coverage', 'dividers'), ['.item'])
+    assert.deepEqual(under('accent_coverage', 'one-hero'), ['.feature', FIRST])
+  })
+  it('accent_coverage does not outline the buttons under labels, nor the tags under actions (the fix)', () => {
+    assert.ok(!under('accent_coverage', 'labels').includes('.action'))
+    assert.ok(!under('accent_coverage', 'actions').includes('.tag'))
+    assert.ok(!under('accent_coverage', 'labels').includes('.stats strong'), 'the totals ignore coverage')
+  })
+  it('palette_hue_count outlines the third-hue tags wherever they are, and what the accent colors under each placement (one hue or two recolors every accent consumer)', () => {
+    assert.deepEqual(under('palette_hue_count', 'none'), ['.palette-3 .tag'])
+    assert.deepEqual(under('palette_hue_count', 'labels'), ['.palette-3 .tag', '.stats strong', '.tag'])
+    assert.deepEqual(under('palette_hue_count', 'actions'), ['.action', '.palette-3 .tag'])
+    assert.deepEqual(under('palette_hue_count', 'dividers'), ['.item', '.palette-3 .tag', '.row'])
+    assert.deepEqual(under('palette_hue_count', 'one-hero'), [FIRST, '.palette-3 .tag', '.screen-title'])
+    assert.deepEqual(under('palette_hue_count', 'one-hero', 'le15'), ['.feature', FIRST, '.palette-3 .tag', '.screen-title'])
+  })
+  it('accent_placement stays an ungated union on every placement, since the previous placement is unknown', () => {
+    for (const a of PLACEMENTS) for (const sel of ['.tag', '.action', '.stats strong']) assert.ok(under('accent_placement', a).includes(sel), `${a} ${sel}`)
+    assert.deepEqual(under('accent_placement', 'dividers'), ['.action', '.item', '.row', '.stats strong', '.tag'])
+    assert.deepEqual(under('accent_placement', 'one-hero'), ['.action', FIRST, '.screen-title', '.stats strong', '.tag'])
+  })
+
+  /** The selectors of shell.css above the highlight block, one per entry. */
+  const baseSelectors = [...css.slice(0, start).replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{/g)].flatMap(m => splitTop(m[1], c => c === ','))
+
+  /** Every class an outline names is one that shell.css (above the highlight block) restyles under that very placement; for coverage, under a coverage condition too. */
+  it('draws an accent-family outline only on elements a rule of shell.css restyles under that placement', () => {
+    const restyled = (accent: string, cls: string, coverage: boolean) => baseSelectors.some(s => s.includes(`[data-accent="${accent}"]`) && s.includes(`.${cls}`) && (!coverage || s.includes('[data-coverage=')))
+    for (const key of ['color_accent', 'accent_coverage', 'palette_hue_count']) {
+      for (const a of PLACEMENTS) for (const cov of ['le2', 'le5', 'le15']) {
+        for (const sel of under(key, a, cov)) {
+          if (sel === '.palette-3 .tag') continue   // the third hue is a class of the markup, not a placement
+          for (const cls of sel.match(/\.[a-z][a-z0-9-]*/g)!.map(c => c.slice(1))) {
+            assert.ok(restyled(a, cls, key === 'accent_coverage'), `${key} outlines ${sel} under ${a} ${cov}, but no rule restyles .${cls} there`)
+          }
+        }
+      }
+    }
+  })
+  it('and the other way: wherever shell.css has a coverage rule for an element under a placement, accent_coverage outlines it there (nothing is left out)', () => {
+    for (const [accent, cls] of [['labels', 'tag'], ['actions', 'action'], ['dividers', 'item'], ['one-hero', 'feature']]) {
+      assert.ok(baseSelectors.some(s => s.includes(`[data-accent="${accent}"][data-coverage=`) && s.includes(`.${cls}`)), `shell.css has a coverage rule for .${cls} under ${accent}`)
+      assert.ok(under('accent_coverage', accent).some(sel => sel.includes(`.${cls}`)), `${accent} .${cls}`)
+    }
   })
 })

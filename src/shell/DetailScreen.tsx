@@ -1,8 +1,9 @@
 import { CONCERTS, groupBy, posterFor, shortDate } from './content'
 import type { Params } from './params'
 
-/** Screen 2: the year in review. Exercises grouping and rhythm on a second layout. */
-export function DetailScreen({ params }: { params: Params }) {
+/** Screen 2: the year in review. Exercises grouping and rhythm on a second layout.
+ *  `staticRender` is the same contract as on `ListScreen`: no interactive element. This screen has none today (rows, tags and totals are plain text), so it has nothing to swap; a control added here has to honor the prop. */
+export function DetailScreen({ params }: { params: Params; staticRender?: boolean }) {
   const grouping = String(params.grouping) === 'none' ? 'by-time' : String(params.grouping)
   const groups = groupBy(CONCERTS, grouping)
   const rhythm = String(params.rhythm)
