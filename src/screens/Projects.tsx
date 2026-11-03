@@ -7,7 +7,9 @@ import { proposedNow } from '../export'
 import { savedLabel } from '../lib/brickLabels'
 import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
-import type { Proposal, ProposalPick } from '../lib/mapRelations'
+import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
+import { brickParams, rotations } from '../lib/brickPreview'
+import { MiniPreview } from '../shell/MiniPreview'
 import type { Brick } from '../lib/types'
 
 const MAX_BRICKS = 5
@@ -21,6 +23,11 @@ const COPY = {
   manual: 'Pick manually',
   proposeInstead: 'Propose instead',
   acceptAll: 'Accept all',
+  compositions: 'Pick a composition',
+  compositionsHint: 'The same bricks, each with a different one on top. Worked out here from their rules; no model call.',
+  top: (id: string) => `top: ${id}`,
+  useThis: 'Use this one',
+  back: 'Back',
   swap: 'Swap',
   proposedBy: 'proposed · model',
   swappedBy: 'adapted · by you',
@@ -41,7 +48,7 @@ const COPY = {
   empty: 'Nothing in the library yet. Add photos or load the sample library first.',
 }
 
-type Stage = 'intent' | 'proposing' | 'proposal' | 'manual'
+type Stage = 'intent' | 'proposing' | 'proposal' | 'compositions' | 'manual'
 type Meta = { model: string; effort: string; latency_ms: number; dropped: number; intent: string; lean?: Lean }
 type Card = ProposalPick & { original?: ProposalPick }
 
@@ -66,6 +73,8 @@ export function ProjectsScreen() {
   const [chips, setChips] = useState<ChipId[]>([])
   const [pickingAnchor, setPickingAnchor] = useState(false)
   const [cards, setCards] = useState<Card[]>([])
+  /** The record made when Accept all was pressed; the compositions stage creates the project with it, whichever of the three is picked. */
+  const [accepted, setAccepted] = useState<Proposal | null>(null)
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const req = useRef(0)
   useEffect(() => { proposeEnabled().then(setEnabled) }, [])
@@ -115,14 +124,29 @@ export function ProjectsScreen() {
     // the record carries the intent the model actually saw (the field is locked while the cards are shown)
     const picks: ProposalPick[] = cards.map(({ original: _o, ...p }) => p)
     const proposal: Proposal = { at: new Date().toISOString(), model: meta.model, effort: meta.effort, intent: meta.intent, latency_ms: meta.latency_ms, dropped: meta.dropped, picks, ...(meta.lean ? { lean: meta.lean } : {}) }
-    openProject(store.createProject(meta.intent, picks.map(c => c.brickId), name.trim() || undefined, { proposal }))
+    // P8: one accepted brick has nothing to rotate, so it goes straight in; two or three are shown in their rotations first
+    if (picks.length < 2) openProject(store.createProject(meta.intent, picks.map(c => c.brickId), name.trim() || undefined, { proposal }))
+    else { setAccepted(proposal); setStage('compositions') }
   }
+  // P8: the chosen rotation becomes the project's brick order (the first brick is on top), with the proposal record unchanged
+  const chooseComposition = (order: string[]) => {
+    if (!accepted) return
+    openProject(store.createProject(accepted.intent, order, name.trim() || undefined, { proposal: accepted }))
+  }
+  // P8: each rotation resolved as a temporary project, in that order, with the same proposal record; the first brick's skin and hierarchy lead
+  const compositions = useMemo(() => {
+    if (stage !== 'compositions' || !accepted) return []
+    return rotations(accepted.picks.map(p => p.brickId)).map(order => {
+      const temp: Project = { id: 'mini', intent: accepted.intent, createdAt: accepted.at, brickIds: order, proposal: accepted, disabled: {}, choice: {}, locks: {}, manual: {} }
+      return { order, params: resolveProject(temp, store.bricks).params }
+    })
+  }, [stage, accepted, store.bricks])
   const createManual = () => {
     if (!intent.trim() || picked.length === 0) return
     openProject(store.createProject(intent.trim(), picked, name.trim() || undefined))
   }
   // back to the intent stage with the intent, the chips and the starting point kept; asking again is a new call
-  const changeLean = () => { req.current++; setCards([]); setMeta(null); setNote(null); setSwapping(null); setStage('intent') }
+  const changeLean = () => { req.current++; setCards([]); setMeta(null); setAccepted(null); setNote(null); setSwapping(null); setStage('intent') }
   const busy = stage === 'proposing'
 
   return (
@@ -130,7 +154,7 @@ export function ProjectsScreen() {
       <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
         <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
         <span className="ink-2">/ Projects</span>
-        <div className="ml-auto"><button type="button" className="btn btn-accent" onClick={() => { req.current++; setOpen(true); setStage('intent'); setCards([]); setNote(null); setMeta(null); setSwapping(null); setChips([]); setAnchor(null); setPickingAnchor(false) }}>New project</button></div>
+        <div className="ml-auto"><button type="button" className="btn btn-accent" onClick={() => { req.current++; setOpen(true); setStage('intent'); setCards([]); setAccepted(null); setNote(null); setMeta(null); setSwapping(null); setChips([]); setAnchor(null); setPickingAnchor(false) }}>New project</button></div>
       </header>
       <div className="px-4 py-1 text-[12px] ink-2 min-[960px]:hidden" style={{ borderBottom: '1px solid var(--line)' }}>{COPY.phone}</div>
 
@@ -143,7 +167,7 @@ export function ProjectsScreen() {
                 <input value={name} disabled={busy} onChange={e => setName(e.target.value)} placeholder="Concert log" className="rounded border px-2 py-1 text-[13px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
               </label>
               <label className="flex flex-col gap-1 text-[12px] ink-2">Intent, one line
-                <input value={intent} disabled={busy || stage === 'proposal'} maxLength={300} onChange={e => setIntent(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && stage === 'intent' && withRules.length && enabled !== false) onPropose() }} placeholder="A concert log for someone who goes to a lot of shows" className="rounded border px-2 py-1 text-[13px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
+                <input value={intent} disabled={busy || stage === 'proposal' || stage === 'compositions'} maxLength={300} onChange={e => setIntent(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && stage === 'intent' && withRules.length && enabled !== false) onPropose() }} placeholder="A concert log for someone who goes to a lot of shows" className="rounded border px-2 py-1 text-[13px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
               </label>
             </div>
             {stage === 'intent' && intent.trim() && withRules.length > 0 && enabled !== false && (
@@ -211,6 +235,23 @@ export function ProjectsScreen() {
                   <button type="button" className="btn" onClick={() => { setStage('manual'); setPicked(withAnchor([])) }}>{COPY.manual}</button>
                   {meta && <span className="mono ink-2 text-[11px]">{meta.model} · effort {meta.effort} · {(meta.latency_ms / 1000).toFixed(1)} s</span>}
                 </div>
+              </>
+            )}
+
+            {stage === 'compositions' && accepted && (
+              <>
+                <h3 className="mt-4 text-[13px] font-semibold">{COPY.compositions}</h3>
+                <p className="ink-2 text-[11px]">{COPY.compositionsHint}</p>
+                <ul className="mt-2 flex gap-3 overflow-x-auto pb-1" aria-label="Compositions">
+                  {compositions.map(c => (
+                    <li key={c.order.join(',')} className="panel flex shrink-0 flex-col items-center gap-2 p-3">
+                      <MiniPreview params={c.params} width={220} />
+                      <div className="mono text-[12px]">{COPY.top(c.order[0])}</div>
+                      <button type="button" className="btn btn-accent" onClick={() => chooseComposition(c.order)}>{COPY.useThis}</button>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3"><button type="button" className="btn" onClick={() => { setStage('proposal'); setAccepted(null) }}>{COPY.back}</button></div>
               </>
             )}
 
@@ -284,6 +325,7 @@ function ProposalCard({ pick: c, brick: b, spare, swapping, onSwap, onPick }: { 
           </>
         ) : c.status === 'anchor' ? <p className="ink-2 m-0">{COPY.anchorNote}</p>
           : <p className="ink-2 m-0">Swapped in by you for <span className="mono">{c.swappedFrom}</span>.</p>}
+        {b && <ProposalPreview brick={b} />}
         <div className="mt-1 flex gap-1">
           <button type="button" className="btn btn-quiet px-2 py-0.5 text-[11px]" disabled={spare.length === 0} onClick={onSwap} aria-expanded={swapping}>{COPY.swap}</button>
         </div>
@@ -295,4 +337,10 @@ function ProposalCard({ pick: c, brick: b, spare, swapping, onSwap, onPick }: { 
       </div>
     </article>
   )
+}
+
+/** P7: the tiny List screen this brick makes alone, in place of a sentence about what it would change. */
+function ProposalPreview({ brick }: { brick: Brick }) {
+  const { params, unexpressed } = useMemo(() => brickParams(brick), [brick])
+  return <div className="mt-1"><MiniPreview params={params} width={120} badge={unexpressed} /></div>
 }

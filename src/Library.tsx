@@ -3,6 +3,8 @@ import { useStore, LIBRARY_CAP } from './lib/store'
 import { ACCEPT, prepareImage } from './lib/client'
 import { Link } from './lib/router'
 import { Photo } from './bricks/Photo'
+import { MiniPreview } from './shell/MiniPreview'
+import { brickParams } from './lib/brickPreview'
 import type { Brick } from './lib/types'
 
 const COPY = {
@@ -88,15 +90,31 @@ export function Library() {
   )
 }
 
+/** The 16:10 photo box is at least ~180 px tall at the narrowest layouts; a 9:16 preview 96 px wide is 170 px tall and fits in all of them. */
+const PREVIEW_W = 96
+/** L6: the flip between the photo and the mini-preview, for touch. */
+const FLIP = { showPreview: 'Show preview', showPhoto: 'Show photo' }
+
+/** A ready card (spec v3 L6): the photo, and on mouse hover the mini-preview of what this brick alone makes, in the same 16:10 box. A touch device has no hover, so a small toggle flips photo and preview;
+ *  it never follows the card's link. A tap's emulated hover is ignored (only a mouse counts), so the toggle is the one thing that decides on touch. */
 function Card({ brick: b, onRetry, onRemove }: { brick: Brick; onRetry: () => void; onRemove: () => void }) {
   const status = b.status ?? 'ready'
   const rules = b.relations.slice(0, 2)
   const busy = status === 'extracting' || status === 'pending'
+  const [hover, setHover] = useState(false)
+  const [flipped, setFlipped] = useState(false)
+  const preview = status === 'ready' && (hover || flipped)
   const inner = (
     <>
-      <div className="relative overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}>
+      <div className="relative overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}
+        onPointerEnter={e => { if (e.pointerType === 'mouse') setHover(true) }} onPointerLeave={() => setHover(false)}>
         <Photo src={b.photo.url} className={`h-full w-full object-cover ${busy ? 'opacity-50' : ''}`} />
         {status === 'extracting' && <div className="card-progress" />}
+        {preview && <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'var(--paper)' }}><MiniPreview params={brickParams(b).params} width={PREVIEW_W} /></div>}
+        {status === 'ready' && (
+          <button type="button" className="btn absolute bottom-1 right-1 px-2 py-0.5 text-[11px]" aria-pressed={flipped} title="Flip between the photo and what this brick makes on its own"
+            onClick={e => { e.preventDefault(); e.stopPropagation(); setFlipped(v => !v) }}>{flipped ? FLIP.showPhoto : FLIP.showPreview}</button>
+        )}
       </div>
       <div className="flex flex-col gap-1 px-3 py-2">
         <div className="flex items-center justify-between">

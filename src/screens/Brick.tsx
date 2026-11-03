@@ -5,8 +5,11 @@ import { Photo } from '../bricks/Photo'
 import { proposeValue, provenanceOf, typeFamilyOf } from '../lib/mapRelations'
 import { footnoteFor, footnoteMeasurement, landsOn } from '../lib/landing'
 import { DEFAULT_PARAMS, type ParameterKey } from '../shell/params'
+import { MiniPreview } from '../shell/MiniPreview'
+import { brickParams } from '../lib/brickPreview'
 
-/** Brick screen (spec v3 B3): one photo, then the transferable relations (rule → where it would land, `none` last as `no slot`), the measurements they rest on, the letterform description,
+/** Brick screen (spec v3 B2, B3): one photo; on the right a mini-preview of the List screen made from this brick alone (its three parameters, its own skin, the shell's defaults for the rest),
+ *  then the transferable relations (rule → where it would land, `none` last as `no slot`), the measurements they rest on, the letterform description,
  *  the hypotheses, and the fragile sentence. Every item has an id anchor (#m3, #h2, #r1) so a provenance chip anywhere can land here. */
 export function BrickScreen({ id }: { id: string }) {
   const store = useStore()
@@ -23,6 +26,7 @@ export function BrickScreen({ id }: { id: string }) {
   if (!brick) return <div className="chrome min-h-full p-4"><Link href="/" className="ink-2 text-[12px]">← Library</Link><p className="mt-4 ink-2">No brick with id {id}.</p></div>
   const mIds = new Set(brick.measurements.map(m => m.id))
   const relations = [...brick.relations].sort((a, b) => (a.parameter === 'none' ? 1 : 0) - (b.parameter === 'none' ? 1 : 0))
+  const mini = brickParams(brick)
 
   return (
     <div className="chrome min-h-full">
@@ -54,6 +58,7 @@ export function BrickScreen({ id }: { id: string }) {
         </div>
 
         <div className="flex flex-col gap-4">
+          <div><MiniPreview params={mini.params} width={160} badge={mini.unexpressed} /></div>
           <section className="panel p-3">
             <h2 className="mb-2 text-[13px] font-semibold">Transferable relations</h2>
             <ol className="space-y-2">
