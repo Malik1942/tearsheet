@@ -1,0 +1,170 @@
+{
+  "id": "iran-1260s-star-cross-luster-tiles",
+  "photo": {
+    "url": "/samples/iran-1260s-star-cross-luster-tiles.jpg",
+    "width": 2000,
+    "height": 1472
+  },
+  "credit": "The Metropolitan Museum of Art, 1260\u201370",
+  "saved_at": "2026-11-02",
+  "measurements": [
+    {
+      "how_measured": "counted distinct 8-point outlines across upper, middle, lower bands",
+      "id": "m1",
+      "statement": "count of large patterned 8-pointed star tiles in interlocking grid",
+      "value": "15 full plus 2 cropped at bottom edge, arranged 5 per row across 3 rows"
+    },
+    {
+      "how_measured": "counted cross-shaped gaps between stars and judged patterned vs plain fill",
+      "id": "m2",
+      "statement": "ratio of ornate star tiles to cross-shaped filler tiles and plain vs patterned fillers",
+      "value": "stars : crosses ~ 2:1; about 8 plain mottled fillers to 3 patterned fillers in middle band"
+    },
+    {
+      "how_measured": "eyeballed outer tile extents against frame edges",
+      "id": "m3",
+      "statement": "panel footprint occupies most of frame centered high with empty surround below",
+      "value": "~90% of frame width and ~80% of frame height, hugging top and side thirds, leaving bottom ~15% empty light background"
+    },
+    {
+      "how_measured": "visual scan for distinct hues ignoring light background",
+      "id": "m4",
+      "statement": "palette is restricted to off-white ground plus brown-gold range with no saturated hue",
+      "value": "2 earth hues (dark umber-brown and mottled golden-tan) on light neutral, ~70% patterned dark, ~30% plain tan"
+    },
+    {
+      "how_measured": "compared center medallion diameter to outer star diameter on several tiles",
+      "id": "m5",
+      "statement": "each star has dense central motif with narrow perimeter band",
+      "value": "center ornament ~3/4 of star width; border band ~1/10 of star width encircling edge"
+    },
+    {
+      "how_measured": "inspected border script on closest in-focus stars relative to star size",
+      "id": "m6",
+      "statement": "perimeter text is tiny thin-stroke low-contrast cursive sans-serif-like hand script with tight spacing following star points",
+      "value": "script height ~1/20 of star diameter, light weight, narrow width, even thin stroke, continuous around edge"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.9,
+      "id": "h1",
+      "rests_on": [
+        "m1",
+        "m2",
+        "m3"
+      ],
+      "statement": "All-over interlocking rhythm of stars and crosses creates unity with no single focal tile; the eye moves across the panel."
+    },
+    {
+      "confidence": 0.85,
+      "id": "h2",
+      "rests_on": [
+        "m2",
+        "m5",
+        "m4"
+      ],
+      "statement": "Tension and relief come from dense dark patterned stars alternating with sparse plain tan crosses, preventing visual overload."
+    },
+    {
+      "confidence": 0.75,
+      "id": "h3",
+      "rests_on": [
+        "m4",
+        "m5",
+        "m6"
+      ],
+      "statement": "Mood of aged handmade craft comes from limited earth palette, mottled texture, and variation of central motifs within a strict border system."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "rhythm",
+      "rule": "Alternate large ornate modules with smaller plain filler modules in an offset interlocking grid with no single center.",
+      "source_hypothesis": "h1",
+      "target": "layout grid"
+    },
+    {
+      "id": "r2",
+      "parameter": "palette_hue_count",
+      "rule": "Limit colors to a light neutral ground plus one dark and one mid earth tone; allow no saturated accent.",
+      "source_hypothesis": "h3",
+      "target": "color system"
+    },
+    {
+      "id": "r3",
+      "parameter": "grouping",
+      "rule": "Keep each module as dense center covering ~75% with a thin continuous edge band under ~15% for secondary micro-detail.",
+      "source_hypothesis": "h2",
+      "target": "module interior"
+    }
+  ],
+  "fragile_if_changed": "If the plain mottled cross fillers were made as busy or dark as the star tiles, the breathing contrast that lets the dense ornament read would collapse.",
+  "regions": [
+    {
+      "box_1000": [
+        44,
+        75,
+        959,
+        861
+      ],
+      "label": "star tile field",
+      "measurement_ids": [
+        "m1",
+        "m5"
+      ]
+    },
+    {
+      "box_1000": [
+        38,
+        68,
+        962,
+        954
+      ],
+      "label": "full interlocked panel",
+      "measurement_ids": [
+        "m2",
+        "m3"
+      ]
+    },
+    {
+      "box_1000": [
+        131,
+        188,
+        874,
+        926
+      ],
+      "label": "plain mottled cross fillers and palette area",
+      "measurement_ids": [
+        "m4"
+      ]
+    },
+    {
+      "box_1000": [
+        230,
+        101,
+        411,
+        299
+      ],
+      "label": "perimeter inscription band on one star",
+      "measurement_ids": [
+        "m6"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 29291,
+    "input_tokens": 4381,
+    "output_tokens": 2620,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#DAD3CB",
+    "color_fg": "#3A2418",
+    "color_accent": "#633E23",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'plain mottled cross fillers and palette area'"
+  }
+}

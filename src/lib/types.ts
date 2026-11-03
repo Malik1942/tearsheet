@@ -10,6 +10,8 @@ export type Brick = {
   id: string
   photo: { url: string; width: number; height: number }
   saved_at: string
+  /** Licensed sample material only: the one line that must travel with the photo wherever it is shown (see README, Sample credits). */
+  credit?: string
   measurements: Measurement[]
   hypotheses: Hypothesis[]
   relations: Relation[]

@@ -1,0 +1,169 @@
+{
+  "id": "haeckel-1904-trochilidae-plate-99",
+  "photo": {
+    "url": "/samples/haeckel-1904-trochilidae-plate-99.jpg",
+    "width": 1460,
+    "height": 2048
+  },
+  "credit": "Wikimedia Commons, 1904",
+  "saved_at": "2026-11-02",
+  "measurements": [
+    {
+      "how_measured": "counted each distinct head-body-tail grouping across the full frame",
+      "id": "m1",
+      "statement": "exactly twelve hummingbirds distributed from top edge to bottom edge and left edge to right edge",
+      "value": "12"
+    },
+    {
+      "how_measured": "visually estimated share of frame covered by painted birds, leaves, nest and sky wash versus blank paper",
+      "id": "m2",
+      "statement": "about 95% of the frame is filled image with full bleed; subjects touch all four edges leaving no margins",
+      "value": "~95% filled, 0% margin"
+    },
+    {
+      "how_measured": "compared area of green plumage versus red-orange-red crests, throats and tails across all birds",
+      "id": "m3",
+      "statement": "green is present on all twelve birds covering about half the frame; warm red-orange accents appear on about ten birds covering about 15% of the frame",
+      "value": "green ~50%, red-orange ~15%"
+    },
+    {
+      "how_measured": "divided frame horizontally by background tone from pale upper left to dark lower right",
+      "id": "m4",
+      "statement": "top third is pale blue-white sky while bottom two-thirds is dark brown-green foliage, with light-to-dark transition near the middle",
+      "value": "light ~35% top, dark ~65% bottom"
+    },
+    {
+      "how_measured": "traced long axes of bodies, beaks and tails in the central band",
+      "id": "m5",
+      "statement": "at least eight birds point on crossing diagonals northeast-southwest versus northwest-southeast, intersecting in the center third",
+      "value": "8+ crossing diagonals"
+    },
+    {
+      "how_measured": "compared longest body-plus-tail extent of bottom bird to smallest top-left bird relative to frame height",
+      "id": "m6",
+      "statement": "largest bird length is about one-third of frame height, smallest about one-sixth, a ratio of about 2 to 1 with overlapping wings and tails",
+      "value": "~2:1 largest to smallest"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.9,
+      "id": "h1",
+      "rests_on": [
+        "m1",
+        "m2",
+        "m3"
+      ],
+      "statement": "Abundance and variety feel comes from packing many similarly-sized colorful subjects edge-to-edge with a shared dominant color so the eye reads plenty without chaos."
+    },
+    {
+      "confidence": 0.85,
+      "id": "h2",
+      "rests_on": [
+        "m4",
+        "m2"
+      ],
+      "statement": "Depth and downward flow work because the pale open sky in the upper third gives way to dark dense foliage in the lower two-thirds, moving the eye from airy flight to sheltered perching."
+    },
+    {
+      "confidence": 0.8,
+      "id": "h3",
+      "rests_on": [
+        "m5",
+        "m6",
+        "m1"
+      ],
+      "statement": "Liveliness and tension hold without a single focal point because bodies, beaks and tails form opposing diagonals that cross in the center and repeat at similar scale."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "density",
+      "rule": "Fill the canvas edge-to-edge with subjects so coverage stays above 90% with no margins or isolated white space.",
+      "source_hypothesis": "h1",
+      "target": "new design"
+    },
+    {
+      "id": "r2",
+      "parameter": "palette_hue_count",
+      "rule": "Keep one dominant hue on every subject and restrict warm accent hues to small patches totaling 10-20% of the frame.",
+      "source_hypothesis": "h1",
+      "target": "new design"
+    },
+    {
+      "id": "r3",
+      "parameter": "rhythm",
+      "rule": "Alternate subject axes on opposing diagonals so long forms cross near the center to create continuous movement without a single focal point.",
+      "source_hypothesis": "h3",
+      "target": "new design"
+    }
+  ],
+  "fragile_if_changed": "Isolating the birds with empty background or margins would destroy the dense, overlapping cabinet-of-curiosities abundance that defines its character.",
+  "regions": [
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "label": "full composition of twelve birds edge to edge",
+      "measurement_ids": [
+        "m1",
+        "m2"
+      ]
+    },
+    {
+      "box_1000": [
+        5,
+        0,
+        995,
+        990
+      ],
+      "label": "green plumage with red-orange accents",
+      "measurement_ids": [
+        "m3",
+        "m6"
+      ]
+    },
+    {
+      "box_1000": [
+        0,
+        0,
+        1000,
+        1000
+      ],
+      "label": "pale sky top to dark foliage bottom",
+      "measurement_ids": [
+        "m4"
+      ]
+    },
+    {
+      "box_1000": [
+        90,
+        170,
+        990,
+        610
+      ],
+      "label": "center band of diagonal beak and body crossings",
+      "measurement_ids": [
+        "m5"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 30099,
+    "input_tokens": 4361,
+    "output_tokens": 2624,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#272616",
+    "color_fg": "#D8EADA",
+    "color_accent": "#9E5D27",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'green plumage with red-orange accents'"
+  }
+}

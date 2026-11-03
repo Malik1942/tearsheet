@@ -1,0 +1,173 @@
+{
+  "id": "jpl-2016-visions-mars",
+  "photo": {
+    "url": "/samples/jpl-2016-visions-mars.jpg",
+    "width": 1365,
+    "height": 2048
+  },
+  "credit": "Courtesy NASA/JPL-Caltech",
+  "saved_at": "2026-11-02",
+  "measurements": [
+    {
+      "how_measured": "visually estimated proportion of flat red-orange versus illustrated and other flat fills across full poster",
+      "id": "m1",
+      "statement": "about 50-55% of the frame is flat red-orange empty background in upper-left and lower band",
+      "value": "~52% red field"
+    },
+    {
+      "how_measured": "compared stroke weight, letter width versus height, presence of serifs, and inter-letter space on headline versus supporting lines",
+      "id": "m2",
+      "statement": "headline MARS is heavy wide low-contrast sans with tight letterspacing; top VISIT THE and bottom taglines are light narrow tall condensed sans with wide letterspacing, no serifs",
+      "value": "heavy-wide sans vs light-condensed sans"
+    },
+    {
+      "how_measured": "compared vertical cap-height of giant MARS letters to smallest VISIT THE and bottom tagline letters",
+      "id": "m3",
+      "statement": "largest text height : smallest text height is about 9 to 1",
+      "value": "\u22489:1"
+    },
+    {
+      "how_measured": "estimated bounding box of interlocking flat shapes from rover at left to black mountains at right and from yellow block at top to blue band at mid-lower",
+      "id": "m4",
+      "statement": "dense geometric illustration cluster occupies middle ~60% of height and ~90% of width, centered slightly right of frame",
+      "value": "~60% H x ~90% W central mass"
+    },
+    {
+      "how_measured": "counted distinct flat fills with no gradients: red, mustard-yellow, cream, black, purple-magenta, medium blue plus white accents",
+      "id": "m5",
+      "statement": "palette is 6 flat hues with no gradients or shading, red dominant",
+      "value": "6 flat hues"
+    },
+    {
+      "how_measured": "divided frame into vertical thirds and noted where legible display text occurs versus image-only area",
+      "id": "m6",
+      "statement": "all large text is in top ~10% flush left and bottom ~20% centered; middle ~65% has no large text",
+      "value": "text top 10% + bottom 20%, image middle 65%"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.88,
+      "id": "h1",
+      "rests_on": [
+        "m2",
+        "m3",
+        "m6"
+      ],
+      "statement": "Extreme scale contrast between giant bottom title and tiny framing lines creates a clear top-to-bottom hierarchy that anchors the busy center."
+    },
+    {
+      "confidence": 0.82,
+      "id": "h2",
+      "rests_on": [
+        "m1",
+        "m4",
+        "m6"
+      ],
+      "statement": "A dense interlocking central image mass set against large areas of empty flat red creates tension and lets the collage pop with optimistic poster energy."
+    },
+    {
+      "confidence": 0.78,
+      "id": "h3",
+      "rests_on": [
+        "m4",
+        "m5"
+      ],
+      "statement": "A strictly flat limited palette unifies disparate rover, helmet, and architecture fragments into one cohesive futuristic-nostalgic mood."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "type_scale_ratio",
+      "rule": "Keep display title cap-height about 9x the smallest supporting text to preserve anchor hierarchy.",
+      "source_hypothesis": "h1",
+      "target": "title block"
+    },
+    {
+      "id": "r2",
+      "parameter": "image_text_dominance",
+      "rule": "Keep middle 60% image-only with no large text, confine text to top edge zone and bottom band.",
+      "source_hypothesis": "h1",
+      "target": "canvas layout"
+    },
+    {
+      "id": "r3",
+      "parameter": "palette_hue_count",
+      "rule": "Limit palette to about 6 flat hues with one dominant flat field covering about half the frame and no gradients.",
+      "source_hypothesis": "h3",
+      "target": "palette and background"
+    }
+  ],
+  "fragile_if_changed": "Replacing the flat dominant red field and limited flat-color geometric illustration with photographic shading or gradients would most destroy the bold retro travel-poster character.",
+  "regions": [
+    {
+      "box_1000": [
+        60,
+        35,
+        940,
+        932
+      ],
+      "label": "full poster red field",
+      "measurement_ids": [
+        "m1",
+        "m5"
+      ]
+    },
+    {
+      "box_1000": [
+        68,
+        80,
+        365,
+        135
+      ],
+      "label": "top header text",
+      "measurement_ids": [
+        "m2",
+        "m3",
+        "m6"
+      ]
+    },
+    {
+      "box_1000": [
+        60,
+        105,
+        940,
+        652
+      ],
+      "label": "central geometric illustration mass",
+      "measurement_ids": [
+        "m4",
+        "m5"
+      ]
+    },
+    {
+      "box_1000": [
+        85,
+        728,
+        715,
+        885
+      ],
+      "label": "bottom MARS title and taglines",
+      "measurement_ids": [
+        "m2",
+        "m3",
+        "m6"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 31394,
+    "input_tokens": 4191,
+    "output_tokens": 2913,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#EC3129",
+    "color_fg": "#FCF8F3",
+    "color_accent": "#F0B72C",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'bottom MARS title and taglines', excluding pixels within RGB distance 60 of bg because the background itself is saturated"
+  }
+}

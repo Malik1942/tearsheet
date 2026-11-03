@@ -1,0 +1,172 @@
+{
+  "id": "secession-1902-beethoven-catalogue",
+  "photo": {
+    "url": "/samples/secession-1902-beethoven-catalogue.jpg",
+    "width": 1756,
+    "height": 2048
+  },
+  "credit": "Minneapolis Institute of Art, 1902",
+  "saved_at": "2026-11-02",
+  "measurements": [
+    {
+      "how_measured": "counted ink hues inside border and visually estimated solid black area versus paper white, ignoring paper grain",
+      "id": "m_ink",
+      "statement": "only black ink on off-white paper with no gray shading; flat black dominates the illustration",
+      "value": "2 tones total; black covers ~55-65% of illustration area"
+    },
+    {
+      "how_measured": "compared illustration box edges to paper edges left-to-right and top-to-bottom",
+      "id": "m_frame",
+      "statement": "one large rectangular illustration dominates the page with narrow side margins and larger bottom paper margin",
+      "value": "block spans ~80% of page width and ~75% of page height; bottom margin ~1.5x top margin"
+    },
+    {
+      "how_measured": "traced contiguous white shape from forehead through neck and torso to raised arm holding skull against black ground",
+      "id": "m_figure",
+      "statement": "pale figure forms a continuous thick V-curve with face in upper third right of center and skull held at middle left",
+      "value": "white ribbon runs from upper-right to lower-center to middle-left; face and skull occupy opposite sides of center"
+    },
+    {
+      "how_measured": "observed dark perimeter line tight to artwork on all four sides versus paper margin",
+      "id": "m_border",
+      "statement": "illustration is enclosed by a thin hand-drawn black rule tight to the artwork",
+      "value": "rule thickness ~1/300 of page height; inset ~5% from paper edge on sides"
+    },
+    {
+      "how_measured": "read letterforms below border for serif, stroke, weight and spacing and compared cap-height and line width to page and block",
+      "id": "m_caption",
+      "statement": "caption below is small all-caps low-contrast serif with even monoline stroke, medium weight, slightly condensed width, visibly letterspaced and centered",
+      "value": "cap-height ~1/60 of page height; line spans ~75% of page width centered below border"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.88,
+      "id": "h_contrast",
+      "rests_on": [
+        "m_ink",
+        "m_figure"
+      ],
+      "statement": "Absolute black-versus-paper contrast with no midtones creates a stark, ominous mood and makes the pale face and skull read instantly as linked foci."
+    },
+    {
+      "confidence": 0.76,
+      "id": "h_movement",
+      "rests_on": [
+        "m_figure",
+        "m_frame"
+      ],
+      "statement": "The continuous thick pale ribbon from face down to torso and up to the skull drives a looping eye rhythm between upper-right and middle-left across the dark field."
+    },
+    {
+      "confidence": 0.82,
+      "id": "h_plate",
+      "rests_on": [
+        "m_frame",
+        "m_border",
+        "m_caption"
+      ],
+      "statement": "A single bordered block dominating the page with only a tiny centered caption below establishes an art-plate hierarchy where image overwhelms text."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "palette_hue_count",
+      "rule": "limit composition to two flat values with no gradients, with dark value covering about half of image area",
+      "source_hypothesis": "h_contrast",
+      "target": "new composition"
+    },
+    {
+      "id": "r2",
+      "parameter": "rhythm",
+      "rule": "link two focal elements with one continuous thick light curve across a dark field to force back-and-forth eye movement",
+      "source_hypothesis": "h_movement",
+      "target": "content block"
+    },
+    {
+      "id": "r3",
+      "parameter": "image_text_dominance",
+      "rule": "let one bordered image occupy >70% of height and reduce text to a single small centered line below the border",
+      "source_hypothesis": "h_plate",
+      "target": "page layout"
+    }
+  ],
+  "fragile_if_changed": "Replacing the flat solid-black ground with soft gray shading or gradients would collapse the stark figure-ground reversal that gives the image its character.",
+  "regions": [
+    {
+      "box_1000": [
+        115,
+        65,
+        895,
+        840
+      ],
+      "label": "illustration ink field",
+      "measurement_ids": [
+        "m_ink"
+      ]
+    },
+    {
+      "box_1000": [
+        35,
+        25,
+        955,
+        975
+      ],
+      "label": "page and illustration scale",
+      "measurement_ids": [
+        "m_frame"
+      ]
+    },
+    {
+      "box_1000": [
+        125,
+        105,
+        755,
+        830
+      ],
+      "label": "pale figure ribbon face to skull",
+      "measurement_ids": [
+        "m_figure"
+      ]
+    },
+    {
+      "box_1000": [
+        110,
+        60,
+        900,
+        845
+      ],
+      "label": "border rule",
+      "measurement_ids": [
+        "m_border"
+      ]
+    },
+    {
+      "box_1000": [
+        125,
+        842,
+        895,
+        884
+      ],
+      "label": "caption line",
+      "measurement_ids": [
+        "m_caption"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 37568,
+    "input_tokens": 4636,
+    "output_tokens": 3144,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#E3D6BF",
+    "color_fg": "#0B0C0B",
+    "color_accent": "#0B0C0B",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'illustration ink field': none found (1 px), so accent = fg"
+  }
+}

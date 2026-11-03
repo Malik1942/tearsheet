@@ -1,0 +1,174 @@
+{
+  "id": "lissitzky-1923-dlya-golosa",
+  "photo": {
+    "url": "/samples/lissitzky-1923-dlya-golosa.jpg",
+    "width": 1446,
+    "height": 2048
+  },
+  "credit": "Minneapolis Institute of Art, 1923",
+  "saved_at": "2026-11-02",
+  "measurements": [
+    {
+      "how_measured": "counted distinct ink colors across all marks inside the thin border versus the paper ground",
+      "id": "m_palette",
+      "statement": "Inside the inner frame only black ink and a single saturated red-orange hue appear on an off-white ground",
+      "value": "1 chromatic hue + black"
+    },
+    {
+      "how_measured": "compared stroke thickness to counter and stem width on the large upper red form and the two smaller black E-forms",
+      "id": "m_type",
+      "statement": "Letter-like forms are heavy-weight, wide, geometric sans with near-zero stroke contrast and tight construction, all rotated together off-vertical",
+      "value": "heavy geometric sans, low contrast"
+    },
+    {
+      "how_measured": "traced long red spine from lower-left to upper-right against the vertical border edge and estimated angle and extent",
+      "id": "m_diagonal",
+      "statement": "All major elongated forms share a common diagonal tilted about 20 degrees off vertical rising to the right, spanning almost the full inner-frame height",
+      "value": "tilt ~20deg, length ~90% of frame height"
+    },
+    {
+      "how_measured": "visually divided inner frame into dense overlapping center versus plain right and bottom zones",
+      "id": "m_empty",
+      "statement": "About half of the inner framed area remains empty off-white, concentrated on the right side and below the dense overlap",
+      "value": "~50-60% empty"
+    },
+    {
+      "how_measured": "compared border extents to page edges left-right and top-bottom",
+      "id": "m_frame",
+      "statement": "A thin black orthogonal rule encloses the composition centered on the page with a larger blank margin below than above",
+      "value": "frame width ~65% of page, height ~78% of page"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.85,
+      "id": "h1",
+      "rests_on": [
+        "m_palette",
+        "m_type",
+        "m_diagonal"
+      ],
+      "statement": "Hierarchy comes from scale plus color overlap: the huge red form dominates, black solids anchor the middle and lower zones"
+    },
+    {
+      "confidence": 0.82,
+      "id": "h2",
+      "rests_on": [
+        "m_diagonal",
+        "m_frame",
+        "m_empty"
+      ],
+      "statement": "Tension comes from the diagonal cluster colliding with the thin orthogonal frame, making the static border feel charged"
+    },
+    {
+      "confidence": 0.78,
+      "id": "h3",
+      "rests_on": [
+        "m_palette",
+        "m_type",
+        "m_empty"
+      ],
+      "statement": "Mood is urgent and constructivist from severe palette restraint and heavy geometry set against abundant white breathing room"
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "palette_hue_count",
+      "rule": "Limit any new layout to one saturated hue plus black on light ground, using the hue only for the largest shape and thin accent lines covering <15% of area",
+      "source_hypothesis": "h3",
+      "target": "color system of new layout"
+    },
+    {
+      "id": "r2",
+      "parameter": "rhythm",
+      "rule": "Rotate the whole content group 15-25 degrees off the container vertical while keeping the container orthogonal",
+      "source_hypothesis": "h2",
+      "target": "composition of new layout"
+    },
+    {
+      "id": "r3",
+      "parameter": "hierarchy_mode",
+      "rule": "Create hierarchy by overlapping large-scale color forms in the upper-center with smaller heavy solids offset below, not by linear reading order",
+      "source_hypothesis": "h1",
+      "target": "hierarchy of new layout"
+    }
+  ],
+  "fragile_if_changed": "If the shared diagonal tilt were straightened to vertical and horizontal, the collision with the orthogonal frame and sense of forward thrust would collapse into static stacking.",
+  "regions": [
+    {
+      "box_1000": [
+        195,
+        65,
+        875,
+        875
+      ],
+      "label": "thin border frame",
+      "measurement_ids": [
+        "m_frame"
+      ]
+    },
+    {
+      "box_1000": [
+        205,
+        95,
+        860,
+        865
+      ],
+      "label": "red-black marks area",
+      "measurement_ids": [
+        "m_palette"
+      ]
+    },
+    {
+      "box_1000": [
+        240,
+        110,
+        872,
+        755
+      ],
+      "label": "heavy letter-like forms",
+      "measurement_ids": [
+        "m_type"
+      ]
+    },
+    {
+      "box_1000": [
+        210,
+        100,
+        710,
+        868
+      ],
+      "label": "shared diagonal spine",
+      "measurement_ids": [
+        "m_diagonal"
+      ]
+    },
+    {
+      "box_1000": [
+        550,
+        380,
+        868,
+        867
+      ],
+      "label": "empty right and bottom ground",
+      "measurement_ids": [
+        "m_empty"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 35824,
+    "input_tokens": 4413,
+    "output_tokens": 3275,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#FBF4E9",
+    "color_fg": "#56372F",
+    "color_accent": "#DE322C",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'red-black marks area'"
+  }
+}

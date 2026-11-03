@@ -100,6 +100,7 @@ function Card({ brick: b, onRetry, onRemove }: { brick: Brick; onRetry: () => vo
           {status === 'extracting' && <span className="text-[12px]" style={{ color: 'var(--accent)' }}>{COPY.extracting}</span>}
           {status === 'unparsed' && <span className="text-[12px]" style={{ color: 'var(--accent)' }}>{COPY.unparsed}</span>}
         </div>
+        {b.credit && <span className="ink-2 truncate text-[11px]" title={b.credit}>{b.credit}</span>}
         {status === 'ready' && rules.map(r => (
           <div key={r.id} className="flex items-baseline gap-2 text-[12px]">
             <span className="min-w-0 flex-1 truncate">{r.rule}</span>

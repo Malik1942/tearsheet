@@ -1,0 +1,192 @@
+{
+  "id": "matthews-19c-glyphography-trade-card",
+  "photo": {
+    "url": "/samples/matthews-19c-glyphography-trade-card.jpg",
+    "width": 1436,
+    "height": 2048
+  },
+  "credit": "The Metropolitan Museum of Art, 19th century",
+  "saved_at": "2026-11-02",
+  "measurements": [
+    {
+      "how_measured": "Visual inspection of letterforms in upper band: hollow shaded interiors, serifs, separated glyphs",
+      "id": "m1",
+      "statement": "Top headline is a medium-weight shaded inline ornamental serif with decorated hollow interior, wide width, high detail, very wide letterspacing",
+      "value": "ornamental inline serif, wide-tracked"
+    },
+    {
+      "how_measured": "Visual inspection of middle lines between image and body: cap-height, serif feet, even spacing, centered lines",
+      "id": "m2",
+      "statement": "Author and address lines are regular-weight small-caps serif with low stroke contrast, wide tracking, centered, about 2x body height",
+      "value": "spaced small-caps serif, centered"
+    },
+    {
+      "how_measured": "Visual inspection of two bottom paragraphs: small size, bracketed serifs, regular weight, tight leading",
+      "id": "m3",
+      "statement": "Bottom explanatory text is small regular-weight serif with low stroke contrast, normal width, tight line spacing, centered block",
+      "value": "small regular serif, centered block"
+    },
+    {
+      "how_measured": "Projected vertical midline and checked left-right extents of all text lines and image edges",
+      "id": "m4",
+      "statement": "All text lines and illustration are centered on the same vertical axis; left ~15% and right ~15% of frame have no text or image",
+      "value": "centered symmetry, side margins ~15% each"
+    },
+    {
+      "how_measured": "Estimated oval vignette extents versus frame and counted ink hues outside paper off-white and black text",
+      "id": "m5",
+      "statement": "Exactly one saturated hue (muted blue-gray) covering ~20% of frame used only on central oval vignette of castle, bridge and trees occupying central third",
+      "value": "one accent hue, central vignette ~50% width"
+    },
+    {
+      "how_measured": "Compared cap-height of top headline to x-height of bottom body and estimated paper without ink",
+      "id": "m6",
+      "statement": "Largest display height : smallest body height \u2248 3 : 1; about 60% of frame is empty off-white paper with large top margin and large bottom margin",
+      "value": "ratio ~3:1, ~60% empty background"
+    }
+  ],
+  "hypotheses": [
+    {
+      "confidence": 0.85,
+      "id": "h1",
+      "rests_on": [
+        "m1",
+        "m2",
+        "m3",
+        "m6"
+      ],
+      "statement": "Hierarchy works by ornament then size then centered position, reading from showy title down to image proof to attribution to fine-print explanation."
+    },
+    {
+      "confidence": 0.8,
+      "id": "h2",
+      "rests_on": [
+        "m4",
+        "m5",
+        "m6"
+      ],
+      "statement": "Calm authority comes from generous empty paper surrounding a single delicate centered vignette, making the image feel like precious evidence."
+    },
+    {
+      "confidence": 0.7,
+      "id": "h3",
+      "rests_on": [
+        "m4",
+        "m5"
+      ],
+      "statement": "Tension between sharp black lettering and soft blue tonal engraving emphasizes craftsmanship and the contrast of type versus image."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "parameter": "alignment_edge",
+      "rule": "Center every text block and the illustration on the same vertical midline with no left- or right-aligned elements.",
+      "source_hypothesis": "h1",
+      "target": "new design with different content"
+    },
+    {
+      "id": "r2",
+      "parameter": "image_text_dominance",
+      "rule": "Place a single soft vignette image in the middle third as the visual anchor, with display type above and attribution plus small explanation below.",
+      "source_hypothesis": "h2",
+      "target": "new design with different content"
+    },
+    {
+      "id": "r3",
+      "parameter": "type_scale_ratio",
+      "rule": "Keep display headline cap-height about 3x body text height while stepping down through spaced small-caps for middle lines.",
+      "source_hypothesis": "h1",
+      "target": "new design with different content"
+    }
+  ],
+  "fragile_if_changed": "Moving any text or the vignette off the central vertical axis would destroy the formal centered specimen symmetry that defines its character.",
+  "regions": [
+    {
+      "box_1000": [
+        124,
+        140,
+        880,
+        174
+      ],
+      "label": "top ornamental headline",
+      "measurement_ids": [
+        "m1"
+      ]
+    },
+    {
+      "box_1000": [
+        181,
+        613,
+        827,
+        725
+      ],
+      "label": "author and address centered lines",
+      "measurement_ids": [
+        "m2"
+      ]
+    },
+    {
+      "box_1000": [
+        152,
+        744,
+        846,
+        871
+      ],
+      "label": "bottom small body paragraphs",
+      "measurement_ids": [
+        "m3"
+      ]
+    },
+    {
+      "box_1000": [
+        100,
+        130,
+        900,
+        875
+      ],
+      "label": "centered column",
+      "measurement_ids": [
+        "m4"
+      ]
+    },
+    {
+      "box_1000": [
+        241,
+        226,
+        767,
+        579
+      ],
+      "label": "central blue vignette illustration",
+      "measurement_ids": [
+        "m5"
+      ]
+    },
+    {
+      "box_1000": [
+        15,
+        10,
+        985,
+        990
+      ],
+      "label": "whole page empty paper and scale",
+      "measurement_ids": [
+        "m6"
+      ]
+    }
+  ],
+  "model": {
+    "id": "muse-spark-1.3",
+    "effort": "medium",
+    "latency_ms": 28425,
+    "input_tokens": 4413,
+    "output_tokens": 2528,
+    "prompt": "v3"
+  },
+  "skin_measured": {
+    "color_bg": "#E6DFD9",
+    "color_fg": "#495C6D",
+    "color_accent": "#295578",
+    "how_measured": "k-means (6 clusters) on the sent pixels for bg/fg; accent = median of strongly saturated mid-lightness pixels (s>0.45, 0.2<l<0.8) inside region 'central blue vignette illustration'"
+  }
+}
