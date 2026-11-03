@@ -1,41 +1,6 @@
-import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link } from '../lib/router'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
-/** 15_SIMPLIFY §1: inside Make, a step line instead of breadcrumbs: a back arrow, then 1 What · 2 Picks · 3 See · 4 Share. */
-export type Step = 1 | 2 | 3 | 4
-const NAMES: Record<Step, string> = { 1: 'What', 2: 'Picks', 3: 'See', 4: 'Share' }
-export type Go = string | (() => void)
-
-/** `go` holds where a step other than the current one leads; a step with nowhere to go is plain text. `back` is the arrow. */
-export function StepLine({ current, back, go = {} }: { current: Step; back: Go; go?: Partial<Record<Step, Go>> }) {
-  const backLabel = 'Back'
-  return (
-    <nav aria-label="Make steps" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
-      {typeof back === 'string'
-        ? <Link href={back} className="btn btn-quiet -ml-2 px-2 py-1 text-[15px] no-underline" aria-label={backLabel} title={backLabel}>←</Link>
-        : <button type="button" className="btn btn-quiet -ml-2 px-2 py-1 text-[15px]" aria-label={backLabel} title={backLabel} onClick={back}>←</button>}
-      <ol className="m-0 flex list-none flex-wrap items-center gap-x-2 p-0">
-        {([1, 2, 3, 4] as const).map((s, i) => {
-          const to = s === current ? undefined : go[s]
-          const label = <><span className="tabular-nums">{s}</span> {NAMES[s]}</>
-          const style = s === current ? { color: 'var(--ink)', fontWeight: 600 } : { color: 'var(--ink-2)' }
-          return (
-            <Fragment key={s}>
-              {i > 0 && <li aria-hidden="true" className="ink-2">·</li>}
-              <li aria-current={s === current ? 'step' : undefined} style={style}>
-                {to === undefined ? label
-                  : typeof to === 'string' ? <Link href={to} className="no-underline" style={style}>{label}</Link>
-                  : <button type="button" className="cursor-pointer border-0 bg-transparent p-0" style={{ ...style, font: 'inherit' }} onClick={to}>{label}</button>}
-              </li>
-            </Fragment>
-          )
-        })}
-      </ol>
-    </nav>
-  )
-}
-
-/** §5: one page title per step, 24 px. Set inline: the chrome's own h1 rule would win over a utility class. */
+/** §5: a page title, 24 px. Set inline: the chrome's own h1 rule would win over a utility class. */
 export function StepTitle({ children, id }: { children: ReactNode; id?: string }) {
   return <h1 id={id} style={{ fontSize: 24, lineHeight: '30px', fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>{children}</h1>
 }
@@ -74,18 +39,7 @@ export function MoreMenu({ items, label = 'More' }: { items: { label: string; on
   )
 }
 
-/** A toggle switch: accent when on (§5: accent only on the primary button, a selected tab, a toggle that is on and the change highlight). */
-export function Switch({ on, onChange, label }: { on: boolean; onChange: () => void; label: string }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} aria-label={label} title={label} onClick={onChange}
-      className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-0 p-0 transition-colors"
-      style={{ background: on ? 'var(--accent)' : 'var(--line)' }}>
-      <span aria-hidden="true" className="absolute h-4 w-4 rounded-full transition-[left]" style={{ left: on ? 18 : 2, background: '#fff' }} />
-    </button>
-  )
-}
-
-/** A dialog laid over the step: Escape or the close button closes it. `full` takes the whole screen (the Fine-tune drawer). */
+/** A dialog laid over the page: Escape or the close button closes it. `full` takes the whole screen (the Fine-tune drawer). */
 export function Overlay({ title, onClose, children, full = false, actions }: { title: string; onClose: () => void; children: ReactNode; full?: boolean; actions?: ReactNode }) {
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }

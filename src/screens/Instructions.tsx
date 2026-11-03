@@ -4,13 +4,12 @@ import { Link } from '../lib/router'
 import { resolveProject } from '../lib/mapRelations'
 import { exportHandoff } from '../export'
 import { Markdown } from '../lib/markdown'
-import { projectSteps } from '../lib/makeFlow'
-import { StepLine, StepPage } from '../make/Steps'
+import { StepPage } from '../make/Steps'
 
 const COPY = { copy: 'Copy handoff.md', copied: 'Copied', see: 'See the screens', note: 'This is the handoff.md that Share downloads, rendered as a page: the same generator, the same words.', missing: "This project isn't on this device.", projects: 'Projects' }
 
 /** Instructions: handoff.md as a page, from the same generator Share's Downloads use. It is what Share's link opens on another device (E1 minimal),
- *  and what Share shows on a phone; read-only. The step line sits on 4 Share; See the screens leads back to 3 See, Fine-tune included. */
+ *  read-only. See the screens leads to the project's Make page, Fine-tune included. */
 export function InstructionsScreen({ id }: { id: string }) {
   const store = useStore()
   const project = store.projects.find(p => p.id === id)
@@ -23,7 +22,6 @@ export function InstructionsScreen({ id }: { id: string }) {
   return (
     <div className="chrome min-h-full">
       <StepPage>
-        <StepLine current={4} back={`/project/${project.id}/share`} go={projectSteps(project.id)} />
         <div className="flex flex-wrap items-center gap-2">
           <Link href={`/project/${project.id}`} className="btn btn-accent no-underline">{COPY.see}</Link>
           <button type="button" className="btn" onClick={copy}>{copied ? COPY.copied : COPY.copy}</button>

@@ -79,7 +79,8 @@ function AppHeader({ tab }: { tab: Tab }) {
       <nav aria-label="Main" className="hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
       <div className="ml-auto flex items-center gap-3">
         <QueueStatus />
-        <ShootButton className="hidden md:inline-block" />
+        {/* Make is one page about the result: Shoot sits in the header on the Library side only (the phone's bottom bar keeps it everywhere) */}
+        {tab === 'library' && <ShootButton className="hidden md:inline-block" />}
         <MoreMenu />
       </div>
     </header>

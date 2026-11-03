@@ -1,11 +1,12 @@
-/** 15_SIMPLIFY §2 Make: the pure parts of the four steps (What, Picks, See, Share). No React, no model call. */
-import { candidatesOf, type Project, type RelationRef, type Resolved } from './mapRelations'
-import { labelsOf, labelForRule, labelsOfBrick, type ShortLabel } from './shortLabels'
+/** Make, one page (Malik, 2026-11-03, over 15_SIMPLIFY's steps): the pure parts. No React, no model call. */
+import { candidatesOf, resolveProject, type Project, type Resolved } from './mapRelations'
+import { labelsOf, labelsOfBrick } from './shortLabels'
 import { creditLine, savedLabel } from './brickLabels'
 import { originOf } from './starters'
+import { PARAMETER_KEYS } from '../shell/params'
 import type { Brick } from './types'
 
-/** Spec v3 P2: the field's placeholder rotates three examples, so the expected granularity is obvious. */
+/** Spec v3 P2: three examples of the expected granularity, shown under the empty field. */
 export const INTENT_EXAMPLES = ['a concert log for someone who goes to a lot of shows', 'a reading tracker', 'a ride stats screen for sunlight'] as const
 
 const LEADING = new Set(['a', 'an', 'the'])
@@ -22,65 +23,63 @@ export function autoName(intent: string): string {
   return name ? name[0].toUpperCase() + name.slice(1) : ''
 }
 
-/** The one line under a photo on a Picks card: the day it was taken ("Dec 27, 2025") when the photo said, else "saved Nov 3"; a starter carries its credit line (SB2). */
+/** The line under a photo in a picker: the day it was taken ("Dec 27, 2025") when the photo said, else "saved Nov 3"; a starter carries its credit line (SB2). */
 export function photoLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {
   if (originOf(b) === 'starter') return creditLine(b)
   return b.taken_at ? savedLabel(b.taken_at, today).slice('saved '.length) : savedLabel(b.saved_at, today)
 }
 
-/** A Picks card's one label: the label for the rule the brick was proposed for; a card with no quote (the starting point, a swap) takes the brick's first label. */
-export function pickLabel(brick: Brick, quotedRule: string): ShortLabel | null {
-  return (quotedRule ? labelForRule(brick, quotedRule) : null) ?? labelsOfBrick(brick, 1)[0] ?? null
-}
+/** The photo row under the screens: each photo of the project that sets something on them, judged with that photo unmuted (a photo tapped off
+ *  stays in the row, dimmed, as long as turning it back on would show), with its one short label. A photo that sets nothing is left out. */
+export type PhotoChip = { brick: Brick; muted: boolean; label: string | null }
 
-/** The ref that switches a whole relation off: `brick/r1` for `brick/r1:hierarchy_mode`. */
-export const relationOf = (ref: RelationRef): RelationRef => ref.split(':')[0] as RelationRef
-
-/** Whether a candidate is switched off in the project, by its own ref or by its relation's. */
-export const isOff = (project: Pick<Project, 'disabled'>, ref: RelationRef): boolean => !!project.disabled[ref] || !!project.disabled[relationOf(ref)]
-
-/** `inUse`: the screens show this label's value. A label that is on can still lose its parameter to a brick above it (or a choice made in Fine-tune). */
-export type SeeLabel = ShortLabel & { ref: RelationRef; on: boolean; inUse: boolean }
-export type SeeRow = { brick: Brick; labels: SeeLabel[] }
-
-/** 3 See, "From your photos": one row per brick of the project, in the project's order, each with the short labels of its candidates that are active in the
- *  resolved project or switched off by you (so a label you turned off keeps its switch). A candidate the cap of three holds back has no row until a slot frees. */
-export function seeRows(project: Project, resolved: Resolved, bricks: Brick[]): SeeRow[] {
-  const active = new Set(Object.values(resolved.candidates).flatMap(cs => (cs ?? []).map(c => c.ref)))
+export function photoRow(project: Project, bricks: Brick[]): PhotoChip[] {
   return project.brickIds.flatMap(id => {
     const brick = bricks.find(b => b.id === id)
     if (!brick) return []
-    const shown = candidatesOf(brick).candidates.filter(c => active.has(c.ref) || isOff(project, c.ref))
-    const labels = labelsOf(shown).filter((l): l is ShortLabel & { ref: RelationRef } => !!l.ref).map(l => {
-      const v = resolved.values[l.key]
-      return { ...l, on: !isOff(project, l.ref), inUse: v.source?.brickId === brick.id && v.source?.relationId === l.relationId && v.value === l.value }
-    })
-    return [{ brick, labels }]
+    const muted = !!project.mutedBricks?.[id]
+    const r = resolveProject(muted ? { ...project, mutedBricks: toggleMuted(project.mutedBricks, id) } : project, bricks)
+    if (!PARAMETER_KEYS.some(k => r.values[k].source?.brickId === id)) return []
+    return [{ brick, muted, label: oneLabel(brick, r) }]
   })
 }
 
-/** The project's `disabled` after a See switch is flipped. Off sets the label's own ref. On clears its own ref and its relation's, because a relation
- *  switched off as a whole (the label for the relation's own parameter, or a relation unchecked in Fine-tune) holds every reading off. */
-export function toggleRef(disabled: Project['disabled'], ref: RelationRef): Project['disabled'] {
-  const d = { ...disabled }
-  if (!d[ref] && !d[relationOf(ref)]) { d[ref] = true; return d }
-  delete d[ref]
-  delete d[relationOf(ref)]
-  return d
+/** A photo's one label: the first short label among the values it sets on the screens (in the order of its own rules, then its skin);
+ *  when none of those has a label, its first label overall. Never a glyph, never rule text. */
+export function oneLabel(brick: Brick, resolved: Resolved): string | null {
+  const order: string[] = candidatesOf(brick).candidates.map(c => c.key)
+  const rank = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length : i }
+  const sets = PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === brick.id).sort((a, b) => rank(a) - rank(b)).map(k => resolved.values[k])
+  return labelsOf(sets)[0]?.label ?? labelsOfBrick(brick, 1)[0]?.label ?? null
 }
 
-/** E1 minimal: the link a Share hands out. It opens the library under the code on the other device and lands on the project's Instructions page. */
+/** `mutedBricks` with one photo flipped: off if it was on, on if it was off. */
+export function toggleMuted(muted: Project['mutedBricks'], id: string): Record<string, true> {
+  const next = { ...(muted ?? {}) }
+  if (next[id]) delete next[id]
+  else next[id] = true
+  return next
+}
+
+const PROJECT_PAGE = /^\/project\/([^/]+)(?:\/(share|export|preview))?\/?$/
+
+/** Which Make page a path shows: `/make` (no project yet) or `/project/:id`. The older step routes land on the project's page, `share` and `export`
+ *  with the Share popover open. `/project/:id/instructions` is not Make (it is E1's target), so it is null, as is every other path. */
+export function makeRoute(path: string): { id: string | null; share: boolean } | null {
+  if (path === '/make' || path === '/make/') return { id: null, share: false }
+  const m = PROJECT_PAGE.exec(path)
+  return m ? { id: decodeURIComponent(m[1]), share: m[2] === 'share' || m[2] === 'export' } : null
+}
+
+/** E1 minimal: the link Share hands out. It opens the library under the code on the other device and lands on the project's Instructions page. */
 export const instructionsLink = (origin: string, code: string, projectId: string): string =>
   `${origin}/open?code=${code}&project=${encodeURIComponent(projectId)}&to=instructions`
 
-/** Where `/open` lands once the library is in: the project's Instructions page when the link asks for it (`to=instructions`), else the project (See), else the Projects list or the Library. */
+/** Where `/open` lands once the library is in: the project's Instructions page when the link asks for it (`to=instructions`), else the project's Make page, else the Projects list or the Library. */
 export function openDestination(projectId: string | null, known: boolean, to: string | null): string {
   if (projectId && known) return to === 'instructions' ? `/project/${projectId}/instructions` : `/project/${projectId}`
   return projectId ? '/projects' : '/'
 }
 
-/** Where the step line's steps lead from inside a project: 1 What starts a new one, 3 See and 4 Share are the project's pages; 2 Picks is gone once the project exists. */
-export const projectSteps = (id: string): { 1: string; 3: string; 4: string } => ({ 1: '/make', 3: `/project/${id}`, 4: `/project/${id}/share` })
-
-/** Neutral skin: the same colors, radius, type and spacing on every shell, so only the relationship parameters remain (See's ⋯ and Fine-tune share it). */
+/** Neutral skin: the same colors, radius, type and spacing on every shell, so only the relationship parameters remain (Make's ⋯ and Fine-tune share it). */
 export const NEUTRAL_SKIN = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const

@@ -1,5 +1,6 @@
 import { StoreProvider } from './lib/store'
 import { match, usePath } from './lib/router'
+import { makeRoute } from './lib/makeFlow'
 import { hasHeader } from './lib/nav'
 import { AppChrome } from './chrome/AppChrome'
 import { AddPhotosProvider } from './bricks/AddPhotos'
@@ -11,8 +12,6 @@ import { MakeScreen } from './screens/Make'
 import { SyncScreen } from './screens/Sync'
 import { OpenScreen } from './screens/Open'
 import { InstructionsScreen } from './screens/Instructions'
-import { SeeScreen } from './screens/See'
-import { ShareScreen } from './screens/Share'
 import { Solo } from './Solo'
 import { lazy, Suspense } from 'react'
 
@@ -26,20 +25,14 @@ function Routes() {
   const brick = match('/brick/:id', path)
   if (brick) return <BrickScreen id={brick.id} />
   if (path === '/projects') return <ProjectsScreen />
-  if (path === '/make') return <MakeScreen />
+  // Make is one page: /make before a project, /project/:id with one (the older share, export and preview routes land there too)
+  const make = makeRoute(path)
+  if (make) return <MakeScreen id={make.id} share={make.share} />
   if (path === '/sync') return <SyncScreen />
   if (DevPixels && path === '/dev/pixels') return <Suspense fallback={null}><DevPixels /></Suspense>
   if (path === '/open') return <OpenScreen />
-  const exp = match('/project/:id/export', path)
-  if (exp) return <ShareScreen id={exp.id} openDownloads />
-  const share = match('/project/:id/share', path)
-  if (share) return <ShareScreen id={share.id} />
-  const prev = match('/project/:id/preview', path)
-  if (prev) return <SeeScreen id={prev.id} />
   const instr = match('/project/:id/instructions', path)
   if (instr) return <InstructionsScreen id={instr.id} />
-  const proj = match('/project/:id', path)
-  if (proj) return <SeeScreen id={proj.id} />
   // the step-2 comparison: still a route, no longer in any navigation (15_SIMPLIFY §1)
   if (path === '/compare') return <Compare />
   return <Library />
