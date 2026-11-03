@@ -81,9 +81,9 @@ export function BrickScreen({ id }: { id: string }) {
               {relations.map(r => {
                 const prov = provenanceOf(brick, r)
                 const value = r.parameter === 'none' ? null : proposeValue(r.parameter as ParameterKey, r)
-                // C4′: where the rule would land on the shell (every other parameter at its default); the footnote is the first measurement it rests on
+                // C4′: where the rule would land on the shell (every other parameter at its default); the footnote is the same helper the Sheet uses
                 const lands = value === null ? null : landsOn(r.parameter as ParameterKey, { ...DEFAULT_PARAMS, [r.parameter]: value })
-                const first = brick.measurements.find(m => m.id === prov.measurementIds[0])
+                const note = footnoteFor(brick, prov.measurementIds)
                 return (
                   <li key={r.id} id={r.id} className="rounded px-2 py-1" onMouseEnter={() => setHl(prov.measurementIds[0] ?? null)} onMouseLeave={() => setHl(null)}>
                     <div className="flex items-baseline gap-2"><span className="mono ink-2">{r.id}</span><span>{r.rule}{lands && ` → ${lands}`}</span></div>
@@ -93,7 +93,7 @@ export function BrickScreen({ id }: { id: string }) {
                         : <span className="chip chip-measured"><span className="mono">{r.parameter}</span>{value !== null && <span className="mono">= {String(value)}</span>}</span>}
                       {r.parameter !== 'none' && value === null && <span className="ink-2">no value could be read from the rule</span>}
                       <span className="ink-2">from <a href={`#${r.source_hypothesis}`} className="mono">{r.source_hypothesis}</a> · {prov.provenance}</span>
-                      {first && <span className="mono ink-2 min-w-0 break-words">{footnoteFor(first)}</span>}
+                      {note && <span className="mono ink-2 min-w-0 max-w-full truncate" title={note}>{note}</span>}
                     </div>
                   </li>
                 )

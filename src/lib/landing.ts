@@ -7,9 +7,10 @@ const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1)
 const lowerFirst = (x: string) => x.charAt(0).toLowerCase() + x.slice(1)
 
 /** Hue ranges in degrees: a hue below the first number is red, from there up to the next is orange, and so on; every lower bound is inclusive, 345 and over is red again. */
-const HUES: [number, string][] = [[15, 'red'], [45, 'orange'], [70, 'yellow'], [170, 'green'], [200, 'teal'], [255, 'blue'], [290, 'purple'], [345, 'pink']]
+const HUES: [number, string][] = [[15, 'red'], [45, 'orange'], [70, 'yellow'], [165, 'green'], [190, 'teal'], [255, 'blue'], [290, 'purple'], [345, 'pink']]
 
-/** A plain name for #RRGGBB, read from lightness, then saturation, then hue. Anything that is not #RRGGBB is grey. */
+/** A plain name for #RRGGBB, read from lightness, then saturation, then hue, then a qualifier (`light` from 0.7 up, `dark` up to 0.3; a dark orange or yellow is `brown`).
+ *  A pale, nearly neutral color (lighter than 0.85, under 0.3 saturated) is `off-white`. Anything that is not #RRGGBB is grey. */
 export function colorName(hex: string): string {
   const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex)
   if (!m) return 'grey'
@@ -21,8 +22,11 @@ export function colorName(hex: string): string {
   if (l < 0.12) return 'black'
   if (l > 0.94) return 'white'
   if (s < 0.12) return 'grey'
+  if (l > 0.85 && s < 0.3) return 'off-white'
   const h = max === r ? (60 * (g - b)) / d + (g < b ? 360 : 0) : max === g ? (60 * (b - r)) / d + 120 : (60 * (r - g)) / d + 240
-  return HUES.find(([below]) => h < below)?.[1] ?? 'red'
+  const hue = HUES.find(([below]) => h < below)?.[1] ?? 'red'
+  if ((hue === 'orange' || hue === 'yellow') && l < 0.35) return 'brown'
+  return l >= 0.7 ? `light ${hue}` : l <= 0.3 ? `dark ${hue}` : hue
 }
 
 const HIERARCHY: Record<string, string> = {
@@ -47,35 +51,41 @@ const RHYTHM: Record<string, string> = {
   alternating: 'Every second item puts its poster on the other side, on both screens.',
   'featured-first': 'The first show becomes a large feature; the year review opens with “Show of the year” and puts the biggest section first.',
 }
+/** `alternating` moves the poster to the other side, which depends on where the hierarchy put it: type-led already has it on the right, image-led has it above the text. */
+const ALTERNATING: Record<string, string> = {
+  'type-led': 'With type-led items the poster is already on the right, so alternating changes nothing on the list; on the year review every second row moves its date to the front.',
+  'image-led': 'Every second item puts its poster below the text, on both screens.',
+}
 const ALIGNMENT: Record<string, string> = {
   left: 'Text hugs the left edge; the right side stays empty.',
   right: 'Text hugs the right edge and posters move to the right.',
   center: 'Titles, dates and headings are centered.',
   split: 'Artist names sit left and the date line sits right.',
 }
+const HERO_ONE = "the first show's title does not stand out."
 const heroTitle = (n: string) => `Only the first show's title and the “2025” headline are ${n}.`
-/** Where the accent lands, by placement and then coverage (n = the accent's color name); `who` is what the one-hue sentence says cannot stand out. `none` is handled in landsOn. */
-const ACCENT: Record<string, { who: string; by: Record<string, (n: string) => string> }> = {
-  labels: { who: 'genre tags', by: {
-    '<=15%': n => `Genre tags are filled ${n}; year-review totals are ${n}.`,
-    '<=5%': n => `Genre tags are outlined in ${n}; year-review totals are ${n}.`,
-    '<=2%': n => `Genre tags stay grey with a small ${n} dot; year-review totals are ${n}.`,
-  } },
-  actions: { who: 'the Details buttons', by: {
-    '<=15%': n => `Only the Details buttons are filled ${n}.`,
-    '<=5%': n => `Only the Details buttons are ${n}.`,
-    '<=2%': n => `Only the Details buttons carry the accent, as a ${n} underline.`,
-  } },
-  dividers: { who: 'the lines between items', by: {
-    '<=15%': n => `The lines between items are ${n} and 6 px thick.`,
-    '<=5%': n => `The lines between items are ${n} and 2 px thick.`,
-    '<=2%': n => `The lines between items are ${n} and 1 px thick.`,
-  } },
-  'one-hero': { who: 'the first show', by: {
-    '<=15%': n => `The first show is filled ${n} and the “2025” headline is ${n}.`,
-    '<=5%': heroTitle,
-    '<=2%': heroTitle,
-  } },
+/** Where the accent lands, by placement and then coverage: [with two hues or more (n = the accent's color name), with one hue, where the accent is the text color, after "With one hue the accent is the text color: "]. `none` is handled in landsOn. */
+const ACCENT: Record<string, Record<string, [(n: string) => string, string]>> = {
+  labels: {
+    '<=15%': [n => `Genre tags are filled ${n}; year-review totals are ${n}.`, 'genre tags are filled with it.'],
+    '<=5%': [n => `Genre tags are outlined in ${n}; year-review totals are ${n}.`, 'genre tags are outlined in it.'],
+    '<=2%': [n => `Genre tags stay grey with a small ${n} dot; year-review totals are ${n}.`, 'genre tags stay grey with a small dot in it.'],
+  },
+  actions: {
+    '<=15%': [n => `Only the Details buttons are filled ${n}.`, 'the Details buttons are filled with it.'],
+    '<=5%': [n => `Only the Details buttons are ${n}.`, 'the Details buttons are outlined in it.'],
+    '<=2%': [n => `Only the Details buttons carry the accent, as a ${n} underline.`, 'the Details buttons get an underline in it.'],
+  },
+  dividers: {
+    '<=15%': [n => `The lines between items are ${n} and 6 px thick.`, 'the lines between items are 6 px thick in it.'],
+    '<=5%': [n => `The lines between items are ${n} and 2 px thick.`, 'the lines between items are 2 px thick in it.'],
+    '<=2%': [n => `The lines between items are ${n} and 1 px thick.`, 'the lines between items are drawn in it.'],
+  },
+  'one-hero': {
+    '<=15%': [n => `The first show is filled ${n} and the “2025” headline is ${n}.`, 'the first show is filled with it.'],
+    '<=5%': [heroTitle, HERO_ONE],
+    '<=2%': [heroTitle, HERO_ONE],
+  },
 }
 
 /** The entry for a parameter's value; a value outside the vocabulary reads as the default's entry, so every call answers. */
@@ -89,14 +99,17 @@ export function landsOn(key: ParameterKey, params: Params): string {
   const hues = Number(params.palette_hue_count)
   const n = colorName(String(params.color_accent))
   switch (key) {
-    case 'type_scale_ratio':
-      return H === 'type-led' ? `Artist names lead at ${R}× the body text; the “2025” headline is ${R}× too.`
+    case 'type_scale_ratio': {
+      const base = H === 'type-led' ? `Artist names lead at ${R}× the body text; the “2025” headline is ${R}× too.`
         : H === 'image-led' ? `List titles stay small under the poster; year-review section titles are ${r}× and the “2025” headline is ${R}×.`
         : `Artist names are ${r}× the body text; the “2025” headline is ${R}×.`
+      // the featured first show sets its title in the display size; under type-led every name already does
+      return params.rhythm === 'featured-first' && H !== 'type-led' ? `${base} The first show's title is ${R}×.` : base
+    }
     case 'hierarchy_mode': return entry(HIERARCHY, key, params)
     case 'density': return entry(DENSITY, key, params)
     case 'grouping': return entry(GROUPING, key, params)
-    case 'rhythm': return entry(RHYTHM, key, params)
+    case 'rhythm': return params.rhythm === 'alternating' && ALTERNATING[String(H)] ? ALTERNATING[String(H)] : entry(RHYTHM, key, params)
     case 'alignment_edge': return entry(ALIGNMENT, key, params)
     case 'image_text_dominance': {
       const base = H === 'type-led' ? `The poster sits right as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
@@ -106,8 +119,8 @@ export function landsOn(key: ParameterKey, params: Params): string {
     }
     case 'accent_placement': {
       if (params.accent_placement === 'none') return 'No element takes the accent color.'
-      const placed = entry(ACCENT, key, params)
-      return hues < 2 ? `With one hue the accent is the text color, so ${placed.who} do not stand out.` : entry(placed.by, 'accent_coverage', params)(n)
+      const [two, one] = entry(entry(ACCENT, key, params), 'accent_coverage', params)
+      return hues < 2 ? `With one hue the accent is the text color: ${one}` : two(n)
     }
     case 'accent_coverage':
       return params.accent_placement === 'none' ? 'No element takes the accent, so coverage has no effect.'
@@ -158,11 +171,13 @@ export function rowHeadline(pv: ParameterValue, params: Params, bricks: Brick[])
   return L
 }
 
-/** A measurement as the footnote under a row: `m3: ~4% of frame`. */
-export const footnoteFor = (m: Pick<Measurement, 'id' | 'value'>): string => `${m.id}: ${m.value}`
-
-/** The footnote of a value: the first measurement it cites that its brick has, or null when there is none. */
-export function footnoteOf(pv: ParameterValue, bricks: Brick[]): string | null {
-  const m = measurementOf(pv, bricks)
-  return m ? footnoteFor(m) : null
+/** The footnote under a row, one derivation for the Sheet and the Brick screen: `m3: ~4% of frame`. Of the measurements a value rests on, the first one (in the order of `measurementIds`) that the brick has and whose value contains a digit;
+ *  when none has a digit, the first that exists; null when there is none. */
+export function footnoteFor(brick: Brick | undefined, measurementIds: string[] | undefined): string | null {
+  const have = (measurementIds ?? []).map(id => brick?.measurements.find(m => m.id === id)).filter((m): m is Measurement => m !== undefined)
+  const m = have.find(x => /\d/.test(String(x.value))) ?? have[0]
+  return m ? `${m.id}: ${m.value}` : null
 }
+
+/** The footnote of a value: `footnoteFor` its brick and the measurements it cites. */
+export const footnoteOf = (pv: ParameterValue, bricks: Brick[]): string | null => footnoteFor(bricks.find(b => b.id === pv.source?.brickId), pv.source?.measurementIds)

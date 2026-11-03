@@ -3,10 +3,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
-import { resolveProject, type Project, type Resolved } from '../src/lib/mapRelations.ts'
+import { provenanceOf, resolveProject, type Project, type Resolved } from '../src/lib/mapRelations.ts'
 import type { Brick } from '../src/lib/types.ts'
 import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, type ParameterKey, type Params } from '../src/shell/params.ts'
-import { colorName, footnoteOf, landsOn, rowHeadline, ruleTextOf } from '../src/lib/landing.ts'
+import { colorName, footnoteFor, footnoteOf, landsOn, rowHeadline, ruleTextOf } from '../src/lib/landing.ts'
 import { exportCss } from '../src/export/index.ts'
 
 const p = (patch: Partial<Params> = {}): Params => ({ ...DEFAULT_PARAMS, ...patch })
@@ -14,17 +14,17 @@ const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
 
 describe('colorName', () => {
   it('names the required cases', () => {
-    for (const [hex, name] of [['#2F6FED', 'blue'], ['#C8502A', 'red'], ['#1B1B1B', 'black'], ['#F4F2EE', 'white'], ['#6B6B6B', 'grey'], ['#2E8B57', 'green'], ['#F2C200', 'yellow']]) assert.equal(colorName(hex), name, hex)
+    for (const [hex, name] of [['#2F6FED', 'blue'], ['#C8502A', 'red'], ['#1B1B1B', 'black'], ['#F4F2EE', 'white'], ['#6B6B6B', 'grey'], ['#2E8B57', 'green'], ['#F2C200', 'yellow'], ['#D4DFE0', 'off-white'], ['#A6D4E3', 'light blue'], ['#673F1E', 'brown'], ['#43403E', 'grey']]) assert.equal(colorName(hex), name, hex)
   })
   it('names each hue range from a pure color', () => {
     for (const [hex, name] of [['#FF0000', 'red'], ['#FF8000', 'orange'], ['#FFFF00', 'yellow'], ['#00FF00', 'green'], ['#00FFFF', 'teal'], ['#0000FF', 'blue'], ['#8000FF', 'purple'], ['#FF00FF', 'pink']]) assert.equal(colorName(hex), name, hex)
   })
   it('puts a hue exactly on a boundary in the range above it, one step lower in the range below', () => {
     const edges: [string, string, string, number][] = [   // [on the boundary, just under it, name under it, boundary in degrees]
-      ['#C83200', '#C83100', 'red', 15], ['#C89600', '#C89500', 'orange', 45], ['#C8F000', '#C8EF00', 'yellow', 70], ['#00F0C8', '#00F0C7', 'green', 170],
-      ['#00A0F0', '#00A0EF', 'teal', 200], ['#3200C8', '#3100C7', 'blue', 255], ['#C800F0', '#C700F0', 'purple', 290], ['#C80032', '#C80033', 'pink', 345],
+      ['#C83200', '#C83100', 'red', 15], ['#C89600', '#C89500', 'orange', 45], ['#C8F000', '#C8EF00', 'yellow', 70], ['#00F0B4', '#00F0B3', 'green', 165],
+      ['#00C8F0', '#00C8EF', 'teal', 190], ['#3200C8', '#3100C7', 'blue', 255], ['#C800F0', '#C700F0', 'purple', 290], ['#C80032', '#C80033', 'pink', 345],
     ]
-    const above: Record<number, string> = { 15: 'orange', 45: 'yellow', 70: 'green', 170: 'teal', 200: 'blue', 255: 'purple', 290: 'pink', 345: 'red' }
+    const above: Record<number, string> = { 15: 'orange', 45: 'yellow', 70: 'green', 165: 'teal', 190: 'blue', 255: 'purple', 290: 'pink', 345: 'red' }
     for (const [on, under, nameUnder, deg] of edges) {
       assert.equal(colorName(on), above[deg], `${on} sits at ${deg}°`)
       assert.equal(colorName(under), nameUnder, `${under} sits just under ${deg}°`)
@@ -43,6 +43,29 @@ describe('colorName', () => {
     assert.equal(colorName('#8A8680'), 'grey')      // s = 0.041
     assert.equal(colorName('#967878'), 'red')       // s = 0.125
     assert.equal(colorName('#917373'), 'red')       // s = 0.12 exactly: not under it
+  })
+  it('calls a pale, nearly neutral color off-white: lighter than 0.85 and less saturated than 0.3, after grey and before the hue', () => {
+    assert.equal(colorName('#D4DFE0'), 'off-white')   // l = 0.855, s = 0.162
+    assert.equal(colorName('#CED9E4'), 'off-white')   // l = 0.851, s = 0.289
+    assert.equal(colorName('#CDD9E4'), 'light blue')  // l = 0.849: not lighter than 0.85
+    assert.equal(colorName('#CDD9E5'), 'light blue')  // l = 0.851, s = 0.316: not under 0.3
+    assert.equal(colorName('#E8E8E8'), 'grey')        // s = 0: grey comes first
+    assert.equal(colorName('#F4F2EE'), 'white')       // l = 0.949: white comes first
+  })
+  it('calls an orange or yellow darker than 0.35 brown, with no qualifier', () => {
+    assert.equal(colorName('#673F1E'), 'brown')       // orange, l = 0.261
+    assert.equal(colorName('#6B5A00'), 'brown')       // yellow, l = 0.210
+    assert.equal(colorName('#B25900'), 'brown')       // l = 0.349
+    assert.equal(colorName('#B35A00'), 'orange')      // l = 0.351
+    assert.equal(colorName('#800000'), 'dark red')    // only orange and yellow turn brown
+  })
+  it('adds light from 0.7 up and dark up to 0.3', () => {
+    assert.equal(colorName('#6666FF'), 'light blue')  // l = 0.7 exactly
+    assert.equal(colorName('#6565FF'), 'blue')        // l = 0.698
+    assert.equal(colorName('#000099'), 'dark blue')   // l = 0.3 exactly
+    assert.equal(colorName('#00009A'), 'blue')        // l = 0.302
+    assert.equal(colorName('#90EE90'), 'light green')
+    assert.equal(colorName('#006400'), 'dark green')
   })
   it('reads lower-case hex', () => assert.equal(colorName('#2f6fed'), 'blue'))
   it('answers grey for anything that is not #RRGGBB', () => {
@@ -65,6 +88,38 @@ describe('landsOn: type_scale_ratio', () => {
   it('squares every ratio of the vocabulary to two places', () => {
     for (const [ratio, square] of [[1.125, '1.27'], [1.25, '1.56'], [1.414, '2'], [1.6, '2.56'], [2, '4'], [3, '9']] as const) {
       assert.equal(landsOn('type_scale_ratio', p({ type_scale_ratio: ratio })), `Artist names are ${ratio}× the body text; the “2025” headline is ${square}×.`)
+    }
+  })
+})
+
+describe('landsOn: type_scale_ratio with a featured first show', () => {
+  it('balanced and image-led: the first show title takes the squared ratio, after one space', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'balanced', rhythm: 'featured-first', type_scale_ratio: 1.25 })), "Artist names are 1.25× the body text; the “2025” headline is 1.56×. The first show's title is 1.56×.")
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'image-led', rhythm: 'featured-first', type_scale_ratio: 2 })), "List titles stay small under the poster; year-review section titles are 2× and the “2025” headline is 4×. The first show's title is 4×.")
+  })
+  it('type-led already says every name leads at that size, so nothing is added', () => {
+    assert.equal(landsOn('type_scale_ratio', p({ hierarchy_mode: 'type-led', rhythm: 'featured-first', type_scale_ratio: 2 })), 'Artist names lead at 4× the body text; the “2025” headline is 4× too.')
+  })
+  it('uniform and alternating add nothing', () => {
+    for (const rhythm of ['uniform', 'alternating']) for (const hierarchy_mode of ['balanced', 'image-led']) {
+      assert.ok(!landsOn('type_scale_ratio', p({ hierarchy_mode, rhythm, type_scale_ratio: 2 })).includes('The first show'), `${hierarchy_mode} ${rhythm}`)
+    }
+  })
+})
+
+describe('landsOn: rhythm reads the hierarchy', () => {
+  const ALTERNATING = {
+    'type-led': 'With type-led items the poster is already on the right, so alternating changes nothing on the list; on the year review every second row moves its date to the front.',
+    'image-led': 'Every second item puts its poster below the text, on both screens.',
+    balanced: 'Every second item puts its poster on the other side, on both screens.',
+  }
+  it('alternating: one sentence per hierarchy', () => {
+    for (const [hierarchy_mode, sentence] of Object.entries(ALTERNATING)) assert.equal(landsOn('rhythm', p({ rhythm: 'alternating', hierarchy_mode })), sentence, hierarchy_mode)
+  })
+  it('uniform and featured-first read the same under every hierarchy', () => {
+    for (const hierarchy_mode of Object.keys(ALTERNATING)) {
+      assert.equal(landsOn('rhythm', p({ rhythm: 'uniform', hierarchy_mode })), 'Every list item has the same shape.', hierarchy_mode)
+      assert.equal(landsOn('rhythm', p({ rhythm: 'featured-first', hierarchy_mode })), 'The first show becomes a large feature; the year review opens with “Show of the year” and puts the biggest section first.', hierarchy_mode)
     }
   })
 })
@@ -140,6 +195,12 @@ describe('landsOn: image_text_dominance', () => {
 })
 
 describe('landsOn: accent_placement and accent_coverage', () => {
+  const ONE_HUE: Record<string, Record<string, string>> = {   // what follows "With one hue the accent is the text color: ", by what shell.css does with --color-accent = --color-fg
+    labels: { '<=15%': 'genre tags are filled with it.', '<=5%': 'genre tags are outlined in it.', '<=2%': 'genre tags stay grey with a small dot in it.' },
+    actions: { '<=15%': 'the Details buttons are filled with it.', '<=5%': 'the Details buttons are outlined in it.', '<=2%': 'the Details buttons get an underline in it.' },
+    dividers: { '<=15%': 'the lines between items are 6 px thick in it.', '<=5%': 'the lines between items are 2 px thick in it.', '<=2%': 'the lines between items are drawn in it.' },
+    'one-hero': { '<=15%': 'the first show is filled with it.', '<=5%': "the first show's title does not stand out.", '<=2%': "the first show's title does not stand out." },
+  }
   const BY: Record<string, Record<string, string>> = {   // default accent #2F6FED is blue
     labels: { '<=15%': 'Genre tags are filled blue; year-review totals are blue.', '<=5%': 'Genre tags are outlined in blue; year-review totals are blue.', '<=2%': 'Genre tags stay grey with a small blue dot; year-review totals are blue.' },
     actions: { '<=15%': 'Only the Details buttons are filled blue.', '<=5%': 'Only the Details buttons are blue.', '<=2%': 'Only the Details buttons carry the accent, as a blue underline.' },
@@ -162,11 +223,14 @@ describe('landsOn: accent_placement and accent_coverage', () => {
     assert.equal(landsOn('accent_placement', p({ accent_placement: 'none' })), 'No element takes the accent color.')
     assert.equal(landsOn('accent_placement', p({ accent_placement: 'none', palette_hue_count: 1 })), 'No element takes the accent color.')
   })
-  it('with one hue the accent is the text color, whatever the coverage', () => {
-    const who = { labels: 'genre tags', actions: 'the Details buttons', dividers: 'the lines between items', 'one-hero': 'the first show' }
-    for (const [placement, w] of Object.entries(who)) for (const coverage of ['<=15%', '<=5%', '<=2%']) {
-      assert.equal(landsOn('accent_placement', p({ accent_placement: placement, accent_coverage: coverage, palette_hue_count: 1 })), `With one hue the accent is the text color, so ${w} do not stand out.`, `${placement} ${coverage}`)
+  it('with one hue the accent is the text color, and the coverage still decides how the element carries it', () => {
+    assert.deepEqual(Object.keys(ONE_HUE).sort(), Object.keys(BY).sort(), 'the same placements')
+    for (const [placement, byCoverage] of Object.entries(ONE_HUE)) for (const [coverage, rest] of Object.entries(byCoverage)) {
+      assert.equal(landsOn('accent_placement', p({ accent_placement: placement, accent_coverage: coverage, palette_hue_count: 1 })), `With one hue the accent is the text color: ${rest}`, `${placement} ${coverage}`)
     }
+  })
+  it('with one hue, none keeps its own sentence', () => {
+    for (const coverage of ['<=15%', '<=5%', '<=2%']) assert.equal(landsOn('accent_placement', p({ accent_placement: 'none', accent_coverage: coverage, palette_hue_count: 1 })), 'No element takes the accent color.')
   })
   it('with three hues the accent still lands as with two', () => {
     assert.equal(landsOn('accent_placement', p({ accent_placement: 'actions', accent_coverage: '<=5%', palette_hue_count: 3 })), 'Only the Details buttons are blue.')
@@ -181,7 +245,10 @@ describe('landsOn: accent_placement and accent_coverage', () => {
     }
   })
   it('accent_coverage: with one hue it carries the one-hue sentence', () => {
-    assert.equal(landsOn('accent_coverage', p({ accent_placement: 'actions', accent_coverage: '<=5%', palette_hue_count: 1 })), 'At ≤5% coverage: with one hue the accent is the text color, so the Details buttons do not stand out.')
+    assert.equal(landsOn('accent_coverage', p({ accent_placement: 'actions', accent_coverage: '<=5%', palette_hue_count: 1 })), 'At ≤5% coverage: with one hue the accent is the text color: the Details buttons are outlined in it.')
+    for (const [placement, byCoverage] of Object.entries(ONE_HUE)) for (const coverage of Object.keys(byCoverage)) {
+      assert.equal(landsOn('accent_coverage', p({ accent_placement: placement, accent_coverage: coverage, palette_hue_count: 1 })), `At ${coverage.replace('<=', '≤')} coverage: with one hue the accent is the text color: ${byCoverage[coverage]}`, `${placement} ${coverage}`)
+    }
   })
 })
 
@@ -195,13 +262,17 @@ describe('landsOn: palette_hue_count and the skin', () => {
   it('color_bg and color_fg name the color', () => {
     assert.equal(landsOn('color_bg', p({ color_bg: '#F4F2EE' })), 'White page background on both screens.')
     assert.equal(landsOn('color_bg', p({ color_bg: '#2F6FED' })), 'Blue page background on both screens.')
+    assert.equal(landsOn('color_bg', p({ color_bg: '#D4DFE0' })), 'Off-white page background on both screens.')
+    assert.equal(landsOn('color_fg', p({ color_fg: '#673F1E' })), 'Brown text; muted text and lines are mixed from it.')
     assert.equal(landsOn('color_fg', p({ color_fg: '#1B1B1B' })), 'Black text; muted text and lines are mixed from it.')
     assert.equal(landsOn('color_fg', p({ color_fg: '#6B6B6B' })), 'Grey text; muted text and lines are mixed from it.')
   })
   it('color_accent is used with two hues or more and unused with one', () => {
     assert.equal(landsOn('color_accent', p({ palette_hue_count: 2 })), 'Blue accent; accent_placement decides where it shows.')
     assert.equal(landsOn('color_accent', p({ palette_hue_count: 3, color_accent: '#C8502A' })), 'Red accent; accent_placement decides where it shows.')
+    assert.equal(landsOn('color_accent', p({ palette_hue_count: 2, color_accent: '#A6D4E3' })), 'Light blue accent; accent_placement decides where it shows.')
     assert.equal(landsOn('color_accent', p({ palette_hue_count: 1 })), 'Unused: with one hue the accent is the text color.')
+    assert.equal(landsOn('palette_hue_count', p({ palette_hue_count: 2, color_accent: '#A6D4E3' })), 'Two hues: the text color plus light blue for the accent.')
   })
   it('radius: zero is square, anything else is named', () => {
     assert.equal(landsOn('radius', p({ radius: '0px' })), 'Posters, tags and buttons have square corners.')
@@ -245,18 +316,18 @@ const HEADLINES: Record<ParameterKey, string> = {
   rhythm: 'Shell default → Every list item has the same shape.',
   alignment_edge: 'Shell default → Text hugs the left edge; the right side stays empty.',
   image_text_dominance: `${ruleOf('g2', 'r1')} → Posters run full width above the text, 80% of the item's height; year-review images grow with it. Capped at 80% so the text stays readable.`,
-  accent_placement: 'Shell default → Genre tags are outlined in teal; year-review totals are teal.',
-  accent_coverage: `${ruleOf('g2', 'r2')} → At ≤5% coverage: genre tags are outlined in teal; year-review totals are teal.`,
+  accent_placement: 'Shell default → Genre tags are outlined in light blue; year-review totals are light blue.',
+  accent_coverage: `${ruleOf('g2', 'r2')} → At ≤5% coverage: genre tags are outlined in light blue; year-review totals are light blue.`,
   palette_hue_count: `${ruleOf('g1', 'r3')} → A third hue tints the genre tags on the list.`,
-  color_bg: 'Teal page background on both screens.',
+  color_bg: 'Off-white page background on both screens.',
   color_fg: 'Black text; muted text and lines are mixed from it.',
-  color_accent: 'Teal accent; accent_placement decides where it shows.',
+  color_accent: 'Light blue accent; accent_placement decides where it shows.',
   radius: 'Shell default → Corners of posters, tags and buttons are 8px.',
   type_family: `${statementOf('g2', 'm4')} → Every text on both screens is set in Helvetica Neue.`,
   spacing_unit: 'Shell default → Padding and gaps step in 8px; list items pad 2×.',
 }
 const FOOTNOTES: Partial<Record<ParameterKey, string>> = {
-  type_scale_ratio: footnoteFrom('calmmouse', 'm1'),
+  type_scale_ratio: 'm2: ≈ 2.2 : 1',   // r1 rests on m1 (a type description, no digit) and m2 (the ratio): the numeric one is the footnote
   hierarchy_mode: footnoteFrom('g1', 'm_foreground_coverage'),
   image_text_dominance: footnoteFrom('g2', 'm4'),
   accent_coverage: footnoteFrom('g2', 'm3'),
@@ -319,14 +390,45 @@ describe('ruleTextOf, rowHeadline and footnoteOf on g1 + g2 + calmmouse', () => 
     assert.equal(footnoteOf(v.type_family, []), null)
     assert.equal(rowHeadline(v.type_family, resolved.params, []), 'Every text on both screens is set in Helvetica Neue.')
   })
-  it('the footnote is "id: value" of the first measurement the brick has', () => {
+  it('the footnote is "id: value" of the first measurement the brick has with a digit in its value', () => {
     for (const [key, note] of Object.entries(FOOTNOTES)) assert.equal(footnoteOf(v[key as ParameterKey], SAMPLES), note, key)
+    assert.equal(measurement('calmmouse', 'm1').value.match(/\d/), null, 'm1 is a description without a digit')
+    assert.equal(footnoteOf(v.type_scale_ratio, SAMPLES), `m2: ${measurement('calmmouse', 'm2').value}`)
     const skipsAMissingId = { ...v.type_scale_ratio, source: { ...v.type_scale_ratio.source!, measurementIds: ['not-in-this-brick', 'm2'] } }
     assert.equal(footnoteOf(skipsAMissingId, SAMPLES), footnoteFrom('calmmouse', 'm2'))
     assert.equal(footnoteOf({ ...v.type_scale_ratio, source: { ...v.type_scale_ratio.source!, measurementIds: ['not-in-this-brick'] } }, SAMPLES), null)
   })
   it('all sixteen rows read as typed out from the spec', () => {
     for (const key of PARAMETER_KEYS) assert.equal(rowHeadline(v[key], resolved.params, SAMPLES), HEADLINES[key], key)
+  })
+})
+
+describe('footnoteFor: the one helper behind the Sheet and the Brick screen', () => {
+  const calm = brick('calmmouse')
+  const r1 = calm.relations.find(r => r.id === 'r1')!
+  it('calmmouse r1 rests on m1, m2 and m7; the footnote is m2, the first with a digit, on the Sheet and on the Brick screen', () => {
+    assert.deepEqual(provenanceOf(calm, r1).measurementIds, ['m1', 'm2', 'm7'])
+    assert.equal(footnoteFor(calm, provenanceOf(calm, r1).measurementIds), 'm2: ≈ 2.2 : 1')   // what Brick.tsx calls
+    assert.equal(footnoteOf(resolved.values.type_scale_ratio, SAMPLES), 'm2: ≈ 2.2 : 1')      // what Row calls
+  })
+  it('keeps the order of the ids: the first id with a digit wins, not the one with the most', () => {
+    assert.equal(footnoteFor(calm, ['m1', 'm3', 'm2']), `m3: ${measurement('calmmouse', 'm3').value}`)
+    assert.equal(footnoteFor(calm, ['m2', 'm3']), 'm2: ≈ 2.2 : 1')
+  })
+  it('skips an id the brick does not have', () => {
+    assert.equal(footnoteFor(calm, ['nope', 'm1', 'm2']), 'm2: ≈ 2.2 : 1')
+    assert.equal(footnoteFor(calm, ['nope', 'm1']), `m1: ${measurement('calmmouse', 'm1').value}`)
+  })
+  it('with no digit anywhere it takes the first measurement that exists', () => {
+    const words: Brick = { ...calm, measurements: [{ id: 'a', statement: 's', value: 'wide', how_measured: '' }, { id: 'b', statement: 's', value: 'narrow', how_measured: '' }] }
+    assert.equal(footnoteFor(words, ['zz', 'a', 'b']), 'a: wide')
+    assert.equal(footnoteFor(words, ['b', 'a']), 'b: narrow')
+  })
+  it('is null when there is no id, no brick or no such measurement', () => {
+    assert.equal(footnoteFor(calm, []), null)
+    assert.equal(footnoteFor(calm, undefined), null)
+    assert.equal(footnoteFor(calm, ['nope']), null)
+    assert.equal(footnoteFor(undefined, ['m2']), null)
   })
 })
 
@@ -340,12 +442,27 @@ describe('exportCss', () => {
   }
   const count = (text: string, token: string) => text.split(token).length - 1
 
+  const SHELL_DEFAULTS = ['density', 'grouping', 'rhythm', 'alignment_edge', 'accent_placement', 'radius', 'spacing_unit'] as const
   it('every parameter line carries a comment that starts with its row headline', () => {
-    for (const key of PARAMETER_KEYS) assert.ok(commentOf(css, key).startsWith(`${escaped(HEADLINES[key])} · `), key)
+    for (const key of PARAMETER_KEYS) {
+      const comment = commentOf(css, key)
+      assert.ok(comment.startsWith(escaped(HEADLINES[key])), key)
+      if (!(SHELL_DEFAULTS as readonly string[]).includes(key)) assert.ok(comment.startsWith(`${escaped(HEADLINES[key])} · `), key)
+    }
+  })
+  it('a shell default row is the headline alone: no repeated origin', () => {
+    for (const key of SHELL_DEFAULTS) {
+      assert.equal(commentOf(css, key), escaped(HEADLINES[key]), key)
+      assert.ok(commentOf(css, key).startsWith('Shell default → '), key)
+    }
+    assert.ok(css.includes('  --density: 4; /* Shell default → Four list items per screen; notes are hidden. */\n'))
+    assert.ok(!css.includes('shell default'), 'the lower-case origin is gone')
+    for (const key of SHELL_DEFAULTS) assert.ok(!commentOf(css, key).includes('adapted'), `no adapted origin on the ${key} default`)
   })
   it('then the origin it had, then the footnote when there is one', () => {
     assert.equal(commentOf(css, 'type_scale_ratio'), `${HEADLINES.type_scale_ratio} · measured · calmmouse · r1 · from m1, m2, m7 · ${FOOTNOTES.type_scale_ratio}`)
-    assert.equal(commentOf(css, 'density'), `${HEADLINES.density} · adapted · shell default`)
+    assert.equal(commentOf(css, 'density'), HEADLINES.density)   // a shell default: the headline alone
+    assert.equal(commentOf(css, 'type_family'), `${HEADLINES.type_family} · adapted · g2 · from m4 · by rule · ${FOOTNOTES.type_family}`)
     assert.equal(commentOf(css, 'color_bg'), `${HEADLINES.color_bg} · measured · g1`)
   })
   it('keeps the values and the resolved shell variables as they were', () => {

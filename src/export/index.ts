@@ -1,6 +1,6 @@
 import type { Proposal, Resolved } from '../lib/mapRelations'
 import type { Brick } from '../lib/types'
-import { footnoteOf, rowHeadline } from '../lib/landing'
+import { footnoteOf, isShellDefault, rowHeadline } from '../lib/landing'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS, toCssVars } from '../shell/params'
 
 const origin = (r: Resolved, k: (typeof PARAMETER_KEYS)[number]) => {
@@ -15,11 +15,11 @@ export function exportJson(intent: string, r: Resolved, proposal?: Proposal, bri
 }
 
 /** Custom properties for the skin and the relationship switches, one comment per value in the order of the sheet (C4′): the rule and where it lands, then its source, then the measurement.
- *  Where those texts would close a comment they are broken to `* /`, so a comment never closes early. Plus the resolved shell variables. */
+ *  A shell default is its headline alone (`Shell default → …`): the origin would only say it again. Where those texts would close a comment they are broken to `* /`, so a comment never closes early. Plus the resolved shell variables. */
 export function exportCss(r: Resolved, bricks: Brick[]): string {
   const vars = toCssVars(r.params)
   const lines = PARAMETER_KEYS.map(k => {
-    const comment = [rowHeadline(r.values[k], r.params, bricks), origin(r, k), footnoteOf(r.values[k], bricks)].filter(Boolean).join(' · ')
+    const comment = [rowHeadline(r.values[k], r.params, bricks), isShellDefault(r.values[k]) ? '' : origin(r, k), footnoteOf(r.values[k], bricks)].filter(Boolean).join(' · ')
     return `  --${k.replace(/_/g, '-')}: ${cssValue(String(r.params[k]))}; /* ${comment.replaceAll('*/', '* /')} */`
   })
   const derived = Object.entries(vars).map(([k, v]) => `  ${k}: ${v};`)
