@@ -15,7 +15,7 @@ export function ExportScreen({ id }: { id: string }) {
   const resolved = useMemo(() => project ? resolveProject(project, store.bricks) : null, [project, store.bricks])
   if (!project || !resolved) return <div className="chrome min-h-full p-4"><Link href="/projects" className="ink-2 text-[12px]">← Projects</Link><p className="mt-4 ink-2">No project with id {id}.</p></div>
   const bricks = project.brickIds.map(b => store.bricks.find(x => x.id === b)).filter((b): b is NonNullable<typeof b> => !!b)
-  const text = tab === 'parameters.json' ? exportJson(project.intent, resolved, project.proposal, project.brickIds) : tab === 'tokens.css' ? exportCss(resolved) : exportHandoff(project.intent, bricks, resolved, project.proposal)
+  const text = tab === 'parameters.json' ? exportJson(project.intent, resolved, project.proposal, project.brickIds) : tab === 'tokens.css' ? exportCss(resolved, store.bricks) : exportHandoff(project.intent, bricks, resolved, project.proposal)
   const mime = TABS.find(t => t[0] === tab)![1]
   const copy = async () => { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* clipboard blocked: the textarea below is selectable */ } }
   return (

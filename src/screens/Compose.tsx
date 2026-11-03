@@ -123,8 +123,8 @@ export function ComposeScreen({ id }: { id: string }) {
 
         {/* Parameter sheet (block 3 version; block 4 adds conflicts and the cap rows) */}
         <aside className="flex min-w-0 flex-col gap-3">
-          <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} thumb={thumbOf(resolved.values[k])} />)}</Section>
-          <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} swatch={k.startsWith('color')} thumb={thumbOf(resolved.values[k])} />)}</Section>
+          <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} thumb={thumbOf(resolved.values[k])} />)}</Section>
+          <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} swatch={k.startsWith('color')} thumb={thumbOf(resolved.values[k])} />)}</Section>
           {resolved.conflicts.length > 0 && (
             <Section title="Conflicts">
               {resolved.conflicts.map(k => (
@@ -167,7 +167,7 @@ export function ComposeScreen({ id }: { id: string }) {
           </Section>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn" onClick={() => download('parameters.json', exportJson(project.intent, resolved, project.proposal, project.brickIds), 'application/json')}>parameters.json</button>
-            <button type="button" className="btn" onClick={() => download('tokens.css', exportCss(resolved), 'text/css')}>tokens.css</button>
+            <button type="button" className="btn" onClick={() => download('tokens.css', exportCss(resolved, store.bricks), 'text/css')}>tokens.css</button>
             <button type="button" className="btn" onClick={() => download('handoff.md', exportHandoff(project.intent, materials, resolved, project.proposal), 'text/markdown')}>handoff.md</button>
           </div>
         </aside>

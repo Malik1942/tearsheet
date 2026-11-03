@@ -1,5 +1,6 @@
 import type { Proposal, Resolved } from '../lib/mapRelations'
 import type { Brick } from '../lib/types'
+import { footnoteOf, rowHeadline } from '../lib/landing'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS, toCssVars } from '../shell/params'
 
 const origin = (r: Resolved, k: (typeof PARAMETER_KEYS)[number]) => {
@@ -13,10 +14,14 @@ export function exportJson(intent: string, r: Resolved, proposal?: Proposal, bri
   return JSON.stringify({ intent, brickIds: brickIds ?? null, proposal: proposal ?? null, parameters: r.values, conflicts: r.conflicts, capped: r.capped.map(c => ({ ref: c.ref, key: c.key, value: c.value })), unexpressed: r.unexpressed }, null, 2)
 }
 
-/** Custom properties for the skin and the relationship switches, one comment per value naming its source, plus the resolved shell variables. */
-export function exportCss(r: Resolved): string {
+/** Custom properties for the skin and the relationship switches, one comment per value in the order of the sheet (C4′): the rule and where it lands, then its source, then the measurement.
+ *  Where those texts would close a comment they are broken to `* /`, so a comment never closes early. Plus the resolved shell variables. */
+export function exportCss(r: Resolved, bricks: Brick[]): string {
   const vars = toCssVars(r.params)
-  const lines = PARAMETER_KEYS.map(k => `  --${k.replace(/_/g, '-')}: ${cssValue(String(r.params[k]))}; /* ${origin(r, k)} */`)
+  const lines = PARAMETER_KEYS.map(k => {
+    const comment = [rowHeadline(r.values[k], r.params, bricks), origin(r, k), footnoteOf(r.values[k], bricks)].filter(Boolean).join(' · ')
+    return `  --${k.replace(/_/g, '-')}: ${cssValue(String(r.params[k]))}; /* ${comment.replaceAll('*/', '* /')} */`
+  })
   const derived = Object.entries(vars).map(([k, v]) => `  ${k}: ${v};`)
   return `/* Tearsheet tokens. Relationship parameters are layout switches; read them in JS or map them to data-* attributes (see shell/params.ts dataAttributes). */\n:root {\n${lines.join('\n')}\n\n  /* resolved shell variables, what the two reference screens actually consume */\n${derived.join('\n')}\n}\n`
 }

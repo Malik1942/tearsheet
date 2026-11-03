@@ -62,7 +62,7 @@ export function PreviewScreen({ id }: { id: string }) {
             {materials.map(b => <Link key={b.id} href={`/brick/${b.id}`} className="flex items-center gap-2 no-underline" style={{ color: 'inherit' }} aria-label={`Open brick ${b.id}`}><Photo src={b.photo.url} className="h-10 w-14 rounded object-cover" /><span className="mono text-[11px]">{b.id}</span></Link>)}
           </div>
         </Section>
-        <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} thumb={thumbOf(resolved.values[k])} />)}</Section>
+        <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} thumb={thumbOf(resolved.values[k])} />)}</Section>
         <Section title="Could not be expressed">
           {resolved.unexpressed.length === 0 ? <div className="ink-2 text-[12px]">{COPY.unexpressedEmpty}</div> : (
             <ul className="space-y-1 text-[12px]">
