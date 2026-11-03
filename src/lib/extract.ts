@@ -63,6 +63,13 @@ export async function extract(apiKey: string, imageDataUrl: string): Promise<Ext
 }
 
 /** HTTP handler shared by Vercel and the dev server. Body: { image: dataURL, dry?: boolean }. */
+/** Tolerate the usual paste accidents in a dashboard: surrounding quotes, whitespace, or a leading `META_API_KEY=`. */
+export function cleanKey(raw: string | undefined): string | undefined {
+  if (!raw) return undefined
+  const k = raw.trim().replace(/^META_API_KEY\s*=\s*/, '').replace(/^['"]|['"]$/g, '').trim()
+  return k || undefined
+}
+
 export async function handleExtract(bodyJson: any, apiKey: string | undefined): Promise<{ code: number; body: any }> {
   const image = String(bodyJson?.image ?? '')
   if (!image.startsWith('data:image/')) return { code: 400, body: { error: 'image must be a data URL' } }
@@ -71,6 +78,7 @@ export async function handleExtract(bodyJson: any, apiKey: string | undefined): 
     const req = buildRequest(image)
     return { code: 200, body: { dry: true, request: { ...req, input: [{ ...req.input[0], content: [req.input[0].content[0], { type: 'input_image', image_url: `<data url, ${image.length} chars>` }] }] } } }
   }
-  if (!apiKey) return { code: 500, body: { error: 'META_API_KEY is not set on the server' } }
-  return { code: 200, body: await extract(apiKey, image) }
+  const key = cleanKey(apiKey)
+  if (!key) return { code: 500, body: { error: 'META_API_KEY is not set on the server' } }
+  return { code: 200, body: await extract(key, image) }
 }
