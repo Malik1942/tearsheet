@@ -54,7 +54,7 @@ export function proposeValue(key: ParameterKey, rel: { rule: string; target: str
       for (const t of texts) {
         const low = t.toLowerCase()
         if (/\b(type|headline|title|wordmark|text|display)\b.*\b(lead|first|dominant|largest|hero)/.test(low) || /\bhero (headline|title|type|wordmark)/.test(low)) return 'type-led'
-        if (/\bhero (object|image|photo|subject|product)|\b(image|photo|subject)\b.*\b(lead|dominant|fill|span)/.test(low)) return 'image-led'
+        if (/\bhero (object|image|photo|subject|product)|\b(image|photo|subject)\b.*\b(lead|dominant|fill|span)|image alone|no text overlay|without text/.test(low)) return 'image-led'
         if (/balanced|equal weight|side by side/.test(low)) return 'balanced'
       }
       return null
@@ -144,11 +144,42 @@ export function candidatesOf(brick: Brick): { candidates: Candidate[]; unexpress
   return { candidates, unexpressed }
 }
 
+/** Map a measured description of the type (weight, width, contrast, serif/sans) onto a font stack. The stack is adapted; the description it rests on is measured. */
+const TYPE_STACKS: [RegExp, string, string][] = [
+  [/condensed|narrow|compressed/, '"Oswald", "Arial Narrow", "Helvetica Neue Condensed", sans-serif', 'condensed sans'],
+  [/geometric/, '"Futura", "Avenir Next", "Century Gothic", sans-serif', 'geometric sans'],
+  [/grotesque|grotesk|low[- ]contrast sans|bold sans|heavy sans/, '"Helvetica Neue", "Inter", Arial, sans-serif', 'grotesque sans'],
+  [/humanist sans/, '"Gill Sans", "Source Sans 3", "Segoe UI", sans-serif', 'humanist sans'],
+  [/high[- ]contrast serif|didone|modern serif/, '"Didot", "Bodoni Moda", "Playfair Display", serif', 'high-contrast serif'],
+  [/slab/, '"Rockwell", "Roboto Slab", "Zilla Slab", serif', 'slab serif'],
+  [/\bserif\b/, '"Georgia", "Times New Roman", serif', 'serif'],
+  [/mono|typewriter/, '"SF Mono", Menlo, Consolas, monospace', 'monospace'],
+  [/script|handwrit|brush/, '"Snell Roundhand", "Brush Script MT", cursive', 'script'],
+  [/\bsans\b/, '"Helvetica Neue", "Inter", Arial, sans-serif', 'sans'],
+]
+
+export function typeFamilyOf(brick: Brick): ParameterValue | null {
+  for (const m of brick.measurements) {
+    const text = `${m.statement} ${m.value}`.toLowerCase()
+    if (!/\b(sans|serif|typeface|font|letterspac|grotesque|geometric|condensed|mono)/.test(text)) continue
+    if (/no text|0 text|not visible/.test(text)) continue
+    for (const [re, stack, label] of TYPE_STACKS) {
+      if (re.test(text)) {
+        return { key: 'type_family', value: stack, provenance: 'adapted', locked: false,
+          source: { brickId: brick.id, measurementIds: [m.id], regionLabels: brick.regions.filter(r => r.measurement_ids.includes(m.id)).map(r => r.label),
+            note: `${label}; the description is measured (${m.id}), the stack is the shell's substitute. No typeface is named: the prompt forbids names unless unmistakable.` } }
+      }
+    }
+  }
+  return null
+}
+
 export function skinOf(brick: Brick): Partial<Record<ParameterKey, ParameterValue>> {
   const s = brick.skin_measured
   if (!s) return {}
   const mk = (key: ParameterKey, value: string): ParameterValue => ({ key, value, provenance: 'measured', locked: false, source: { brickId: brick.id, note: s.how_measured } })
-  return { color_bg: mk('color_bg', s.color_bg), color_fg: mk('color_fg', s.color_fg), color_accent: mk('color_accent', s.color_accent) }
+  const tf = typeFamilyOf(brick)
+  return { color_bg: mk('color_bg', s.color_bg), color_fg: mk('color_fg', s.color_fg), color_accent: mk('color_accent', s.color_accent), ...(tf ? { type_family: tf } : {}) }
 }
 
 /** Derive everything the prototype and the panel need. `unexpressed` is never hand-edited. */
