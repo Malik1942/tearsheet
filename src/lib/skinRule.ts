@@ -6,7 +6,7 @@ import { PX_TONE, type PixelFields, type ToneCluster } from './pixels'
 
 export type SkinDerivation = { base: string; fg: string; accent: string | null; rules: string[]; checks: { pair: string; ratio: number; pass: boolean }[] }
 
-export const SKIN_RULE = { base_chroma_max: 0.03, text_contrast: 4.5, single_place_share: 0.6, fg_on_light: '#111111', fg_on_dark: '#F5F5F5', neutral_fallback: '#F5F5F5' }
+export const SKIN_RULE = { base_chroma_max: 0.03, text_contrast: 4.5, single_place_share: 0.6, fg_on_light: '#111111', fg_on_dark: '#F5F5F5', fg_black: '#000000', fg_white: '#FFFFFF', neutral_fallback: '#F5F5F5' }
 
 /** WCAG 2.2 contrast ratio of two #RRGGBB colors, cut (never rounded up) to two decimals so `ratio >= 4.5` is the real 1.4.3 test. */
 export function contrastRatio(hexA: string, hexB: string): number {
@@ -47,7 +47,8 @@ export function deriveSkin(f: PixelFields): SkinDerivation {
     }
   }
 
-  // fg: the neutral on the opposite side of base (light base: #111111, dark base: #F5F5F5); the other neutral when the opposite misses 4.5:1.
+  // fg: the neutral on the opposite side of base (light base: #111111, dark base: #F5F5F5); the other neutral when the opposite misses 4.5:1;
+  // pure black or white, whichever reads better on the base, when neither neutral does (the grey band around Y 0.18). Black or white always reaches at least 4.58:1.
   const light = hexToOklch(base).L >= PX_TONE.light_L
   const [opposite, other] = light ? [SKIN_RULE.fg_on_light, SKIN_RULE.fg_on_dark] : [SKIN_RULE.fg_on_dark, SKIN_RULE.fg_on_light]
   const need = SKIN_RULE.text_contrast
@@ -58,16 +59,18 @@ export function deriveSkin(f: PixelFields): SkinDerivation {
     fg = other
     rules.push(`fg: the neutral opposite the base (${opposite}) does not reach ${need}:1, so the other neutral (${other}) is used`, `fg adjusted for ${need}:1`)
   } else {
-    if (contrastRatio(other, base) > contrastRatio(opposite, base)) fg = other
-    rules.push(`fg: neither neutral reaches ${need}:1 on this base; ${fg} gives the higher ratio and the failure is recorded`)
+    fg = contrastRatio(SKIN_RULE.fg_black, base) >= contrastRatio(SKIN_RULE.fg_white, base) ? SKIN_RULE.fg_black : SKIN_RULE.fg_white
+    rules.push(`fg: neither neutral (${opposite}, ${other}) reaches ${need}:1 on this base, so ${fg}, the pure black or white with the higher ratio, is used`, `fg adjusted for ${need}:1`)
   }
   const checks: SkinDerivation['checks'] = [{ pair: 'fg on base', ratio: contrastRatio(fg, base), pass: contrastRatio(fg, base) >= need }]
 
-  // accent: the highest-chroma hue cluster, only when one place holds most of the high-chroma pixels.
+  // accent: the highest-chroma hue cluster among those at or above c_high, only when one place holds most of the high-chroma pixels.
+  // A muted cluster (c_min <= chroma < c_high) is never an accent, however large: no cluster at or above c_high means no accent.
   let accent: string | null = null
-  if (f.high_chroma_components.largest_component_share >= SKIN_RULE.single_place_share && f.hue_clusters.length > 0) {
-    accent = f.hue_clusters.reduce((best, c) => (c.chroma > best.chroma ? c : best)).hex
-    rules.push(`accent: centroid of the highest-chroma hue cluster, because one place holds at least ${SKIN_RULE.single_place_share * 100}% of the high-chroma pixels`)
+  const strong = f.hue_clusters.filter(c => c.chroma >= f.params.c_high)
+  if (f.high_chroma_components.largest_component_share >= SKIN_RULE.single_place_share && strong.length > 0) {
+    accent = strong.reduce((best, c) => (c.chroma > best.chroma ? c : best)).hex
+    rules.push(`accent: centroid of the highest-chroma hue cluster (chroma at least ${f.params.c_high}), because one place holds at least ${SKIN_RULE.single_place_share * 100}% of the high-chroma pixels`)
   } else {
     rules.push('no single-place accent found')
   }

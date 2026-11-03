@@ -11,7 +11,10 @@ import { InstructionsScreen } from './screens/Instructions'
 import { ComposeScreen } from './screens/Compose'
 import { ExportScreen } from './screens/Export'
 import { Solo } from './Solo'
-import { DevPixels } from './screens/DevPixels'
+import { lazy, Suspense } from 'react'
+
+/** Dev only (/dev/pixels). The lazy import sits in the DEV branch, so a production build folds this to null and neither the page nor its color math reaches the bundle. */
+const DevPixels = import.meta.env.DEV ? lazy(() => import('./screens/DevPixels').then(m => ({ default: m.DevPixels }))) : null
 
 function Routes() {
   const path = usePath()
@@ -21,7 +24,7 @@ function Routes() {
   if (brick) return <BrickScreen id={brick.id} />
   if (path === '/projects') return <ProjectsScreen />
   if (path === '/sync') return <SyncScreen />
-  if (import.meta.env.DEV && path === '/dev/pixels') return <DevPixels />
+  if (DevPixels && path === '/dev/pixels') return <Suspense fallback={null}><DevPixels /></Suspense>
   if (path === '/open') return <OpenScreen />
   const exp = match('/project/:id/export', path)
   if (exp) return <ExportScreen id={exp.id} />

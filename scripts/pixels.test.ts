@@ -2,8 +2,9 @@
  *  Expected values are typed from the CSS Color 4 / WCAG 2.2 references and from the brief, never read back from the code under test. Run: npm test */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { MEASURE_VERSION, PX_PARAMS, coverageBand, fieldsEqualTo2dp, measurePixels, type PixelFields } from '../src/lib/pixels.ts'
+import { MEASURE_VERSION, PX_PARAMS, PX_TONE, coverageBand, fieldsEqualTo2dp, measurePixels, type PixelFields } from '../src/lib/pixels.ts'
 import { contrastRatio, deriveSkin } from '../src/lib/skinRule.ts'
+import { flagsOf, summarize, type ReportRow } from '../src/lib/pixelsReport.ts'
 import { hexToOklch, oklchToHex, rgbToHex } from '../src/lib/colorMath.ts'
 
 type Rgb = [number, number, number]
@@ -88,7 +89,7 @@ describe('measurePixels: luminance shares', () => {
   it('reads an all-black image as 100% near-black with no hue, no coverage and no photo contrast', () => {
     const f = measure(solid(32, 32, BLACK))
     assert.equal(f.measure_version, MEASURE_VERSION)
-    assert.equal(MEASURE_VERSION, 'px-1')
+    assert.equal(MEASURE_VERSION, 'px-2')
     assert.deepEqual(f.luminance_shares, { near_black: 1, near_white: 0, between: 0 })
     assert.equal(f.hue_count, 0)
     assert.deepEqual(f.hue_clusters, [])
@@ -204,9 +205,16 @@ describe('measurePixels: hue clusters and high-chroma distribution', () => {
   })
   it('records the version, the parameters and the size with the values', () => {
     const f = measure(redSquare())
-    assert.deepEqual(f.params, PX_PARAMS)
+    assert.deepEqual(f.params, { ...PX_PARAMS, tone: PX_TONE })
     assert.deepEqual(PX_PARAMS, { downsample: 256, c_min: 0.04, c_high: 0.12, dh_min: 20, min_share: 0.01, seed: 7, k: 8, iters: 20, component_min: 4, near_black_L: 15, near_white_L: 90 })
     assert.equal(f.width, 50); assert.equal(f.height, 50)
+  })
+  it('records the tone constants (k, light_L, dark_L) in params too, because they change the numbers as much as any other parameter', () => {
+    assert.deepEqual(PX_TONE, { k: 6, light_L: 0.6, dark_L: 0.4 })
+    const f = measure(redSquare())
+    assert.deepEqual(f.params.tone, { k: 6, light_L: 0.6, dark_L: 0.4 })
+    assert.equal(JSON.parse(JSON.stringify(f)).params.tone.light_L, 0.6, 'it survives a JSON round trip')
+    assert.notEqual(f.params.tone, PX_TONE, 'a copy, so a caller cannot change the constants through a measurement')
   })
 })
 
@@ -307,6 +315,37 @@ describe('deriveSkin (adapted, by rule)', () => {
     assert.equal(deriveSkin(at(20, 12)).accent, '#FF0000')
     assert.equal(deriveSkin(at(18, 14)).accent, null)
   })
+  it('never takes a muted cluster as the accent: a 30% muted teal and a 7x7 red block on grey', () => {
+    // teal #468282: chroma 0.063, a hue cluster (>= c_min 0.04) but under c_high 0.12. The 49 red pixels are 0.49% of the frame, under min_share, so they make no cluster.
+    const img = paint(paint(solid(100, 100, GREY), 0, 0, 100, 30, [70, 130, 130]), 40, 60, 7, 7, RED)
+    const f = measure(img)
+    const teal = f.hue_clusters.find(c => c.chroma < PX_PARAMS.c_high)
+    assert.ok(teal, 'the muted teal is measured as a hue cluster')
+    assert.ok(teal.share > 0.29 && teal.share < 0.31, `teal share ${teal.share}`)
+    assert.equal(f.hue_clusters.some(c => c.hex === '#FF0000'), false, 'the red block is under min_share')
+    assert.equal(f.high_chroma_components.largest_component_share, 1, 'the one high-chroma place is the red block')
+    const s = deriveSkin(f)
+    assert.notEqual(s.accent, teal.hex, 'the teal is not the accent')
+    assert.equal(s.accent, null, 'no high-chroma cluster survives min_share, so no accent')
+    assert.ok(s.rules.includes('no single-place accent found'))
+    assert.deepEqual(s.checks.map(c => c.pair), ['fg on base'], 'no accent, no label check')
+  })
+  it('takes the red as the accent over a muted teal once the red block is a cluster of its own', () => {
+    const img = paint(paint(solid(100, 100, GREY), 0, 0, 100, 30, [70, 130, 130]), 40, 60, 11, 11, RED)   // 121 pixels = 1.21%: over min_share
+    const f = measure(img)
+    assert.equal(f.hue_clusters.length, 2)
+    const s = deriveSkin(f)
+    assert.equal(s.accent, '#FF0000')
+    assert.ok(f.hue_clusters.some(c => c.chroma < PX_PARAMS.c_high && c.hex !== s.accent), 'a muted cluster is there and is passed over')
+    assert.ok(s.rules.some(r => r.startsWith('accent: ')))
+  })
+  it('makes no accent when every hue cluster is muted, even if one place holds all the high-chroma pixels', () => {
+    // a hue cluster of chroma 0.063 on its own never reaches c_high; one tiny red block gives the single high-chroma place but is under min_share
+    const f = measure(paint(paint(solid(100, 100, GREY), 0, 0, 100, 30, [70, 130, 130]), 40, 60, 5, 5, RED))
+    assert.ok(f.hue_clusters.every(c => c.chroma < PX_PARAMS.c_high))
+    assert.ok(f.high_chroma_components.largest_component_share >= 0.6)
+    assert.equal(deriveSkin(f).accent, null)
+  })
   it('takes the darkest tone cluster as base when over half the frame is near-black, and light text', () => {
     const f = measure(paint(solid(40, 40, BLACK), 30, 30, 10, 10, WHITE))
     const s = deriveSkin(f)
@@ -344,13 +383,47 @@ describe('deriveSkin (adapted, by rule)', () => {
     assert.ok(s.rules.includes('fg adjusted for 4.5:1'))
     assert.equal(s.checks[0].pass, true)
   })
-  it('records a failure when neither neutral reaches 4.5:1, and still leaves the accent alone', () => {
-    const f = measure(paint(solid(40, 40, [118, 118, 118]), 5, 5, 8, 8, RED))   // mid grey (Y 0.181): #F5F5F5 and #111111 both get about 4.2
-    const s = deriveSkin(f)
+  it('falls back to pure black or white, and records it, when neither neutral reaches 4.5:1', () => {
+    // #767676 (Y 0.181) sits in the grey band where #111111 gets 4.16 and #F5F5F5 gets 4.17; pure black gets 4.62 and pure white 4.54
+    const s = deriveSkin(measure(solid(20, 20, [118, 118, 118])))
+    assert.equal(s.base, '#767676')
+    assert.equal(s.fg, '#000000', 'the one of black and white with the higher ratio')
+    assert.ok(s.rules.includes('fg adjusted for 4.5:1'))
     assert.equal(s.checks[0].pair, 'fg on base')
-    assert.equal(s.checks[0].pass, false)
-    assert.ok(s.checks[0].ratio < 4.5)
-    assert.equal(s.accent, f.hue_clusters[0].hex, 'accent is never adjusted for a failing check')
+    assert.equal(s.checks[0].pass, true)
+    assert.ok(s.checks[0].ratio >= 4.5)
+    assert.equal(s.checks[0].ratio, contrastRatio(s.fg, s.base))
+  })
+  it('passes fg on base for every grey, whichever neutral or pure black/white it takes', () => {
+    for (let v = 0; v < 256; v++) {
+      const s = deriveSkin(measure(solid(8, 8, [v, v, v])))
+      const check = s.checks.find(c => c.pair === 'fg on base')
+      assert.ok(check && check.pass && check.ratio >= 4.5, `grey ${v}: base ${s.base}, fg ${s.fg}, ratio ${check?.ratio}`)
+      assert.equal(check.ratio, contrastRatio(s.fg, s.base))
+    }
+  })
+  it('only takes pure black or white as the last resort: the neutrals are kept whenever one of them reaches 4.5:1', () => {
+    for (const v of [0, 40, 126, 200, 255]) {
+      const s = deriveSkin(measure(solid(8, 8, [v, v, v])))
+      assert.ok(s.fg === '#111111' || s.fg === '#F5F5F5', `grey ${v}: fg ${s.fg}`)
+    }
+  })
+  it('records a failing label on accent and leaves the accent alone', () => {
+    // dark grey base (fg #F5F5F5, 9.5:1) with a pure red square: #F5F5F5 on #FF0000 is 3.667 (cut to 3.66) and the base on it 2.59, so the label cannot reach 4.5
+    const f = measure(paint(solid(50, 50, [64, 64, 64]), 10, 10, 10, 10, RED))
+    const s = deriveSkin(f)
+    assert.equal(s.base, '#404040')
+    assert.equal(s.fg, '#F5F5F5')
+    assert.equal(s.accent, '#FF0000', 'accent is never adjusted for a failing check')
+    assert.equal(s.accent, f.hue_clusters[0].hex)
+    const fgOnBase = s.checks.find(c => c.pair === 'fg on base')
+    assert.equal(fgOnBase?.pass, true)
+    const label = s.checks.find(c => c.pair === 'label on accent')
+    assert.ok(label, 'the label check is recorded')
+    assert.equal(label.pass, false)
+    assert.ok(label.ratio < 4.5)
+    assert.equal(label.ratio, 3.66)
+    assert.ok(s.rules.some(r => r.startsWith('label on accent:')))
   })
   it('does not break on an image with nothing to count', () => {
     const s = deriveSkin(measure(solid(4, 4, WHITE, 0)))
@@ -360,5 +433,64 @@ describe('deriveSkin (adapted, by rule)', () => {
   })
   it('is deterministic', () => {
     assert.deepEqual(deriveSkin(measure(redSquare())), deriveSkin(measure(redSquare())))
+  })
+})
+
+describe('the validation summary only claims results that exist', () => {
+  const grey = () => measure(solid(30, 30, GREY))
+  const red = () => measure(redSquare())
+  const done = (over: Partial<ReportRow> = {}): ReportRow => ({ state: 'done', first: red(), second: red(), wb: red(), jpeg: red(), ...over })
+  const waiting = (): ReportRow => ({ state: 'waiting' })
+  const measuring = (): ReportRow => ({ state: 'measuring', first: red(), second: red() })
+  const failed = (): ReportRow => ({ state: 'error' })
+
+  it('claims nothing before any row is done: the checks are pending, with zero errors', () => {
+    const s = summarize([waiting(), waiting(), measuring()])
+    assert.equal(s.done, 0); assert.equal(s.total, 3); assert.equal(s.errors, 0)
+    assert.equal(s.step1, 'pending'); assert.equal(s.step2, 'pending')
+    assert.equal(s.line, '0 of 3 measured · 0 errors · step 1: pending · step 2: pending')
+  })
+  it('claims nothing while a row is still waiting or measuring, even when every finished row agrees', () => {
+    const s = summarize([done(), done(), measuring(), waiting()])
+    assert.equal(s.done, 2)
+    assert.equal(s.step1, 'pending'); assert.equal(s.step2, 'pending')
+    assert.doesNotMatch(s.line, /every repeat identical|no brick flagged/)
+  })
+  it('claims both only when every row is done', () => {
+    const s = summarize([done(), done(), done()])
+    assert.equal(s.done, 3); assert.equal(s.errors, 0)
+    assert.equal(s.step1, 'every repeat identical'); assert.equal(s.step2, 'no brick flagged')
+    assert.equal(s.line, '3 of 3 measured · 0 errors · step 1: every repeat identical · step 2: no brick flagged')
+  })
+  it('claims nothing for no rows at all', () => {
+    const s = summarize([])
+    assert.equal(s.step1, 'pending'); assert.equal(s.step2, 'pending')
+  })
+  it('reports a repeat that differs as soon as it is seen, before the run ends', () => {
+    const s = summarize([done(), done({ second: grey() }), measuring()])
+    assert.equal(s.notIdentical, 1)
+    assert.equal(s.step1, '1 not identical')
+    assert.equal(s.step2, 'pending')
+  })
+  it('reports a flagged brick as soon as it is seen, and never claims "no brick flagged" after that', () => {
+    const rows = [done({ wb: grey() }), measuring()]                  // red -> grey: hue_count 1 -> 0
+    assert.deepEqual(flagsOf(rows[0].first as PixelFields, [['wb', rows[0].wb], ['jpeg', rows[0].jpeg]]), ['wb: hue_count 1 → 0', 'wb: coverage band [0.02, 0.05) → [0, 0.02)'])
+    const s = summarize(rows)
+    assert.equal(s.flagged, 1)
+    assert.equal(s.step2, '1 flagged')
+    assert.equal(summarize([done({ wb: grey() }), done()]).step2, '1 flagged', 'flagged also when every row is done')
+  })
+  it('counts errors, and does not claim a clean run while a row has failed', () => {
+    const s = summarize([done(), done(), failed()])
+    assert.equal(s.done, 2); assert.equal(s.errors, 1)
+    assert.equal(s.step1, 'incomplete'); assert.equal(s.step2, 'incomplete')
+    assert.equal(s.line, '2 of 3 measured · 1 error · step 1: incomplete · step 2: incomplete')
+    assert.equal(summarize([failed(), failed(), measuring()]).errors, 2)
+    assert.match(summarize([failed(), failed()]).line, /2 errors/)
+  })
+  it('keeps a failed row that was partly measured out of the identical claim but not out of the counts', () => {
+    const s = summarize([done(), { state: 'error', first: red(), second: grey() }])
+    assert.equal(s.errors, 1); assert.equal(s.notIdentical, 1)
+    assert.equal(s.step1, '1 not identical')
   })
 })

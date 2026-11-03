@@ -8,16 +8,18 @@
  *  The input is treated as sRGB; no white-balance correction is applied. Anything that changes a threshold, the color space, the downsample or the seed bumps MEASURE_VERSION. */
 import { SRGB8_TO_LINEAR, contrastOfLuminances, lStar, linearRgbToOklab, oklabToGamutLinear, oklabToHex, relativeLuminance } from './colorMath'
 
-export const MEASURE_VERSION = 'px-1'
+export const MEASURE_VERSION = 'px-2'
 export const PX_PARAMS = { downsample: 256, c_min: 0.04, c_high: 0.12, dh_min: 20, min_share: 0.01, seed: 7, k: 8, iters: 20, component_min: 4, near_black_L: 15, near_white_L: 90 }
-/** Fixed with the version, not tunable per call: the k-means size and the OKLab lightness cut-offs of the tone clusters and photo_contrast. */
+/** Fixed with the version, not tunable per call: the k-means size and the OKLab lightness cut-offs of the tone clusters and photo_contrast. Recorded in `params.tone`. */
 export const PX_TONE = { k: 6, light_L: 0.6, dark_L: 0.4 }
 
 export type HueCluster = { hue: number; chroma: number; share: number; hex: string; representative: true }
 /** One of the k=6 clusters over ALL counted pixels in OKLab (L, a, b). `chroma` and `hue` are those of the centroid; `hex` is the centroid. Sorted by share, largest first. */
 export type ToneCluster = { L: number; chroma: number; hue: number; share: number; hex: string }
+/** Everything that changes a number, recorded with the measurement: the tunable params and the fixed tone constants. */
+export type PixelParams = typeof PX_PARAMS & { tone: typeof PX_TONE }
 export type PixelFields = {
-  measure_version: string; params: typeof PX_PARAMS; width: number; height: number
+  measure_version: string; params: PixelParams; width: number; height: number
   luminance_shares: { near_black: number; near_white: number; between: number }
   hue_clusters: HueCluster[]; hue_count: number
   high_chroma_coverage: number
@@ -132,7 +134,7 @@ export function measurePixels(rgba: Uint8ClampedArray, width: number, height: nu
     L[i] = lab.L; A[i] = lab.a; B[i] = lab.b; C[i] = Math.sqrt(lab.a * lab.a + lab.b * lab.b)
     counted[i] = 1; n++
   }
-  const base = { measure_version: MEASURE_VERSION, params: { ...params }, width, height }
+  const base = { measure_version: MEASURE_VERSION, params: { ...params, tone: { ...PX_TONE } }, width, height }
   if (n === 0) {
     return { ...base, luminance_shares: { near_black: 0, near_white: 0, between: 0 }, hue_clusters: [], hue_count: 0, high_chroma_coverage: 0, high_chroma_components: { count: 0, largest_component_share: 0 }, chroma_ratio: null, tone_clusters: [], photo_contrast: null }
   }
