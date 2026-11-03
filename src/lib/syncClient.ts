@@ -1,6 +1,7 @@
 /** Browser side of Sync (PRD 7.3). The code lives in localStorage; the server holds the library under `libraries/<code>/`. */
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
+import { IDB } from './persist'
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 export const CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
@@ -43,6 +44,7 @@ export async function push(code: string, bricks: Brick[], allProjects: Project[]
   let manifest = await pull(code)
   const held = new Map(manifest.bricks.map(b => [b.id, b]))
   const todo = bricks.filter(b => {
+    if (b.photo.url.startsWith(IDB)) return false   // still a pointer into IndexedDB: nothing to upload until the photo is back (spec v3 L11)
     const h = held.get(b.id)
     if (!h) return true
     const vb = b.version ?? 1, vh = h.version ?? 1
