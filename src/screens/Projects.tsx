@@ -13,7 +13,7 @@ const COPY = {
   empty: 'Nothing made yet.',
 }
 
-/** Projects (the header's ⋯ → Projects, 15_SIMPLIFY §3): every project, most recently edited first; each opens on 3 See. Making a new one is the Make tab (`/make`). */
+/** Projects (the header's ⋯ → Projects, 15_SIMPLIFY §3): every project, most recently edited first; each opens on its Make page. Making a new one is the Make tab (`/make`). */
 export function ProjectsScreen() {
   const store = useStore()
   // an older link (Brick → Use in a project) carries `?brick=`: that is a starting point for Make now

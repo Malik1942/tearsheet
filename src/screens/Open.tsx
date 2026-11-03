@@ -14,7 +14,7 @@ const COPY = {
 }
 
 /** S4: the deep link a phone shares, and E1's Share link. Adopts the code, merges the library (bricks and projects), then lands in the project
- *  (its Instructions page when the link says `to=instructions`, else 3 See) or the Library. */
+ *  (its Instructions page when the link says `to=instructions`, else its Make page) or the Library. */
 export function OpenScreen() {
   const store = useStore()
   const params = new URLSearchParams(location.search)

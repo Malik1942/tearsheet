@@ -8,7 +8,7 @@ import { StepPage } from '../make/Steps'
 
 const COPY = { copy: 'Copy handoff.md', copied: 'Copied', see: 'See the screens', note: 'This is the handoff.md that Share downloads, rendered as a page: the same generator, the same words.', missing: "This project isn't on this device.", projects: 'Projects' }
 
-/** Instructions: handoff.md as a page, from the same generator Share's Downloads use. It is what Share's link opens on another device (E1 minimal),
+/** Instructions: handoff.md as a page, from the same generator Share's Download uses. It is what Share's link opens on another device (E1 minimal),
  *  read-only. See the screens leads to the project's Make page, Fine-tune included. */
 export function InstructionsScreen({ id }: { id: string }) {
   const store = useStore()

@@ -5,7 +5,7 @@ import { download, exportCss, exportHandoff, exportJson } from '../export'
 
 const TABS = [['parameters.json', 'application/json'], ['tokens.css', 'text/css'], ['handoff.md', 'text/markdown']] as const
 
-/** What the Export page was, now inside Share's Downloads fold (15_SIMPLIFY §3): the three files as tabs, each with Copy and Download, and the text itself.
+/** What the Export page was, now in Fine-tune's Files fold on the Make page (Share's popover has the plain downloads): the three files as tabs, each with Copy and Download, and the text itself.
  *  The content is exactly what See and Fine-tune show, resolved from the same project. */
 export function FilesView({ project, resolved, bricks }: { project: Project; resolved: Resolved; bricks: Brick[] }) {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('parameters.json')
