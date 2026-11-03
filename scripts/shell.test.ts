@@ -3,8 +3,17 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { DEFAULT_PARAMS, PARAM_SPEC, toCssVars, typeScale, type Params } from '../src/shell/params.ts'
+import { DEFAULT_PARAMS, PARAM_SPEC, dataAttributes, toCssVars, typeScale, type Params } from '../src/shell/params.ts'
 import { landsOn } from '../src/lib/landing.ts'
+
+describe('accent_coverage reaches shell.css', () => {
+  it('data-coverage is the token the coverage rules match: le15, le5, le2 (no % sign)', () => {
+    const p = (accent_coverage: string): Params => ({ ...DEFAULT_PARAMS, accent_coverage })
+    assert.deepEqual(['<=15%', '<=5%', '<=2%'].map(c => dataAttributes(p(c))['data-coverage']), ['le15', 'le5', 'le2'])
+    const css = readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+    for (const token of ['le15', 'le5', 'le2']) assert.ok(css.includes(`[data-coverage="${token}"]`), token)
+  })
+})
 
 const p = (patch: Partial<Params> = {}): Params => ({ ...DEFAULT_PARAMS, ...patch })
 const tokens = (patch: Partial<Params>) => {

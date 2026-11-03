@@ -136,6 +136,7 @@ export function dataAttributes(p: Params): Record<string, string> {
     'data-rhythm': String(p.rhythm),
     'data-align': String(p.alignment_edge),
     'data-accent': String(p.accent_placement),
-    'data-coverage': String(p.accent_coverage).replace('<=', 'le'),
+    // '<=15%' → 'le15', the token shell.css matches ([data-coverage="le15"]); without dropping the % no coverage rule ever matched
+    'data-coverage': String(p.accent_coverage).replace('<=', 'le').replace('%', ''),
   }
 }
