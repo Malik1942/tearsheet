@@ -1,7 +1,7 @@
 import type { Proposal, Resolved } from '../lib/mapRelations'
 import type { Brick } from '../lib/types'
 import { footnoteOf, isShellDefault, rowHeadline } from '../lib/landing'
-import { standInFor } from '../lib/standIns'
+import { standInLine } from '../lib/standIns'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS, toCssVars } from '../shell/params'
 
 const origin = (r: Resolved, k: (typeof PARAMETER_KEYS)[number]) => {
@@ -56,7 +56,7 @@ export function exportHandoff(intent: string, bricks: Brick[], r: Resolved, prop
     '## Switched off by the cap of three per brick', '',
     ...(r.capped.length ? r.capped.map(c => `- ${c.ref}: \`${c.key}\` = ${c.value}`) : ['- none']), '',
     '## Could not be expressed', '',
-    ...(r.unexpressed.length ? r.unexpressed.flatMap(u => [`- [${u.brickId}, ${u.reason === 'fragile' ? 'fragile if changed' : 'no slot'}] ${u.rule}`, `  - Stood in by: ${standInFor(u.rule)}`]) : ['- Everything from these bricks found a slot.']), '',
+    ...(r.unexpressed.length ? r.unexpressed.flatMap(u => [`- [${u.brickId}, ${u.reason === 'fragile' ? 'fragile if changed' : 'no slot'}] ${u.rule}`, `  - ${standInLine(u.rule)}`]) : ['- Everything from these bricks found a slot.']), '',
     '## Appearance', '',
     ...SKIN_KEYS.map(k => `- \`${k}\` = ${r.values[k].value} · ${origin(r, k)}`), '',
     '## Instructions for a coding agent', '',

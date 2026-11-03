@@ -58,11 +58,21 @@ const ALTERNATING = (side: string): Record<string, string> => ({
   'type-led': `With type-led items the poster is already on the ${side}, so alternating changes nothing on the list; on the year review every other row moves its date to the front.`,
   'image-led': 'Every other item puts its poster below the text, on both screens.',
 })
-const ALIGNMENT: Record<string, string> = {
-  left: 'Text hugs the left edge; the right side stays empty.',
-  right: 'Text hugs the right edge and posters move to the right.',
-  center: 'Titles, dates and headings are centered.',
-  split: 'Artist names sit left and the date line sits right.',
+/** `left` and `right` also say where the poster goes, which the hierarchy decides. `.shell[data-align="right"] .item { direction: rtl }` reverses the grid tracks:
+ *  balanced has the poster in the first track, so it is on the right under `right`; type-led has it in the second track (`order: 2`), so it is on the left under `right` and on the right under `left`;
+ *  image-led is a single column, so the poster stays full width above the text. Anything that is not type-led or image-led reads as balanced. */
+const ALIGNMENT = (hierarchy: string): Record<string, string> => {
+  const typeLed = hierarchy === 'type-led', imageLed = hierarchy === 'image-led'
+  return {
+    left: typeLed ? 'Text hugs the left edge; the poster square sits on the right.'
+      : imageLed ? 'Text hugs the left edge; posters stay full width above the text.'
+      : 'Text hugs the left edge; the right side stays empty.',
+    right: typeLed ? 'Text hugs the right edge and the poster square moves to the left.'
+      : imageLed ? 'Text hugs the right edge; posters stay full width above the text.'
+      : 'Text hugs the right edge and posters move to the right.',
+    center: 'Titles, dates and headings are centered.',
+    split: 'Artist names sit left and the date line sits right.',
+  }
 }
 const HERO_ONE = "the first show's title does not stand out."
 const heroTitle = (n: string) => `Only the first show's title and the “2025” headline are ${n}.`
@@ -114,9 +124,9 @@ export function landsOn(key: ParameterKey, params: Params): string {
     case 'density': return entry(DENSITY, key, params)
     case 'grouping': return entry(GROUPING, key, params)
     case 'rhythm': return (params.rhythm === 'alternating' ? ALTERNATING(side)[String(H)] : undefined) ?? entry(RHYTHM, key, params)
-    case 'alignment_edge': return entry(ALIGNMENT, key, params)
+    case 'alignment_edge': return entry(ALIGNMENT(String(H)), key, params)
     case 'image_text_dominance': {
-      const base = H === 'type-led' ? `The poster sits right as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
+      const base = H === 'type-led' ? `The poster sits on the ${side} as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
         : H === 'image-led' ? `Posters run full width above the text, ${P}% of the item's height; year-review images grow with it.`
         : `Posters take ${P}% of each list item's width; year-review thumbnails grow with it.`
       return s > 0.8 ? `${base} Capped at 80% so the text stays readable.` : s < 0.15 ? `${base} Raised to 15% so the poster stays visible.` : base

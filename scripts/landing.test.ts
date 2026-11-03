@@ -154,6 +154,42 @@ describe('landsOn: where a type-led poster sits under alignment_edge right', () 
   })
 })
 
+describe('landsOn: alignment_edge reads the hierarchy', () => {
+  // shell.css: `.shell[data-align="right"] .item { direction: rtl }` reverses the item grid's tracks.
+  // balanced: the poster is the first track, so it is on the right under rtl. type-led: the poster is in the second track (`order: 2`), so it is on the left under rtl. image-led: one column, so the poster stays full width above the text.
+  const RIGHT = {
+    balanced: 'Text hugs the right edge and posters move to the right.',
+    'type-led': 'Text hugs the right edge and the poster square moves to the left.',
+    'image-led': 'Text hugs the right edge; posters stay full width above the text.',
+  }
+  const LEFT = {
+    balanced: 'Text hugs the left edge; the right side stays empty.',
+    'type-led': 'Text hugs the left edge; the poster square sits on the right.',
+    'image-led': 'Text hugs the left edge; posters stay full width above the text.',
+  }
+  it('right: one sentence per hierarchy', () => {
+    for (const [hierarchy_mode, sentence] of Object.entries(RIGHT)) assert.equal(landsOn('alignment_edge', p({ hierarchy_mode, alignment_edge: 'right' })), sentence, hierarchy_mode)
+  })
+  it('left: one sentence per hierarchy', () => {
+    for (const [hierarchy_mode, sentence] of Object.entries(LEFT)) assert.equal(landsOn('alignment_edge', p({ hierarchy_mode, alignment_edge: 'left' })), sentence, hierarchy_mode)
+  })
+  it('center and split do not read the hierarchy', () => {
+    for (const [alignment_edge, sentence] of [['center', 'Titles, dates and headings are centered.'], ['split', 'Artist names sit left and the date line sits right.']]) {
+      for (const hierarchy_mode of ['balanced', 'type-led', 'image-led']) assert.equal(landsOn('alignment_edge', p({ hierarchy_mode, alignment_edge })), sentence, `${alignment_edge} ${hierarchy_mode}`)
+    }
+  })
+  it('a hierarchy outside the vocabulary reads as balanced', () => {
+    assert.equal(landsOn('alignment_edge', p({ hierarchy_mode: 'zzz', alignment_edge: 'right' })), RIGHT.balanced)
+    assert.equal(landsOn('alignment_edge', p({ hierarchy_mode: 'zzz', alignment_edge: 'left' })), LEFT.balanced)
+  })
+  it('agrees with the hierarchy sentence on which side the type-led square is', () => {
+    assert.ok(landsOn('hierarchy_mode', p({ hierarchy_mode: 'type-led', alignment_edge: 'right' })).includes('square on the left'))
+    assert.ok(landsOn('alignment_edge', p({ hierarchy_mode: 'type-led', alignment_edge: 'right' })).includes('square moves to the left'))
+    assert.ok(landsOn('hierarchy_mode', p({ hierarchy_mode: 'type-led', alignment_edge: 'left' })).includes('square on the right'))
+    assert.ok(landsOn('alignment_edge', p({ hierarchy_mode: 'type-led', alignment_edge: 'left' })).includes('square sits on the right'))
+  })
+})
+
 describe('landsOn: the plain enums', () => {
   const table: [ParameterKey, Record<string, string>][] = [
     ['hierarchy_mode', {
@@ -203,8 +239,16 @@ describe('landsOn: the plain enums', () => {
 
 describe('landsOn: image_text_dominance', () => {
   it('type-led: a square up to 60% of the share, as a percent of the item width', () => {
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0.4 })), "The poster sits right as a square up to 24% of the item's width; year-review rows have no thumbnails.")
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0.8 })), "The poster sits right as a square up to 48% of the item's width; year-review rows have no thumbnails.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0.4 })), "The poster sits on the right as a square up to 24% of the item's width; year-review rows have no thumbnails.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0.8 })), "The poster sits on the right as a square up to 48% of the item's width; year-review rows have no thumbnails.")
+  })
+  it('type-led under alignment_edge right: the square sits on the left (the item grid is reversed)', () => {
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0.4, alignment_edge: 'right' })), "The poster sits on the left as a square up to 24% of the item's width; year-review rows have no thumbnails.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 1, alignment_edge: 'right' })), "The poster sits on the left as a square up to 48% of the item's width; year-review rows have no thumbnails. Capped at 80% so the text stays readable.")
+    for (const alignment_edge of ['left', 'center', 'split']) assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0.4, alignment_edge })), "The poster sits on the right as a square up to 24% of the item's width; year-review rows have no thumbnails.", alignment_edge)
+  })
+  it('image-led and balanced do not read the alignment', () => {
+    for (const hierarchy_mode of ['image-led', 'balanced']) assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode, alignment_edge: 'right' })), landsOn('image_text_dominance', p({ hierarchy_mode, alignment_edge: 'left' })), hierarchy_mode)
   })
   it('image-led: full-width posters, the share as a percent of the item height', () => {
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.55 })), "Posters run full width above the text, 55% of the item's height; year-review images grow with it.")
@@ -215,8 +259,8 @@ describe('landsOn: image_text_dominance', () => {
   it('adds the cap note above 0.8 and the raise note below 0.15, each after one space', () => {
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.95 })), "Posters run full width above the text, 80% of the item's height; year-review images grow with it. Capped at 80% so the text stays readable.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.1 })), "Posters take 15% of each list item's width; year-review thumbnails grow with it. Raised to 15% so the poster stays visible.")
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 1 })), "The poster sits right as a square up to 48% of the item's width; year-review rows have no thumbnails. Capped at 80% so the text stays readable.")
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0 })), "The poster sits right as a square up to 9% of the item's width; year-review rows have no thumbnails. Raised to 15% so the poster stays visible.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 1 })), "The poster sits on the right as a square up to 48% of the item's width; year-review rows have no thumbnails. Capped at 80% so the text stays readable.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0 })), "The poster sits on the right as a square up to 9% of the item's width; year-review rows have no thumbnails. Raised to 15% so the poster stays visible.")
   })
   it('adds no note exactly at 0.8 and at 0.15', () => {
     assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.8 })), "Posters take 80% of each list item's width; year-review thumbnails grow with it.")
@@ -344,7 +388,7 @@ const HEADLINES: Record<ParameterKey, string> = {
   density: 'Shell default → Four list items per screen; notes are hidden.',
   grouping: 'Shell default → One ungrouped list; the year review still groups by month.',
   rhythm: 'Shell default → Every list item has the same shape.',
-  alignment_edge: 'Shell default → Text hugs the left edge; the right side stays empty.',
+  alignment_edge: 'Shell default → Text hugs the left edge; posters stay full width above the text.',   // this project resolves image-led
   image_text_dominance: `${ruleOf('g2', 'r1')} → Posters run full width above the text, 80% of the item's height; year-review images grow with it. Capped at 80% so the text stays readable.`,
   accent_placement: 'Shell default → Genre tags are outlined in light blue; year-review totals are light blue.',
   accent_coverage: `${ruleOf('g2', 'r2')} → At ≤5% coverage: genre tags are outlined in light blue; year-review totals are light blue.`,

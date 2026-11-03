@@ -1,5 +1,5 @@
 import type { Unexpressed } from '../lib/types'
-import { standInFor } from '../lib/standIns'
+import { standInLine } from '../lib/standIns'
 
 /** Always visible when non-empty: reference features no shell parameter can carry. */
 export function UnexpressedStrip({ items }: { items: Unexpressed[] }) {
@@ -11,7 +11,7 @@ export function UnexpressedStrip({ items }: { items: Unexpressed[] }) {
         {items.map((u, i) => (
           <li key={i} className="flex gap-1.5">
             <span className="shrink-0 rounded bg-rose-200 px-1 text-[10px]">{u.reason === 'fragile' ? 'fragile if changed' : u.reason}</span>
-            <span>{u.rule}<span className="mt-0.5 block text-[11px] text-rose-700">{`Stood in by: ${standInFor(u.rule)}`}</span></span>
+            <span>{u.rule}<span className="mt-0.5 block text-[11px] text-rose-700">{standInLine(u.rule)}</span></span>
           </li>
         ))}
       </ul>

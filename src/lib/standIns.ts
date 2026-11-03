@@ -14,7 +14,7 @@ export const STAND_INS: Record<Concept, string> = {
 
 /** Case-insensitive patterns per concept, checked in this order; the first concept with a match wins. Near misses the patterns must not read: `soft gray shading`, `equal in size`. */
 const PATTERNS: [Concept, RegExp[]][] = [
-  ['shallow focus', [/\b(shallow|selective|soft) (focus|depth of field)\b/i, /\bdepth of field\b/i, /\bout of focus\b/i, /\bblur(red|ry|s)?\b/i, /\bbokeh\b/i, /\binto (sharp|equal|full)\b[^.;]{0,24}\bfocus\b/i]],
+  ['shallow focus', [/\b(shallow|selective|soft)[- ](focus|depth[- ]of[- ]field)\b/i, /\bdepth[- ]of[- ]field\b/i, /\bout[- ]of[- ]focus\b/i, /\bblur(red|ry|s|ring)?\b/i, /\bbokeh\b/i, /\binto (sharp|equal|full)\b[^.;]{0,24}\bfocus\b/i]],
   ['one-sided light', [/\b(one|single)[- ]sided light/i, /\bside[- ]?light/i, /\braking light/i, /\bdirectional light/i, /\blight (from|on) (the )?(left|right|one side)/i, /\bspotlight/i, /\blow[- ]key\b/i]],
   ['diagonal recession', [/\bdiagonal/i, /\brecession\b/i, /\brecedes?\b/i, /\bvanishing point/i, /\bconverging lines/i]],
   ['overlap/occlusion', [/\boverlap/i, /\boccl(u|ud)/i, /\bin front of\b/i, /\blayered over\b/i]],
@@ -31,3 +31,6 @@ export function standInFor(text: string): string {
   const concept = conceptOf(text)
   return concept ? STAND_INS[concept] : 'none'
 }
+
+/** The second line under an unexpressed item: `Stood in by: none`. One helper for Compose, Preview, the legacy strip and the handoff. */
+export const standInLine = (text: string): string => `Stood in by: ${standInFor(text)}`

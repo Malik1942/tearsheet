@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../lib/store'
 import { Link } from '../lib/router'
 import { resolveProject } from '../lib/mapRelations'
-import { standInFor } from '../lib/standIns'
+import { standInLine } from '../lib/standIns'
 import { RELATIONSHIP_KEYS } from '../shell/params'
 import type { ParameterValue } from '../lib/types'
 import { Shell } from '../shell/Shell'
@@ -67,7 +67,7 @@ export function PreviewScreen({ id }: { id: string }) {
         <Section title="Could not be expressed">
           {resolved.unexpressed.length === 0 ? <div className="ink-2 text-[12px]">{COPY.unexpressedEmpty}</div> : (
             <ul className="space-y-1 text-[12px]">
-              {resolved.unexpressed.map((u, i) => <li key={i} className="flex gap-2"><span className="chip chip-adapted shrink-0 px-1.5 text-[10px]">{u.reason === 'fragile' ? 'fragile if changed' : 'no slot'}</span><span><Link href={`/brick/${u.brickId}`} className="mono ink-2">{u.brickId}</Link> {u.rule}<span className="ink-2 mt-0.5 block text-[11px]">{`Stood in by: ${standInFor(u.rule)}`}</span></span></li>)}
+              {resolved.unexpressed.map((u, i) => <li key={i} className="flex gap-2"><span className="chip chip-adapted shrink-0 px-1.5 text-[10px]">{u.reason === 'fragile' ? 'fragile if changed' : 'no slot'}</span><span><Link href={`/brick/${u.brickId}`} className="mono ink-2">{u.brickId}</Link> {u.rule}<span className="ink-2 mt-0.5 block text-[11px]">{standInLine(u.rule)}</span></span></li>)}
             </ul>
           )}
         </Section>

@@ -7,7 +7,7 @@ import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import bricksJson from '../src/fixtures/bricks.json'
 import { candidatesOf, resolveProject, type Project } from '../src/lib/mapRelations.ts'
 import type { Brick } from '../src/lib/types.ts'
-import { STAND_INS, conceptOf, standInFor, type Concept } from '../src/lib/standIns.ts'
+import { STAND_INS, conceptOf, standInFor, standInLine, type Concept } from '../src/lib/standIns.ts'
 import { exportHandoff } from '../src/export/index.ts'
 
 const GATE = bricksJson as unknown as Brick[]
@@ -113,7 +113,8 @@ describe('conceptOf and standInFor on the relation rules that could not be read 
 
 describe('conceptOf: the rules', () => {
   const cases: [Concept, string[]][] = [
-    ['shallow focus', ['Shallow focus on the subject', 'selective focus', 'soft depth of field', 'a narrow depth of field', 'the backdrop is out of focus', 'blur', 'a blurred wall', 'blurry edges', 'the sky blurs', 'creamy bokeh', 'pulled into sharp focus', 'brought into equal focus with the blossoms', 'moved into full focus']],
+    ['shallow focus', ['Shallow focus on the subject', 'selective focus', 'soft depth of field', 'a narrow depth of field', 'the backdrop is out of focus', 'blur', 'a blurred wall', 'blurry edges', 'the sky blurs', 'creamy bokeh', 'pulled into sharp focus', 'brought into equal focus with the blossoms', 'moved into full focus',
+      'an out-of-focus background', 'soft-focus backdrop', 'shallow-focus portrait', 'selective-focus lens', 'a shallow depth-of-field', 'a soft depth-of-field', 'a narrow depth-of-field', 'blurring the edges']],
     ['one-sided light', ['one-sided light', 'single sided lighting', 'sidelight', 'side light', 'side-light', 'raking light', 'directional light', 'light from the left', 'light on one side', 'light from right', 'a spotlight', 'low-key', 'low key lighting']],
     ['diagonal recession', ['diagonal lines', 'recession into depth', 'the road recedes', 'it recede', 'a vanishing point', 'converging lines']],
     ['overlap/occlusion', ['overlap', 'overlapping forms', 'occlusion', 'occluded by a wall', 'stands in front of the door', 'layered over a field']],
@@ -139,6 +140,44 @@ describe('conceptOf: the rules', () => {
   it('a focus word too far from "into sharp" is not the phrase', () => {
     assert.equal(conceptOf('into sharp and very, very, very evenly lit focus'), null)
     assert.equal(conceptOf('into sharp, even focus'), 'shallow focus')
+  })
+})
+
+describe('conceptOf: hyphenated shallow-focus forms', () => {
+  it('reads each hyphenated form the model writes as shallow focus, with the stand-in', () => {
+    for (const text of ['an out-of-focus background', 'soft-focus backdrop', 'shallow-focus portrait', 'a shallow depth-of-field', 'blurring the edges']) {
+      assert.equal(conceptOf(text), 'shallow focus', text)
+      assert.equal(standInFor(text), SHALLOW, text)
+    }
+  })
+  it('the hand-authored g2 item of /compare (src/fixtures/compositions.ts) is shallow focus: "out-of-focus" comes before "occluder" in the order, so it no longer reads as overlap/occlusion', () => {
+    const rule = 'Foreground out-of-focus occluder bottom-right (m6); verified real on the overlay.'
+    assert.equal(conceptOf(rule), 'shallow focus')
+    assert.equal(standInFor(rule), SHALLOW)
+    assert.equal(conceptOf('Foreground occluder bottom-right'), 'overlap/occlusion')
+  })
+  it('a hyphen or a space joins the words alike, but only one of them', () => {
+    for (const text of ['out of focus', 'out-of-focus', 'depth of field', 'depth-of-field', 'shallow focus', 'shallow-focus']) assert.equal(conceptOf(text), 'shallow focus', text)
+    for (const text of ['outoffocus', 'shallowfocus', 'out--of--focus']) assert.equal(conceptOf(text), null, text)
+  })
+  it('blur matches the whole word only: blur, blurred, blurry, blurs, blurring', () => {
+    for (const text of ['a blur', 'blurred', 'blurry', 'blurs', 'blurring']) assert.equal(conceptOf(text), 'shallow focus', text)
+    for (const text of ['blurb', 'a blurt']) assert.equal(conceptOf(text), null, text)
+  })
+})
+
+describe('standInLine', () => {
+  it('is "Stood in by: " and the stand-in, for every concept and for none', () => {
+    assert.equal(standInLine('Background blur isolates the subject'), 'Stood in by: whitespace + luminance hierarchy')
+    assert.equal(standInLine('A spotlight on the singer'), 'Stood in by: none')
+    assert.equal(standInLine('The diagonal makes the street recede'), 'Stood in by: none')
+    assert.equal(standInLine('The figure stands in front of the doorway'), 'Stood in by: none')
+    assert.equal(standInLine('The display type is cropped by the right edge'), 'Stood in by: none')
+    assert.equal(standInLine('Replacing the flat field with a gradient would collapse the confrontation'), 'Stood in by: none')
+    assert.equal(standInLine(''), 'Stood in by: none')
+  })
+  it('reads the same text as standInFor, on the two g1 sentences', () => {
+    for (const name of ['samples/g1', 'gate/g1']) assert.equal(standInLine(textOf(name)), `Stood in by: ${SHALLOW}`, name)
   })
 })
 
