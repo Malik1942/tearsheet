@@ -1,0 +1,15 @@
+{
+  "name": "Tearsheet",
+  "short_name": "Tearsheet",
+  "description": "Save what you like as you go. When you know what you are making, your references become the parameters of your screens, with every value showing where it came from.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F4F2EE",
+  "theme_color": "#F4F2EE",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

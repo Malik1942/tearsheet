@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
-import { proposeValue, provenanceOf } from '../lib/mapRelations'
+import { proposeValue, provenanceOf, typeFamilyOf } from '../lib/mapRelations'
 import type { ParameterKey } from '../shell/params'
 
 /** Brick screen: one photo, its measurements (the honest layer, first), relations, hypotheses, and the fragile sentence.
@@ -67,6 +67,13 @@ export function BrickScreen({ id }: { id: string }) {
             </ol>
           </section>
 
+          {(() => { const tf = typeFamilyOf(brick); return tf ? (
+            <section className="panel p-3">
+              <h2 className="mb-1 text-[13px] font-semibold">Letterforms</h2>
+              <p className="text-[12px]"><span className="ink-2">Described in </span><a href={`#${tf.source?.measurementIds?.[0]}`} className="mono">{tf.source?.measurementIds?.[0]}</a><span className="ink-2">, mapped to </span><span className="mono">{String(tf.value)}</span></p>
+              <p className="mt-1 text-[11px]"><span className="chip chip-adapted">adapted · by rule</span> <span className="ink-2">no font name reported; the stack is the shell's substitute for the description.</span></p>
+            </section>
+          ) : null })()}
           <section className="panel p-3">
             <h2 className="mb-2 text-[13px] font-semibold">Transferable relations</h2>
             <ol className="space-y-2">

@@ -25,6 +25,10 @@ export type Brick = {
   retries?: number
   /** Which prompt produced it; values are frozen at save time, a re-extraction is a new brick. */
   prompt_version?: string
+  /** Versions: a retry creates a new brick that supersedes the old one; the old one keeps its values. */
+  version?: number
+  supersedes?: string
+  superseded_by?: string
 }
 
 export type Provenance = 'measured' | 'interpreted' | 'adapted'
@@ -50,5 +54,5 @@ export type Composition = {
 /** A relation the user switched off by hand inside a project. Not derived; recorded so the handoff can say so. */
 export type DisabledRelation = { brickId: string; relationId: string; reason: string }
 
-/** Library card state. Absent means ready (bricks from fixtures predate the field). */
-export type BrickStatus = 'extracting' | 'ready' | 'unparsed'
+/** Library card state. Absent means ready (bricks from fixtures predate the field). `pending` = queued, not yet sent. */
+export type BrickStatus = 'pending' | 'extracting' | 'ready' | 'unparsed'
