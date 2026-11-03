@@ -130,3 +130,51 @@
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature { background: var(--color-accent); }
 .shell[data-accent="one-hero"][data-coverage="le15"] .feature * { color: var(--color-bg); }
 .palette-3 .tag { border-color: transparent; background: var(--color-tertiary); color: var(--color-fg); }
+
+/* ---------- C11 change highlight ----------
+   Compose sets data-flash="key key ..." on .shell for one second after an accepted change. Each rule below outlines the elements that parameter restyles on the two screens, in the chrome accent
+   (var(--accent) from chrome/tokens.css, never a --color-* of the shell: chrome and shell share no color).
+   Blocks that run edge to edge (.item, .row, .review-head, .group-title, the shell itself) are outlined inside, at offset -2px, because .shell clips at its edges; everything else sits 2px outside.
+   An element the current attributes do not render (a .row on the list, a .feature without featured-first) has nothing to outline. A selector that names a data-* value restyles that element only under that value.
+   No transition or animation, so prefers-reduced-motion changes nothing: the outline is not motion and stays. */
+
+/* type_scale_ratio: --title-size and --display-size. A .row .title is body size and a list title is 1.15x body under image-led, except under type-led or on the featured first item */
+.shell[data-flash~="type_scale_ratio"] :is(.screen-title, .stats strong, .feature .title),
+.shell[data-flash~="type_scale_ratio"]:not([data-hierarchy="image-led"]) .item .title,
+.shell[data-flash~="type_scale_ratio"][data-hierarchy="image-led"][data-rhythm="featured-first"] .group:first-of-type .item:first-of-type .title,
+.shell[data-flash~="type_scale_ratio"][data-hierarchy="type-led"] .row .title { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+.shell[data-flash~="type_scale_ratio"] .review-section .group-title { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+
+/* hierarchy_mode: what leads a list item and a review row. spacing_unit: --space pads and gaps both. density: --item-h sizes the list item and hides its note at 4 and 6 */
+.shell[data-flash~="hierarchy_mode"] :is(.item, .row),
+.shell[data-flash~="spacing_unit"] :is(.item, .row),
+.shell[data-flash~="density"] .item { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+
+/* grouping: the headings of both screens. alignment_edge: where the text sits, which .review-head and .group-title also align */
+.shell[data-flash~="grouping"] .group-title,
+.shell[data-flash~="alignment_edge"] :is(.review-head, .group-title) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell[data-flash~="alignment_edge"] :is(.text, .feature) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+
+/* rhythm: alternating moves the poster of every even item and row (the same :nth-child the shell uses, so a group title shifts the parity); featured-first enlarges the first item of the first group and adds .feature to the review */
+.shell[data-flash~="rhythm"] :is(.item:nth-child(even), .row:nth-child(even), .group:first-of-type .item:first-of-type) { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell[data-flash~="rhythm"] .feature { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+
+/* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), tags, buttons and the feature card. palette_hue_count: the third hue tints the tags */
+.shell[data-flash~="image_text_dominance"] .pic,
+.shell[data-flash~="radius"] :is(.pic img, .tag, .action, .feature),
+.shell[data-flash~="palette_hue_count"] .tag { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+
+/* accent_placement and color_accent: the tags, the Details buttons and the review totals. accent_coverage: the tags and buttons (the totals ignore coverage). */
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"]) :is(.tag, .action, .stats strong),
+.shell[data-flash~="accent_coverage"] :is(.tag, .action) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+/* dividers draw the line under every item and row (coverage sets only the item's line width); one-hero colors the headline and the first item, and at 15% fills the first item and the feature card */
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"])[data-accent="dividers"] :is(.item, .row),
+.shell[data-flash~="accent_coverage"][data-accent="dividers"] .item,
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"], [data-flash~="accent_coverage"])[data-accent="one-hero"] .group:first-of-type .item:first-of-type { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"])[data-accent="one-hero"] .screen-title,
+.shell:is([data-flash~="accent_placement"], [data-flash~="color_accent"])[data-accent="one-hero"][data-coverage="le15"] .feature,
+.shell[data-flash~="accent_coverage"][data-accent="one-hero"] .feature { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
+
+/* color_bg: the page background is the shell itself. color_fg and type_family: the text of titles and meta lines (type_family sets every text; these are the ones that read as text) */
+.shell[data-flash~="color_bg"] { outline: 2px solid var(--accent, #C8502A); outline-offset: -2px; }
+.shell:is([data-flash~="color_fg"], [data-flash~="type_family"]) :is(.title, .screen-title, .meta) { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }

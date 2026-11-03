@@ -11,6 +11,7 @@ import { conflictTiles } from '../lib/conflictPreview'
 import { Photo } from '../bricks/Photo'
 import { ProvenanceChip } from '../compose/ProvenanceChip'
 import { Section, Row } from '../compose/Sheet'
+import { useChangeFlash } from '../compose/useChangeFlash'
 import { download, exportCss, exportHandoff, exportJson } from '../export'
 
 const NEUTRAL = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const
@@ -25,6 +26,8 @@ export function ComposeScreen({ id }: { id: string }) {
   const [neutral, setNeutral] = useState(false)
   const [swapping, setSwapping] = useState<string | null>(null)
   const resolved = useMemo(() => project ? resolveProject(project, store.bricks) : null, [project, store.bricks])
+  // C11: for one second after an accepted change (Swap, Rotate, a conflict choice, a lock release, swap-in), the parameters it moved are outlined on both shells and tinted in the sheet
+  const flash = useChangeFlash(project)
   if (!project || !resolved) return <div className="chrome min-h-full p-4"><Link href="/projects" className="ink-2 text-[12px]">← Projects</Link><p className="mt-4 ink-2">No project with id {id}.</p></div>
 
   const update = (patch: Partial<Project> | ((p: Project) => Partial<Project>)) => store.updateProject(project.id, patch)
@@ -120,7 +123,7 @@ export function ComposeScreen({ id }: { id: string }) {
         <main className="flex flex-wrap justify-center gap-4 self-start">
           {(screen === 'both' ? (['list', 'review'] as const) : [screen]).map(s => (
             <div key={s} className="w-full max-w-[320px] overflow-hidden rounded-[20px]" style={{ border: '1px solid var(--line)', background: '#111', padding: 6, height: 652 }}>
-              <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} /></div>
+              <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} flash={flash} /></div>
             </div>
           ))}
           <p className="w-full text-center text-[11px] ink-2">Renders locally from one parameters.json; no model call. Edits happen through materials and the sheet.</p>
@@ -128,8 +131,8 @@ export function ComposeScreen({ id }: { id: string }) {
 
         {/* Parameter sheet (block 3 version; block 4 adds conflicts and the cap rows) */}
         <aside className="flex min-w-0 flex-col gap-3">
-          <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} thumb={thumbOf(resolved.values[k])} />)}</Section>
-          <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} swatch={k.startsWith('color')} thumb={thumbOf(resolved.values[k])} />)}</Section>
+          <Section title="Relationship">{RELATIONSHIP_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} thumb={thumbOf(resolved.values[k])} flash={flash.includes(k)} />)}</Section>
+          <Section title="Skin">{SKIN_KEYS.map(k => <Row key={k} k={k} pv={resolved.values[k]} params={resolved.params} bricks={store.bricks} swatch={k.startsWith('color')} thumb={thumbOf(resolved.values[k])} flash={flash.includes(k)} />)}</Section>
           {resolved.conflicts.length > 0 && (
             <Section title="Conflicts">
               {resolved.conflicts.map(k => (
