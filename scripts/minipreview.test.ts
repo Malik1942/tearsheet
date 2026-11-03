@@ -88,7 +88,7 @@ describe('brickParams (B2, L6, P7)', () => {
     const { skin_measured: _s, ...rest } = byId('calmmouse')
     const b: Brick = { ...rest, relations: [], measurements: [], fragile_if_changed: '' }
     const { params, unexpressed } = brickParams(b)
-    assert.deepEqual(params, DEFAULT_PARAMS)
+    assert.deepEqual(params, { ...DEFAULT_PARAMS, accent_set: false })   // nothing sets accent coverage either
     assert.equal(unexpressed, 0)
   })
   it('resolveProject keeps the order it is given, so the top brick of a picker column wins where two bricks set the same parameter', () => {

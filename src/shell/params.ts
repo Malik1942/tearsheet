@@ -36,11 +36,17 @@ export const PARAM_SPEC: Record<ParameterKey, ParamSpec> = {
   spacing_unit: { kind: 'free', default: '8px', effect: 'spacing unit' },
 }
 
-export type Params = Record<ParameterKey, ParamValue>
+/** The parameters, plus one fact the shell needs that no single value carries: `accent_set`, true when a brick, a lock or a person set accent_coverage
+ *  (the shell's default does not count). Without it a value set reads as unset, so one hue stays monochrome. */
+export type Params = Record<ParameterKey, ParamValue> & { accent_set?: boolean }
+
+/** Whether the accent color shows: at two or more hues, or at one hue when accent_coverage is set. One hue plus a set coverage is "one hue, used once
+ *  as the bright spot": that hue is the accent, not the text color. */
+export const accentShows = (p: Params): boolean => Number(p.palette_hue_count) >= 2 || !!p.accent_set
 
 export const DEFAULT_PARAMS: Params = Object.fromEntries(
   PARAMETER_KEYS.map(k => [k, PARAM_SPEC[k].default]),
-) as Params
+) as Record<ParameterKey, ParamValue>
 
 /** Snap a proposed value onto the vocabulary. Returns null when the value cannot be expressed. */
 export function normalize(key: ParameterKey, raw: ParamValue): ParamValue | null {
@@ -88,7 +94,7 @@ export function toCssVars(p: Params): Record<string, string> {
     '--hue-count': String(hues),
     '--color-bg': String(p.color_bg),
     '--color-fg': String(p.color_fg),
-    '--color-accent': hues >= 2 ? String(p.color_accent) : String(p.color_fg),
+    '--color-accent': accentShows(p) ? String(p.color_accent) : String(p.color_fg),
     '--color-muted': `color-mix(in oklab, ${p.color_fg} 55%, ${p.color_bg})`,
     '--color-line': `color-mix(in oklab, ${p.color_fg} 18%, ${p.color_bg})`,
     '--color-surface': `color-mix(in oklab, ${p.color_fg} 6%, ${p.color_bg})`,

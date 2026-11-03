@@ -1,6 +1,6 @@
 /** Rule before number (spec v2 C4′): the sentence a parameter's value reads as on the two prototype screens, and the row text built from it.
  *  Pure: no React, no model call. Each sentence was written from shell.css, ListScreen.tsx and DetailScreen.tsx; change one of those and change its sentence here. */
-import { DEFAULT_PARAMS, RELATIONSHIP_KEYS, type ParameterKey, type Params } from '../shell/params'
+import { DEFAULT_PARAMS, RELATIONSHIP_KEYS, accentShows, type ParameterKey, type Params } from '../shell/params'
 import type { Project, Resolved } from './mapRelations'
 import type { Brick, Measurement, ParameterValue } from './types'
 
@@ -135,18 +135,18 @@ export function landsOn(key: ParameterKey, params: Params): string {
     case 'accent_placement': {
       if (params.accent_placement === 'none') return 'No element takes the accent color.'
       const [two, one] = entry(entry(ACCENT, key, params), 'accent_coverage', params)
-      return hues < 2 ? `With one hue the accent is the text color: ${one}` : two(n)
+      return accentShows(params) ? two(n) : `With one hue the accent is the text color: ${one}`
     }
     case 'accent_coverage':
       return params.accent_placement === 'none' ? 'No element takes the accent, so coverage has no effect.'
         : `At ${String(params.accent_coverage).replace('<=', '≤')} coverage: ${lowerFirst(landsOn('accent_placement', params))}`
     case 'palette_hue_count':
-      return hues < 2 ? 'One hue: the accent falls back to the text color, so nothing is colored.'
+      return hues < 2 ? (params.accent_set ? `One hue, used as the accent: ${n}; everything else is the text color.` : 'One hue: the accent falls back to the text color, so nothing is colored.')
         : hues < 3 ? `Two hues: the text color plus ${n} for the accent.`
         : 'A third hue tints the genre tags on the list.'
     case 'color_bg': return `${cap(colorName(String(params.color_bg)))} page background on both screens.`
     case 'color_fg': return `${cap(colorName(String(params.color_fg)))} text; muted text and lines are mixed from it.`
-    case 'color_accent': return hues >= 2 ? `${cap(n)} accent; accent_placement decides where it shows.` : 'Unused: with one hue the accent is the text color.'
+    case 'color_accent': return accentShows(params) ? `${cap(n)} accent; accent_placement decides where it shows.` : 'Unused: with one hue the accent is the text color.'
     case 'radius': {
       const radius = String(params.radius)
       return radius === '0px' || radius === '0' ? 'Posters, tags and buttons have square corners.' : `Corners of posters, tags and buttons are ${radius}.`

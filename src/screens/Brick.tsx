@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
-import { proposeValue, provenanceOf, typeFamilyOf } from '../lib/mapRelations'
+import { proposeValue, provenanceOf, titleLedReadings, typeFamilyOf } from '../lib/mapRelations'
 import { footnoteFor, footnoteMeasurement, landsOn } from '../lib/landing'
 import { DEFAULT_PARAMS, type ParameterKey } from '../shell/params'
 import { MiniPreview } from '../shell/MiniPreview'
@@ -70,9 +70,14 @@ export function BrickScreen({ id }: { id: string }) {
             <ol className="space-y-2">
               {relations.map(r => {
                 const prov = provenanceOf(brick, r)
-                const value = r.parameter === 'none' ? null : proposeValue(r.parameter as ParameterKey, r)
-                // C4′: where the rule would land on the shell (every other parameter at its default); the footnote is the same helper the Sheet uses, and hovering highlights the measurement it cites
-                const lands = value === null ? null : landsOn(r.parameter as ParameterKey, { ...DEFAULT_PARAMS, [r.parameter]: value })
+                const read = r.parameter === 'none' ? null : proposeValue(r.parameter as ParameterKey, r)
+                // a dominant title said in words: the rule table's readings, the one for this parameter when nothing could be read off the rule, the others beside it
+                const byRule = titleLedReadings(brick, r).filter(c => read === null || c.key !== r.parameter)
+                const ruleOwn = read === null ? byRule.find(c => c.key === r.parameter) : undefined
+                const value = read ?? ruleOwn?.value ?? null
+                const siblings = byRule.filter(c => c.key !== r.parameter)
+                // C4′: where the rule would land on the shell (every other parameter at its default, or at this rule's other readings); the footnote is the same helper the Sheet uses, and hovering highlights the measurement it cites
+                const lands = value === null ? null : landsOn(r.parameter as ParameterKey, { ...DEFAULT_PARAMS, accent_set: mini.params.accent_set, ...Object.fromEntries(siblings.map(c => [c.key, c.value])), [r.parameter]: value })
                 const note = footnoteFor(brick, prov.measurementIds)
                 return (
                   <li key={r.id} id={r.id} className="rounded px-2 py-1" onMouseEnter={() => setHl(footnoteMeasurement(brick, prov.measurementIds)?.id ?? null)} onMouseLeave={() => setHl(null)}>
@@ -81,6 +86,8 @@ export function BrickScreen({ id }: { id: string }) {
                       {r.parameter === 'none'
                         ? <span className="chip chip-adapted">no slot</span>
                         : <span className="chip chip-measured"><span className="mono">{r.parameter}</span>{value !== null && <span className="mono">= {String(value)}</span>}</span>}
+                      {siblings.map(c => <span key={c.key} className="chip chip-measured"><span className="mono">{c.key}</span><span className="mono">= {String(c.value)}</span></span>)}
+                      {byRule.length > 0 && <span className="chip chip-adapted" title={byRule[0].source?.note}>adapted · by rule</span>}
                       {r.parameter !== 'none' && value === null && <span className="ink-2">no value could be read from the rule</span>}
                       <span className="ink-2">from <a href={`#${r.source_hypothesis}`} className="mono">{r.source_hypothesis}</a> · {prov.provenance}</span>
                       {note && <span className="mono ink-2 min-w-0 max-w-full truncate" title={note}>{note}</span>}

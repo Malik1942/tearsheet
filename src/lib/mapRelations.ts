@@ -1,6 +1,7 @@
 import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, RELATIONSHIP_KEYS, normalize, type ParameterKey, type ParamValue, type Params } from '../shell/params'
 import type { Brick, Composition, ParameterValue, Provenance, Relation, Unexpressed } from './types'
 import type { VersionEntry } from './versions'
+import { isShellDefault } from './landing'
 
 /** Resolve a hand-authored composition (fixtures) into the full parameter set. Keys no brick sets fall back to a neutral default labeled adapted. */
 export function resolveParams(c: Composition): { params: Params; values: Record<ParameterKey, ParameterValue> } {
@@ -11,6 +12,7 @@ export function resolveParams(c: Composition): { params: Params; values: Record<
     if (pv) { params[key] = pv.value; values[key] = pv }
     else values[key] = adaptedDefault(key)
   }
+  params.accent_set = !!c.parameters.accent_coverage
   return { params, values }
 }
 
@@ -200,19 +202,56 @@ export function alignmentByRule(brick: Brick): Candidate | null {
   return null
 }
 
+/** A title that dominates, said without a number: "an order of magnitude larger", "the title dominates", "one centered title". */
+const TITLE_LED = /\border of magnitude (?:larger|bigger)|\b(?:title|headline|wordmark|lettering)\b[^.;]{0,60}\bdominat|\bdominat\w*\b[^.;]{0,30}\b(?:title|headline|wordmark|lettering)\b|\bone (?:centered|centred|central|single) (?:title|headline|wordmark)\b/i
+/** The image share a text-led rule reads as: the poster keeps a fifth of each item. */
+export const TEXT_LED_SHARE = 0.2
+
+/** The model files a dominant title under image_text_dominance or hierarchy_mode in words, with no share or mode to read ("keep one centered title … an order of
+ *  magnitude larger than any other mark"). The rule table reads the phrase instead: type-led, text-led, and its alignment through `readAlignment`, each
+ *  `adapted · by rule` and citing the relation. The reading for the relation's own parameter comes first and keeps the relation's ref; the others get
+ *  `<rel>:<key>` refs, so the cap and "swap in" can treat each on its own while switching the relation off switches off all of them. */
+export function titleLedReadings(brick: Brick, rel: Relation): Candidate[] {
+  if (rel.parameter !== 'image_text_dominance' && rel.parameter !== 'hierarchy_mode') return []
+  if (!TITLE_LED.test(`${rel.target} ${rel.rule}`)) return []
+  const edge = readAlignment(rel.rule) ?? readAlignment(rel.target)
+  const reads: [ParameterKey, ParamValue, string][] = [
+    ['image_text_dominance', TEXT_LED_SHARE, `text-led, so the image keeps ${TEXT_LED_SHARE * 100}% of each item`],
+    ['hierarchy_mode', 'type-led', 'type-led, so the title leads each item'],
+  ]
+  if (edge) reads.push(['alignment_edge', edge, `alignment ${edge}, from the rule's own words`])
+  reads.sort((a, b) => Number(b[0] === rel.parameter) - Number(a[0] === rel.parameter))
+  const { measurementIds } = provenanceOf(brick, rel)
+  const regionLabels = brick.regions.filter(r => r.measurement_ids.some(id => measurementIds.includes(id))).map(r => r.label)
+  return reads.map(([key, value, why]) => ({ key, value, provenance: 'adapted', locked: false, relation: rel,
+    ref: relRef(brick.id, key === rel.parameter ? rel.id : `${rel.id}:${key}`),
+    source: { brickId: brick.id, relationId: rel.id, relationRule: rel.rule, measurementIds, regionLabels,
+      note: `by rule: ${rel.id} says a title dominates but gives no number; the rule table reads that as ${why}` } }))
+}
+
+/** The ref a candidate is switched off by: its own, or for a `<rel>:<key>` reading, also its relation's. */
+const relationRefOf = (ref: RelationRef): RelationRef => ref.split(':')[0] as RelationRef
+
 export function candidatesOf(brick: Brick): { candidates: Candidate[]; unexpressed: Unexpressed[] } {
-  const candidates: Candidate[] = []
+  let candidates: Candidate[] = []
   const unexpressed: Unexpressed[] = []
   for (const rel of brick.relations) {
     if (rel.parameter === 'none') { unexpressed.push({ brickId: brick.id, rule: rel.rule, reason: 'parameter-none' }); continue }
     const key = rel.parameter as ParameterKey
     const value = proposeValue(key, rel)
-    if (value === null) { unexpressed.push({ brickId: brick.id, rule: rel.rule, reason: 'unsupported-target' }); continue }
-    const { provenance, measurementIds } = provenanceOf(brick, rel)
-    const regionLabels = brick.regions.filter(r => r.measurement_ids.some(id => measurementIds.includes(id))).map(r => r.label)
-    candidates.push({ key, value, provenance, locked: false, ref: relRef(brick.id, rel.id), relation: rel,
-      source: { brickId: brick.id, relationId: rel.id, relationRule: rel.rule, measurementIds, regionLabels } })
+    // a value read off the rule wins over the reading by rule for the same parameter
+    const byRule = titleLedReadings(brick, rel).filter(c => value === null || c.key !== key)
+    if (value === null && !byRule.some(c => c.key === key)) { unexpressed.push({ brickId: brick.id, rule: rel.rule, reason: 'unsupported-target' }); continue }
+    if (value !== null) {
+      const { provenance, measurementIds } = provenanceOf(brick, rel)
+      const regionLabels = brick.regions.filter(r => r.measurement_ids.some(id => measurementIds.includes(id))).map(r => r.label)
+      candidates.push({ key, value, provenance, locked: false, ref: relRef(brick.id, rel.id), relation: rel,
+        source: { brickId: brick.id, relationId: rel.id, relationRule: rel.rule, measurementIds, regionLabels } })
+    }
+    candidates.push(...byRule)
   }
+  // a reading by rule for another parameter yields to a relation of this brick that sets that parameter itself, and to an earlier reading of the same key
+  candidates = candidates.filter((c, i) => !c.ref.includes(':') || (!candidates.some(d => d.key === c.key && !d.ref.includes(':')) && candidates.findIndex(d => d.key === c.key) === i))
   const align = alignmentByRule(brick)
   if (align && !candidates.some(c => c.key === 'alignment_edge')) candidates.push(align)
   if (brick.fragile_if_changed) unexpressed.push({ brickId: brick.id, rule: brick.fragile_if_changed, reason: 'fragile' })
@@ -278,7 +317,7 @@ export function resolveProject(project: Project, bricks: Brick[]): Resolved {
     unexpressed.push(...c.unexpressed)
     let active = 0
     for (const cand of c.candidates) {
-      if (project.disabled[cand.ref]) continue
+      if (project.disabled[cand.ref] || project.disabled[relationRefOf(cand.ref)]) continue
       if ((RELATIONSHIP_KEYS as readonly string[]).includes(cand.key)) {
         if (active >= CAP_PER_BRICK) { capped.push(cand); continue }
         active++
@@ -310,6 +349,7 @@ export function resolveProject(project: Project, bricks: Brick[]): Resolved {
     if (skin?.length) { values[key] = skin[0]; continue }   // first brick's measured skin; the panel can pick another
     values[key] = adaptedDefault(key)
   }
-  const params = Object.fromEntries(PARAMETER_KEYS.map(k => [k, values[k].value])) as Params
+  const params: Params = Object.fromEntries(PARAMETER_KEYS.map(k => [k, values[k].value])) as Record<ParameterKey, ParamValue>
+  params.accent_set = !isShellDefault(values.accent_coverage)
   return { params, values, candidates, conflicts, unexpressed, capped }
 }
