@@ -50,7 +50,8 @@ export function ComposePanel({ project, neutral, onNeutral, screen }: { project:
   const remove = (bid: string) => update(p => { const lk = { ...(p.lockedBricks ?? {}) }; delete lk[bid]; return { brickIds: p.brickIds.filter(b => b !== bid), lockedBricks: lk } })
   const toggleRelation = (ref: ReturnType<typeof relRef>) => update(p => { const d = { ...p.disabled }; if (d[ref]) delete d[ref]; else d[ref] = true; return { disabled: d } })
   const thumbOf = (pv: ParameterValue) => store.bricks.find(b => b.id === pv.source?.brickId)?.photo.url
-  const byBrick = (bid: string) => PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === bid && resolved.values[k].provenance !== 'adapted')
+  // what a brick sets on the screens, whatever its label: measured, interpreted, or adapted (by rule, by the layout contract, or chosen by you in a conflict); shell defaults carry no brick
+  const byBrick = (bid: string) => PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === bid)
   const pickOf = (bid: string) => project.proposal?.picks.find(p => p.brickId === bid)
   const changed = whatChanged(project, resolved, store.bricks)
 
