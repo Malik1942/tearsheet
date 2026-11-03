@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
 import { propose, proposeEnabled } from '../lib/proposeClient'
 import { proposedNow } from '../export'
 import { savedLabel } from '../lib/brickLabels'
+import { chipsFor, type Lean } from '../lib/lean'
+import type { ChipId } from '../lib/leanFamilies'
 import type { Proposal, ProposalPick } from '../lib/mapRelations'
 import type { Brick } from '../lib/types'
 
@@ -22,6 +24,13 @@ const COPY = {
   swap: 'Swap',
   proposedBy: 'proposed · model',
   swappedBy: 'adapted · by you',
+  lean: 'Lean (optional)',
+  leanHint: 'from your library · adapted · by rule',
+  noLean: 'none set',
+  moreLikeThis: 'More like this one',
+  clearAnchor: 'Clear the starting point',
+  changeLean: 'Change lean',
+  anchorNote: 'Your starting point.',
   noProposal: (why: string) => `No proposal came back (${why}). Pick by hand.`,
   dropped: (n: number) => `${n} ${n === 1 ? 'pick was' : 'picks were'} dropped: not a verbatim rule of a library brick, or a repeat.`,
   create: 'Create project',
@@ -33,23 +42,29 @@ const COPY = {
 }
 
 type Stage = 'intent' | 'proposing' | 'proposal' | 'manual'
-type Meta = { model: string; effort: string; latency_ms: number; dropped: number; intent: string }
+type Meta = { model: string; effort: string; latency_ms: number; dropped: number; intent: string; lean?: Lean }
 type Card = ProposalPick & { original?: ProposalPick }
 
 const wide = () => typeof matchMedia === 'function' && matchMedia('(min-width: 960px)').matches
 /** Compose is desktop-only (PRD 7.5); a phone lands on the read-only preview of the same project. */
 const openProject = (id: string) => navigate(wide() ? `/project/${id}` : `/project/${id}/preview`)
 
-/** Projects: name an intent; the model proposes up to three bricks, each with one of its rules quoted verbatim as the reason (PRD P2–P3);
- *  the person accepts, swaps or picks by hand. The accepted set is recorded on the project as `proposed · model`, a swap as `adapted · by you`. */
+/** Projects: name an intent first; optionally lean the choice (chips derived from the library's relations, and a starting-point brick);
+ *  the model proposes up to three bricks, each with one of its rules quoted verbatim as the reason (PRD P2–P3, spec v3 P1–P5);
+ *  the person accepts, swaps or picks by hand. The accepted set is recorded on the project as `proposed · model`, a swap as `adapted · by you`,
+ *  the starting point as `adapted · by you` too. `?brick=<id>` (Brick → Use in a project) arrives here with that brick as the starting point. */
 export function ProjectsScreen() {
   const store = useStore()
   const preselect = new URLSearchParams(location.search).get('brick')
+  const pre = preselect ? store.bricks.find(b => b.id === preselect) : undefined
   const [open, setOpen] = useState(store.projects.length === 0 || !!preselect)
   const [name, setName] = useState('')
   const [intent, setIntent] = useState('')
-  const [stage, setStage] = useState<Stage>(preselect ? 'manual' : 'intent')
-  const [picked, setPicked] = useState<string[]>(preselect && store.bricks.some(b => b.id === preselect) ? [preselect] : [])
+  const [stage, setStage] = useState<Stage>('intent')
+  const [picked, setPicked] = useState<string[]>(pre ? [pre.id] : [])
+  const [anchor, setAnchor] = useState<string | null>(pre && (pre.status ?? 'ready') === 'ready' && !pre.superseded_by && pre.relations.length > 0 ? pre.id : null)
+  const [chips, setChips] = useState<ChipId[]>([])
+  const [pickingAnchor, setPickingAnchor] = useState(false)
   const [cards, setCards] = useState<Card[]>([])
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const req = useRef(0)
@@ -59,6 +74,11 @@ export function ProjectsScreen() {
   const [swapping, setSwapping] = useState<string | null>(null)
   const ready = store.bricks.filter(b => (b.status ?? 'ready') === 'ready' && !b.superseded_by)
   const withRules = ready.filter(b => b.relations.length > 0)
+  // chips are offered for this intent from the library's own relations; one that has fallen out of the six as the intent changed is no longer set
+  const offered = useMemo(() => chipsFor(store.bricks, intent), [store.bricks, intent])
+  const active = chips.filter(c => offered.some(o => o.id === c))
+  const anchorBrick = anchor ? withRules.find(b => b.id === anchor) : undefined
+  const withAnchor = (p: string[]) => anchorBrick && !p.includes(anchorBrick.id) ? [anchorBrick.id, ...p].slice(0, MAX_BRICKS) : p
   const brickOf = (id: string) => store.bricks.find(b => b.id === id)
   const spare = ready.filter(b => !cards.some(c => c.brickId === b.id))
   const toggle = (id: string) => setPicked(p => p.includes(id) ? p.filter(x => x !== id) : p.length < MAX_BRICKS ? [...p, id] : p)
@@ -67,13 +87,16 @@ export function ProjectsScreen() {
   const onPropose = async () => {
     if (!intent.trim()) return
     const sent = intent.trim(), id = ++req.current
+    const lean: Lean = { chips: active, ...(anchorBrick ? { anchor_id: anchorBrick.id } : {}) }
     setStage('proposing'); setNote(null); setSwapping(null)
     const dry = import.meta.env.DEV && localStorage.getItem('tearsheet.dry') === '1'
-    const out = await propose(sent, ready, dry)
+    const out = await propose(sent, ready, dry, lean)
     if (id !== req.current) return   // the form was reset or asked again meanwhile; this answer is stale
-    if (!out.ok) { setStage('manual'); if (out.disabled) setEnabled(false); setNote(COPY.noProposal(out.reason.replace(/\.$/, ''))); return }
-    setCards(out.picks.map(p => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' })))
-    setMeta({ model: out.model, effort: out.effort, latency_ms: out.latency_ms, dropped: out.dropped, intent: sent })
+    if (!out.ok) { setStage('manual'); setPicked(withAnchor); if (out.disabled) setEnabled(false); setNote(COPY.noProposal(out.reason.replace(/\.$/, ''))); return }
+    // the starting point is the first card: the person's own pick, not the model's
+    const first: Card[] = lean.anchor_id ? [{ brickId: lean.anchor_id, quotedRule: '', why: '', status: 'anchor' }] : []
+    setCards([...first, ...out.picks.map((p): Card => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' }))])
+    setMeta({ model: out.model, effort: out.effort, latency_ms: out.latency_ms, dropped: out.dropped, intent: sent, ...(lean.chips.length || lean.anchor_id ? { lean } : {}) })
     setNote(out.dropped ? COPY.dropped(out.dropped) : null)
     setStage('proposal')
   }
@@ -91,13 +114,15 @@ export function ProjectsScreen() {
     if (!cards.length || !meta) return
     // the record carries the intent the model actually saw (the field is locked while the cards are shown)
     const picks: ProposalPick[] = cards.map(({ original: _o, ...p }) => p)
-    const proposal: Proposal = { at: new Date().toISOString(), model: meta.model, effort: meta.effort, intent: meta.intent, latency_ms: meta.latency_ms, dropped: meta.dropped, picks }
+    const proposal: Proposal = { at: new Date().toISOString(), model: meta.model, effort: meta.effort, intent: meta.intent, latency_ms: meta.latency_ms, dropped: meta.dropped, picks, ...(meta.lean ? { lean: meta.lean } : {}) }
     openProject(store.createProject(meta.intent, picks.map(c => c.brickId), name.trim() || undefined, { proposal }))
   }
   const createManual = () => {
     if (!intent.trim() || picked.length === 0) return
     openProject(store.createProject(intent.trim(), picked, name.trim() || undefined))
   }
+  // back to the intent stage with the intent, the chips and the starting point kept; asking again is a new call
+  const changeLean = () => { req.current++; setCards([]); setMeta(null); setNote(null); setSwapping(null); setStage('intent') }
   const busy = stage === 'proposing'
 
   return (
@@ -105,7 +130,7 @@ export function ProjectsScreen() {
       <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
         <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
         <span className="ink-2">/ Projects</span>
-        <div className="ml-auto"><button type="button" className="btn btn-accent" onClick={() => { req.current++; setOpen(true); setStage('intent'); setCards([]); setNote(null) }}>New project</button></div>
+        <div className="ml-auto"><button type="button" className="btn btn-accent" onClick={() => { req.current++; setOpen(true); setStage('intent'); setCards([]); setNote(null); setMeta(null); setSwapping(null); setChips([]); setAnchor(null); setPickingAnchor(false) }}>New project</button></div>
       </header>
       <div className="px-4 py-1 text-[12px] ink-2 min-[960px]:hidden" style={{ borderBottom: '1px solid var(--line)' }}>{COPY.phone}</div>
 
@@ -121,6 +146,36 @@ export function ProjectsScreen() {
                 <input value={intent} disabled={busy || stage === 'proposal'} maxLength={300} onChange={e => setIntent(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && stage === 'intent' && withRules.length && enabled !== false) onPropose() }} placeholder="A concert log for someone who goes to a lot of shows" className="rounded border px-2 py-1 text-[13px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
               </label>
             </div>
+            {stage === 'intent' && intent.trim() && withRules.length > 0 && enabled !== false && (
+              <div className="mt-3">
+                <div className="flex flex-wrap items-baseline gap-x-2"><span className="text-[12px] ink-2">{COPY.lean}</span><span className="ink-2 text-[11px]">{COPY.leanHint}</span></div>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {offered.map(c => {
+                    const on = active.includes(c.id)
+                    return <button key={c.id} type="button" aria-pressed={on} title={c.note} onClick={() => setChips(cs => cs.includes(c.id) ? cs.filter(x => x !== c.id) : [...cs, c.id])} className="chip chip-adapted min-h-7 cursor-pointer" style={on ? { borderColor: 'var(--accent)', borderWidth: 2, padding: '1px 7px', color: 'var(--ink)', fontWeight: 600 } : undefined}>{c.id}</button>
+                  })}
+                  <button type="button" className="btn px-2 py-0.5 text-[12px]" aria-expanded={pickingAnchor} onClick={() => setPickingAnchor(v => !v)}>{COPY.moreLikeThis}</button>
+                  {anchorBrick && (
+                    <span className="inline-flex items-center gap-1 rounded border py-0.5 pl-0.5 pr-1 hairline" style={{ background: 'var(--panel)' }}>
+                      <Photo src={anchorBrick.photo.url} className="h-6 w-6 rounded object-cover" />
+                      <span className="mono">{anchorBrick.id}</span>
+                      <button type="button" className="btn btn-quiet px-1 py-0 text-[14px]" aria-label={COPY.clearAnchor} title={COPY.clearAnchor} onClick={() => setAnchor(null)}>×</button>
+                    </span>
+                  )}
+                </div>
+                {pickingAnchor && (
+                  <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                    {withRules.map(b => (
+                      <button key={b.id} type="button" onClick={() => { setAnchor(b.id); setPickingAnchor(false) }} aria-pressed={b.id === anchor} className="overflow-hidden rounded text-left" style={{ border: `2px solid ${b.id === anchor ? 'var(--accent)' : 'var(--line)'}`, background: 'var(--panel)' }} title={`Start from ${b.id}`}>
+                        <div style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" /></div>
+                        <div className="mono px-1.5 py-1 text-[11px]">{b.id}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="mt-3 text-[12px] ink-2">Shell family</div>
             <div className="mt-1 flex flex-wrap gap-2">
               <span className="chip chip-measured">List + Year review</span>
@@ -131,7 +186,7 @@ export function ProjectsScreen() {
             {stage === 'intent' && (
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <button type="button" className={`btn ${enabled === false ? '' : 'btn-accent'}`} disabled={!intent.trim() || withRules.length === 0 || enabled === false} onClick={onPropose} title={enabled === false ? COPY.off : withRules.length === 0 ? COPY.noRules : COPY.proposeHint}>{COPY.propose}</button>
-                <button type="button" className={`btn ${enabled === false ? 'btn-accent' : ''}`} disabled={!intent.trim()} onClick={() => setStage('manual')}>{COPY.manual}</button>
+                <button type="button" className={`btn ${enabled === false ? 'btn-accent' : ''}`} disabled={!intent.trim()} onClick={() => { setPicked(withAnchor); setStage('manual') }}>{COPY.manual}</button>
                 {projects.length > 0 && <button type="button" className="btn btn-quiet" onClick={() => setOpen(false)}>Cancel</button>}
                 <span className="ink-2 w-full text-[11px] sm:w-auto">{enabled === false ? COPY.off : withRules.length === 0 ? COPY.noRules : COPY.proposeHint}</span>
               </div>
@@ -141,12 +196,19 @@ export function ProjectsScreen() {
 
             {stage === 'proposal' && (
               <>
+                <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Lean for this proposal">
+                  <span className="text-[12px] ink-2">Lean</span>
+                  {meta?.lean?.chips.map(c => <span key={c} className="chip chip-adapted" title={offered.find(o => o.id === c)?.note}>{c}</span>)}
+                  {meta?.lean?.anchor_id && <span className="inline-flex items-center gap-1 text-[12px]">starting point <span className="mono">{meta.lean.anchor_id}</span></span>}
+                  {!meta?.lean && <span className="ink-2 text-[12px]">{COPY.noLean}</span>}
+                  <button type="button" className="btn btn-quiet px-2 py-0.5 text-[11px]" onClick={changeLean}>{COPY.changeLean}</button>
+                </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-3" aria-live="polite" aria-label="Proposed bricks">
                   {cards.map(c => <ProposalCard key={c.brickId} pick={c} brick={brickOf(c.brickId)} spare={spare} swapping={swapping === c.brickId} onSwap={() => setSwapping(swapping === c.brickId ? null : c.brickId)} onPick={to => swapCard(c.brickId, to)} />)}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button type="button" className="btn btn-accent" onClick={acceptAll}>{COPY.acceptAll}</button>
-                  <button type="button" className="btn" onClick={() => { setStage('manual'); setPicked([]) }}>{COPY.manual}</button>
+                  <button type="button" className="btn" onClick={() => { setStage('manual'); setPicked(withAnchor([])) }}>{COPY.manual}</button>
                   {meta && <span className="mono ink-2 text-[11px]">{meta.model} · effort {meta.effort} · {(meta.latency_ms / 1000).toFixed(1)} s</span>}
                 </div>
               </>
@@ -203,7 +265,8 @@ export function ProjectsScreen() {
   )
 }
 
-/** One proposed brick: the photo, the quoted rule as the reason, the model's one sentence, and Swap. A swapped card says so and names what it replaced. */
+/** One proposed brick: the photo, the quoted rule as the reason, the model's one sentence, and Swap. A swapped card says so and names what it replaced;
+ *  the starting point the person chose ("More like this one") says so and carries no quote, because the model did not pick it. */
 function ProposalCard({ pick: c, brick: b, spare, swapping, onSwap, onPick }: { pick: ProposalPick; brick?: Brick; spare: Brick[]; swapping: boolean; onSwap: () => void; onPick: (to: string) => void }) {
   return (
     <article className="panel overflow-hidden">
@@ -219,7 +282,8 @@ function ProposalCard({ pick: c, brick: b, spare, swapping, onSwap, onPick }: { 
             <blockquote className="m-0 border-l-2 pl-2" style={{ borderColor: 'var(--line)' }} title="This brick's rule, quoted by the model character for character">“{c.quotedRule}”</blockquote>
             <p className="ink-2 m-0">{c.why}</p>
           </>
-        ) : <p className="ink-2 m-0">Swapped in by you for <span className="mono">{c.swappedFrom}</span>.</p>}
+        ) : c.status === 'anchor' ? <p className="ink-2 m-0">{COPY.anchorNote}</p>
+          : <p className="ink-2 m-0">Swapped in by you for <span className="mono">{c.swappedFrom}</span>.</p>}
         <div className="mt-1 flex gap-1">
           <button type="button" className="btn btn-quiet px-2 py-0.5 text-[11px]" disabled={spare.length === 0} onClick={onSwap} aria-expanded={swapping}>{COPY.swap}</button>
         </div>
