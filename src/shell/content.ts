@@ -33,16 +33,6 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export const monthOf = (iso: string) => MONTHS[Number(iso.slice(5, 7)) - 1]
 export const shortDate = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1].slice(0, 3)} ${Number(iso.slice(8, 10))}`
 
-/** A grayscale placeholder poster per concert (gradient + initials), so the skin's palette stays in charge of color. Real poster images can replace it later. */
-export function posterFor(c: Concert): string {
-  let h = 0
-  for (const ch of c.artist) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  const a = 40 + (h % 40), b = 120 + ((h >> 5) % 80)
-  const initials = c.artist.split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase()
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="rgb(${a},${a},${a})"/><stop offset="1" stop-color="rgb(${b},${b},${b})"/></linearGradient></defs><rect width="400" height="400" fill="url(#g)"/><text x="200" y="230" font-family="system-ui, sans-serif" font-size="110" font-weight="700" text-anchor="middle" fill="white" opacity="0.85">${initials}</text></svg>`
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
-}
-
 export function groupBy(items: Concert[], mode: string): { label: string; items: Concert[] }[] {
   if (mode === 'none') return [{ label: '', items }]
   const key = (c: Concert) => mode === 'by-time' ? monthOf(c.date) : mode === 'by-place' ? c.city : c.tags[0]

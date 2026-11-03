@@ -45,6 +45,8 @@ export type ParameterValue = {
   provenance: Provenance
   source?: { brickId: string; relationId?: string; relationRule?: string; measurementIds?: string[]; regionLabels?: string[]; note?: string }
   locked: boolean
+  /** Set when the layout contract (src/shell/contract.ts) changed this value: the value as resolved before it, kept whole so the sheet and the export show both. */
+  before?: ParameterValue
 }
 
 export type Unexpressed = { brickId: string; rule: string; reason: 'parameter-none' | 'unsupported-target' | 'no-slot' | 'fragile' }

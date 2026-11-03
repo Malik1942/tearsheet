@@ -1,7 +1,7 @@
 import { useId, useRef, type ReactNode } from 'react'
 import type { ParameterKey, Params } from '../shell/params'
 import type { Brick, ParameterValue } from '../lib/types'
-import { footnoteMeasurement, footnoteOf, isShellDefault, rowHeadline } from '../lib/landing'
+import { contractLine, footnoteMeasurement, footnoteOf, isShellDefault, rowHeadline } from '../lib/landing'
 import { Photo } from '../bricks/Photo'
 import { PhotoPeek } from './PhotoPeek'
 import { ProvenanceChip } from './ProvenanceChip'
@@ -29,6 +29,7 @@ export function Row({ k, pv, params, bricks, swatch, thumb, flash = false }: { k
       style={{ borderTop: '1px solid var(--line)', background: flash ? 'color-mix(in oklab, var(--accent) 14%, transparent)' : undefined }}
       {...(brick ? peek.handlers : {})}>
       <div className="break-words">{rowHeadline(pv, params, bricks)}</div>
+      {contractLine(pv) && <div className="ink-2 mt-0.5 break-words">{contractLine(pv)}</div>}
       <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
         <div className="flex min-w-0 max-w-full items-center gap-2">
           <span className="mono w-28 shrink-0 truncate sm:w-36" title={k}>{k}</span>

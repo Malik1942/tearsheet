@@ -1,6 +1,7 @@
 /** Rule before number (spec v2 C4′): the sentence a parameter's value reads as on the two prototype screens, and the row text built from it.
  *  Pure: no React, no model call. Each sentence was written from shell.css, ListScreen.tsx and DetailScreen.tsx; change one of those and change its sentence here. */
-import { DEFAULT_PARAMS, DISPLAY_CAP_PX, ITEM_PAD, NEUTRAL_TEXT_FAMILY, PARAM_SPEC, RELATIONSHIP_KEYS, accentShows, typeScale, type ParameterKey, type Params } from '../shell/params'
+import { DEFAULT_PARAMS, DISPLAY_CAP_PX, ITEM_PAD, NEUTRAL_TEXT_FAMILY, PARAM_SPEC, RELATIONSHIP_KEYS, accentShows, typeScale, type ParameterKey, type ParamValue, type Params } from '../shell/params'
+import { THUMBNAILS_HIDDEN } from '../shell/contract'
 import type { Project, Resolved } from './mapRelations'
 import type { Brick, Measurement, ParameterValue } from './types'
 
@@ -42,7 +43,7 @@ const DENSITY: Record<string, [string, string]> = {
   1: ['The loosest list', 'notes show'],
   2: ['A loose list', 'notes show'],
   4: ['A compact list', 'notes are hidden'],
-  6: ['The tightest list', 'notes are hidden'],
+  6: ['The tightest list', 'notes are hidden and a poster is at most a sixth of the screen tall'],   // the padding is 4's (the contract's floor is 16); the poster cap is what is left
 }
 /** A list item's padding at this density: in px when spacing_unit is in px, else as a multiple of it. */
 const itemPad = (params: Params): string => {
@@ -145,6 +146,7 @@ export function landsOn(key: ParameterKey, params: Params): string {
     case 'rhythm': return (params.rhythm === 'alternating' ? ALTERNATING(side)[String(H)] : undefined) ?? entry(RHYTHM, key, params)
     case 'alignment_edge': return entry(ALIGNMENT(String(H)), key, params)
     case 'image_text_dominance': {
+      if (s === THUMBNAILS_HIDDEN) return 'No posters on the list and no thumbnails on the year review; the names carry each item.'
       const base = H === 'type-led' ? `The poster sits on the ${side} as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
         : H === 'image-led' ? `Posters run full width above the text, ${P}% as tall as the room density gives each item; year-review images grow with it.`
         : `Posters take up to ${P}% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.`
@@ -197,6 +199,20 @@ export function ruleTextOf(pv: ParameterValue, bricks: Brick[]): string | null {
 }
 
 /** Line 1 of a parameter row: the rule, then where it lands on this shell. Without a rule it says whose choice it is; a measured skin color is the landing sentence alone. */
+/** What the layout contract did to a value, in one line: "image share 0.95 measured → thumbnails hidden by layout contract: one alignment axis".
+ *  Null for a value the contract left alone. The sheet shows it under the row; tokens.css and handoff.md carry the same words. */
+export function contractLine(pv: ParameterValue): string | null {
+  const rule = pv.source?.note?.startsWith(CONTRACT_NOTE) ? pv.source.note.slice(CONTRACT_NOTE.length) : null
+  if (!pv.before || rule === null) return null
+  const word = (key: ParameterKey, value: ParamValue) => key === 'image_text_dominance' && Number(value) === THUMBNAILS_HIDDEN ? 'thumbnails hidden'
+    : key === 'hierarchy_mode' && value === 'image-led' ? 'image-led (thumbnails above the text)' : String(value)
+  const was = isShellDefault(pv.before) ? 'default' : pv.before.source?.brickId === 'user' || pv.before.source?.note?.startsWith('by you') ? 'by you'
+    : pv.before.provenance === 'adapted' && pv.before.source?.note?.startsWith('by rule') ? 'by rule' : pv.before.provenance
+  return `${CONTRACT_WORDS[pv.key] ?? pv.key.replace(/_/g, ' ')} ${word(pv.key, pv.before.value)} ${was} → ${word(pv.key, pv.value)} by layout contract: ${rule}`
+}
+const CONTRACT_NOTE = 'by rule: layout contract: '
+const CONTRACT_WORDS: Partial<Record<ParameterKey, string>> = { image_text_dominance: 'image share', hierarchy_mode: 'hierarchy', spacing_unit: 'spacing unit' }
+
 export function rowHeadline(pv: ParameterValue, params: Params, bricks: Brick[]): string {
   const L = landsOn(pv.key, params)
   const rule = ruleTextOf(pv, bricks)

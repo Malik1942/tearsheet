@@ -74,9 +74,10 @@ export function normalize(key: ParameterKey, raw: ParamValue): ParamValue | null
 
 const COVERAGE_FRACTION: Record<string, number> = { '<=2%': 0.02, '<=5%': 0.05, '<=15%': 0.15 }
 
-/** Design pass A2: density sets the padding above and below a list item, in spacing units (32 24 16 12 px at 8 px), and never a min-height.
- *  Fewer items per screen means more room around each, not empty space under it. */
-export const ITEM_PAD: Record<number, number> = { 1: 4, 2: 3, 4: 2, 6: 1.5 }
+/** Design pass A2 and layout contract rule 2: density sets the padding above and below a list item, in spacing units (32 24 16 16 px at 8 px; the scale
+ *  stops at 16 inside the contract's 16–32), and never a min-height. Fewer items per screen means more room around each, not empty space under it;
+ *  the tightest density also caps a poster at the sixth of the screen it gets (shell.css --slot). */
+export const ITEM_PAD: Record<number, number> = { 1: 4, 2: 3, 4: 2, 6: 2 }
 
 /** The shell's type scale (design pass A1): four sizes generated from type_scale_ratio r on a 15 px body. Caption is body / r but never under 11 px;
  *  display is body × r² capped at 44 px, and title (body × r) never passes display. A screen shows three of the four. */
@@ -138,5 +139,7 @@ export function dataAttributes(p: Params): Record<string, string> {
     'data-accent': String(p.accent_placement),
     // '<=15%' → 'le15', the token shell.css matches ([data-coverage="le15"]); without dropping the % no coverage rule ever matched
     'data-coverage': String(p.accent_coverage).replace('<=', 'le').replace('%', ''),
+    // the layout contract's "thumbnails hidden" (contract.ts THUMBNAILS_HIDDEN): no poster on the list, no thumbnail on the year review
+    'data-thumbs': Number(p.image_text_dominance) === 0 ? 'none' : 'shown',
   }
 }

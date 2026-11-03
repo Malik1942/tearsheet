@@ -1,4 +1,4 @@
-import { CONCERTS, groupBy, posterFor, shortDate } from './content'
+import { CONCERTS, groupBy, shortDate } from './content'
 import { TopBar } from './ListScreen'
 import type { Params } from './params'
 
@@ -15,7 +15,7 @@ export function DetailScreen({ params, staticRender = false }: { params: Params;
   const ordered = rhythm === 'featured-first' ? [...groups].sort((a, b) => b.items.length - a.items.length) : groups
   return (
     <div>
-      <TopBar title="Year in review">
+      <TopBar title="Year review">
         {staticRender ? <span className="bar-icon"><ShareIcon /></span> : <button className="bar-icon" type="button" aria-label="Share"><ShareIcon /></button>}
       </TopBar>
       <header className="review-head">
@@ -28,7 +28,7 @@ export function DetailScreen({ params, staticRender = false }: { params: Params;
       </header>
       {rhythm === 'featured-first' && (
         <div className="feature">
-          <div className="pic"><img src={posterFor(best)} alt="" /></div>
+          <div className="pic" aria-hidden="true" />
           <h2 className="title">Show of the year: {best.artist}</h2>
           <p className="meta">{shortDate(best.date)} · {best.venue}</p>
         </div>
@@ -38,7 +38,7 @@ export function DetailScreen({ params, staticRender = false }: { params: Params;
           <h2 className="group-title">{g.label}</h2>
           {g.items.map(c => (
             <div className="row" key={c.id}>
-              <div className="pic"><img src={posterFor(c)} alt="" /></div>
+              <div className="pic" aria-hidden="true" />
               <div>
                 <p className="title">{c.artist}</p>
                 <p className="meta">{c.venue} · <span className="tags">{c.tags.map(t => <span key={t} className="tag">{t}</span>)}</span></p>

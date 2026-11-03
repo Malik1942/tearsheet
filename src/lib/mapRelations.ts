@@ -2,6 +2,14 @@ import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, RELATIONSHIP_KEYS, normaliz
 import type { Brick, Composition, ParameterValue, Provenance, Relation, Unexpressed } from './types'
 import type { VersionEntry } from './versions'
 import { isShellDefault } from './landing'
+import { applyContract, type Adjustment } from '../shell/contract'
+
+/** A value the layout contract changed: `adapted · by rule`, its source note naming the rule ("by rule: layout contract: one alignment axis"), the brick and
+ *  relation it came from kept, and the value it replaced kept whole as `before`. */
+export function contracted(pv: ParameterValue, a: Adjustment): ParameterValue {
+  return { key: pv.key, value: a.after, provenance: 'adapted', locked: pv.locked, before: pv,
+    source: { ...pv.source, brickId: pv.source?.brickId ?? '', note: `by rule: layout contract: ${a.rule}` } }
+}
 
 /** Resolve a hand-authored composition (fixtures) into the full parameter set. Keys no brick sets fall back to a neutral default labeled adapted. */
 export function resolveParams(c: Composition): { params: Params; values: Record<ParameterKey, ParameterValue> } {
@@ -177,6 +185,8 @@ export type Resolved = {
   unexpressed: Unexpressed[]
   /** Candidates switched off by the cap of three relationship parameters per brick. */
   capped: Candidate[]
+  /** What the layout contract changed after resolving (empty when nothing). The changed values carry `before`. */
+  adjustments: Adjustment[]
 }
 
 export const CAP_PER_BRICK = 3
@@ -306,8 +316,9 @@ export function skinOf(brick: Brick): Partial<Record<ParameterKey, ParameterValu
   return { color_bg: mk('color_bg', s.color_bg), color_fg: mk('color_fg', s.color_fg), color_accent: mk('color_accent', s.color_accent), ...(tf ? { type_family: tf } : {}) }
 }
 
-/** Derive everything the prototype and the panel need. `unexpressed` is never hand-edited. */
-export function resolveProject(project: Project, bricks: Brick[]): Resolved {
+/** Derive everything the prototype and the panel need. `unexpressed` is never hand-edited. The layout contract runs last;
+ *  `contract: false` returns the mapping alone, for tests of the mapping and nothing that renders or exports. */
+export function resolveProject(project: Project, bricks: Brick[], opts: { contract: boolean } = { contract: true }): Resolved {
   const ordered = [...project.brickIds].sort((a, b) => (project.lockedBricks?.[b] ? 1 : 0) - (project.lockedBricks?.[a] ? 1 : 0))
   const inProject = ordered.filter(id => !project.mutedBricks?.[id]).map(id => bricks.find(b => b.id === id)).filter((b): b is Brick => !!b)
   const candidates: Partial<Record<ParameterKey, Candidate[]>> = {}
@@ -353,5 +364,9 @@ export function resolveProject(project: Project, bricks: Brick[]): Resolved {
   }
   const params: Params = Object.fromEntries(PARAMETER_KEYS.map(k => [k, values[k].value])) as Record<ParameterKey, ParamValue>
   params.accent_set = !isShellDefault(values.accent_coverage)
-  return { params, values, candidates, conflicts, unexpressed, capped }
+  if (!opts.contract) return { params, values, candidates, conflicts, unexpressed, capped, adjustments: [] }
+  // the layout contract runs last, on what was resolved: what renders and what is exported are the same values
+  const laid = applyContract(params)
+  for (const a of laid.adjustments) values[a.key] = contracted(values[a.key], a)
+  return { params: laid.params, values, candidates, conflicts, unexpressed, capped, adjustments: laid.adjustments }
 }

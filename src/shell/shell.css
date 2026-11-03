@@ -1,10 +1,11 @@
 /* The prototype shell. Everything visual comes from CSS custom properties set by toCssVars() and the data-* switches from dataAttributes(). No generator. */
 
-/* ---------- spacing: a 4 px base (steps 4 8 12 16 24 32 48 at an 8 px spacing_unit, so every step is a multiple of --space), grouped by proximity:
-   inside an item (title → meta 4, meta → tags 8) < around an item (--item-pad, 32 24 16 12 as density goes 1 2 4 6) < between sections (32). Nothing sets a fixed height. */
+/* ---------- spacing (layout contract rule 2): only the steps 4 8 12 16 24 32 48 at an 8 px spacing_unit, so every gap is a multiple of --space, grouped by proximity:
+   inside an item (title → meta 4, meta → tags 8) < around an item (--item-pad, 32 24 16 16 as density goes 1 2 4 6) < between sections (32). Nothing sets a fixed height. */
 .shell {
   --viewport-h: 640px;
-  --side: calc(var(--space) * 2.5);                     /* side margins, 20 at an 8 px unit, on both screens */
+  --side: calc(var(--space) * 2);                       /* side margins, 16 at an 8 px unit, on both screens (a step of the scale) */
+  --color-block: color-mix(in oklab, var(--color-fg) 12%, var(--color-bg));   /* the flat placeholder for a poster or thumbnail (contract rule 6) */
   --slot: calc(var(--viewport-h) / var(--density));    /* the share of the screen density gives one item: it caps a poster's height, it never sets an item's */
   --accent-weight: var(--accent-coverage);
   background: var(--color-bg);
@@ -17,7 +18,8 @@
   overflow-x: hidden;
 }
 .shell * { box-sizing: border-box; }
-.shell img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); }
+.pic { display: block; background: var(--color-block); border-radius: var(--radius); }   /* a flat surface block: no image, no initials, no text inside (contract rule 6) */
+.shell[data-thumbs="none"] .pic { display: none; }   /* image share 0 is the contract's "thumbnails hidden" */
 
 /* ---------- type: one scale from type_scale_ratio (params.ts typeScale), three sizes per screen ----------
    List: title (names), body (meta, notes), caption (tags, group labels). Under type-led the names take display and meta and notes drop to caption, so it is still three.
@@ -27,10 +29,10 @@
 .t-display, .screen-title, .stats strong { font-family: var(--font-display); font-size: var(--t-display); font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
 .meta, .when, .stats { font-variant-numeric: tabular-nums; }
 
-/* ---------- alignment: text hugs one edge, the opposite side stays empty ---------- */
-.shell[data-align="left"]   .text { text-align: left;   padding-right: calc(24% * (1 - var(--image-share))); }
-.shell[data-align="right"]  .text { text-align: right;  padding-left: calc(24% * (1 - var(--image-share))); }
-.shell[data-align="center"] .text { text-align: center; padding-inline: 10%; }
+/* ---------- alignment: one axis per screen (contract rule 1). Text hugs one edge; the measure (32ch) keeps the opposite side empty ---------- */
+.shell[data-align="left"]   .text { text-align: left; }
+.shell[data-align="right"]  .text { text-align: right; }
+.shell[data-align="center"] .text { text-align: center; padding-left: calc(var(--space) * 3); }   /* the same 24 on both sides as the chevron's, so centered stays centered */
 .shell[data-align="split"]  .text { text-align: left; }
 .shell[data-align="split"]  .meta { text-align: right; margin-left: auto; }
 .shell[data-align="right"]  .item { direction: rtl; }
@@ -41,35 +43,37 @@
 .shell[data-align="center"] .item .meta :is(.date, .venue) { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shell[data-align="center"] .item .meta .sep { display: none; }
 .shell[data-align="center"] .item .tags { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* measure: a list item's text column stops at 32 characters, at the edge the alignment names */
-.item .text { max-width: 32ch; }
-.shell[data-align="center"] .item .text { justify-self: center; width: 100%; }
+/* measure: a list item's text stops at 32 characters, at the edge the alignment names; the measure counts the text, not the chevron's padding (24, both sides under center) */
+.item .text { max-width: calc(32ch + var(--space) * 3); }
+.shell[data-align="center"] .item .text { justify-self: center; width: 100%; max-width: calc(32ch + var(--space) * 6); }
 
 /* ---------- top bar: the screen title, one control on the right, a hairline below; no status bar. It follows the alignment like the headings ---------- */
-.bar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--space); min-height: 44px; padding: calc(var(--space) * 0.5) var(--side); background: var(--color-bg); border-bottom: 1px solid var(--color-line); }
+.bar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--space); min-height: 44px; padding: 0 var(--side); background: var(--color-bg); border-bottom: 1px solid var(--color-line); }
 .bar-title { flex: 1; min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shell[data-align="right"] .bar { flex-direction: row-reverse; }
 .shell[data-align="right"] .bar-title { text-align: right; }
 .shell[data-align="center"] .bar { display: grid; grid-template-columns: 1fr auto 1fr; }
 .shell[data-align="center"] .bar-title { grid-column: 2; text-align: center; }
 .shell[data-align="center"] .bar > :last-child { grid-column: 3; justify-self: end; }
-/* the quiet control: a 32 px square on the surface tint, muted. The list's is .action, the one place the accent goes under accent_placement: actions */
-.action, .bar-icon { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--space) * 0.5); flex: none; min-width: 32px; height: 32px; padding: 0 var(--space); font-family: inherit; font-weight: 650; color: var(--color-muted); background: var(--color-surface); border: 1px solid transparent; border-radius: var(--radius); }
+/* the quiet control: a 44 px square (a tap target, contract rule 4) on the surface tint, muted. The list's is .action, the one place the accent goes under accent_placement: actions */
+.action, .bar-icon { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--space) * 0.5); flex: none; min-width: 44px; height: 44px; padding: 0 var(--space); font-family: inherit; font-weight: 650; color: var(--color-muted); background: var(--color-surface); border: 1px solid transparent; border-radius: var(--radius); }
 .icon { display: block; flex: none; }
 
 /* ---------- list items: no card, a hairline between items only, a chevron at the trailing edge; the whole row is the target ---------- */
 .item {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(calc(48px * 16 / 10), calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words. The poster column never drops under 76.8 px, the width of a 48 px tall 16:10 poster, so a low share never pushes it over the text */
+  grid-template-columns: minmax(calc(48px * 16 / 10), calc(var(--image-share) * 100%)) minmax(calc(9em + var(--space) * 3), 1fr);   /* the text keeps 9em plus the chevron's 24: at phone width a high image share shrinks the poster, not the words. The poster column never drops under 76.8 px, the width of a 48 px tall 16:10 poster, so a low share never pushes it over the text */
   gap: calc(var(--space) * 2);
-  padding: var(--item-pad) calc(var(--side) + 12px + var(--space)) var(--item-pad) var(--side);   /* density sets this padding (params.ts ITEM_PAD), never a min-height: an item is as tall as what it holds. The right side keeps room for the chevron */
+  padding: var(--item-pad) var(--side);   /* density sets this padding (params.ts ITEM_PAD), never a min-height: an item is as tall as what it holds */
   align-items: center;
 }
 .item + .item { border-top: 1px solid var(--color-line); }
-.chev { position: absolute; right: var(--side); top: 50%; translate: 0 -50%; width: 12px; height: 12px; color: var(--color-muted); }
-.item .pic { aspect-ratio: 16 / 10; min-height: 48px; align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape */
+.item .text { position: relative; padding-right: calc(var(--space) * 3); }   /* the chevron's room: 24 at the trailing edge of the text, so it never sits on a poster */
+.chev { position: absolute; right: 0; top: 50%; translate: 0 -50%; width: 12px; height: 12px; color: var(--color-muted); }
+.item .pic { aspect-ratio: 16 / 10; min-height: 48px; max-height: calc(var(--slot) - var(--item-pad) * 2); align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape. The slot density gives an item caps its height */
 .item .text { min-width: 0; }
+.shell[data-thumbs="none"] .item { grid-template-columns: 1fr; }
 .item .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; hyphens: auto; }   /* title → meta: 4 */
 .item .meta { color: var(--color-muted); margin: 0; }
 .item .note { margin: var(--space) 0 0; color: var(--color-fg); }   /* meta → note: 8 */
@@ -87,6 +91,8 @@
 
 /* rhythm */
 .shell[data-rhythm="alternating"] .item:nth-child(even) .pic { order: 2; }
+/* side by side, the even row's columns swap with its poster, so the text keeps its 9em column and never takes the poster's */
+.shell[data-hierarchy="balanced"][data-rhythm="alternating"] .item:nth-child(even) { grid-template-columns: minmax(calc(9em + var(--space) * 3), 1fr) minmax(calc(48px * 16 / 10), calc(var(--image-share) * 100%)); }
 .shell[data-rhythm="featured-first"] .group:first-of-type .item:first-of-type,
 .shell[data-rhythm="featured-first"][data-grouping="none"] .item:first-of-type {
   grid-template-columns: 1fr;
@@ -153,6 +159,14 @@
 .row .when { color: var(--color-muted); white-space: nowrap; min-width: 5ch; text-align: right; }
 .shell[data-accent="dividers"] .row + .row { border-top-color: var(--color-accent); }
 .shell[data-hierarchy="image-led"] .row { grid-template-columns: 1fr; }
+.shell[data-thumbs="none"] .row { grid-template-columns: 1fr auto; }
+/* one alignment axis (contract rule 1): the rows follow the screen's edge, and the month labels with them (.group-title above).
+   Center stacks a row: title, meta and date centered, the thumbnail above (image-led) or hidden (the contract never leaves balanced under center). Right mirrors it */
+.shell[data-align="center"] .row { grid-template-columns: 1fr; text-align: center; }
+.shell[data-align="center"] .row .when { text-align: center; min-width: 0; }
+.shell[data-align="right"] .row { direction: rtl; }
+.shell[data-align="right"] .row > * { direction: ltr; text-align: right; }
+.shell[data-align="right"] .row .when { text-align: left; }
 .shell[data-hierarchy="image-led"] .row .pic { width: 100%; height: calc(80px + var(--image-share) * 160px); }
 .shell[data-hierarchy="type-led"] .row .pic { display: none; }
 .shell[data-rhythm="alternating"] .row:nth-child(even) .pic { order: 3; }
@@ -198,7 +212,7 @@
 /* image_text_dominance: --image-share sizes every poster and thumbnail. radius: posters (the img), the top bar's buttons and the feature card (tags are text; the one filled tag at labels 15% rounds too).
    palette_hue_count at three hues: the third hue tints the tags, and .palette-3 is on the tag row only then (the other hue counts recolor the accent: see the accent family below) */
 .shell[data-flash~="image_text_dominance"] .pic,
-.shell[data-flash~="radius"] :is(.pic img, .action, .bar-icon, .feature),
+.shell[data-flash~="radius"] :is(.pic, .action, .bar-icon, .feature),
 .shell[data-flash~="radius"][data-accent="labels"][data-coverage="le15"] .group:first-of-type .item:first-of-type .tag:first-child,
 .shell[data-flash~="palette_hue_count"] .palette-3 .tag { outline: 2px solid var(--accent, #C8502A); outline-offset: 2px; }
 
