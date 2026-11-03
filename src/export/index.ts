@@ -2,6 +2,7 @@ import type { Proposal, Resolved } from '../lib/mapRelations'
 import type { Brick } from '../lib/types'
 import { footnoteOf, isShellDefault, rowHeadline } from '../lib/landing'
 import { standInLine } from '../lib/standIns'
+import { IDB } from '../lib/persist'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS, toCssVars } from '../shell/params'
 
 const origin = (r: Resolved, k: (typeof PARAMETER_KEYS)[number]) => {
@@ -35,7 +36,8 @@ function cssValue(v: string): string {
 /** `photos: 'inline'` keeps data URLs in the image links so the same text renders as a page with thumbnails; the download stands them in. */
 export function exportHandoff(intent: string, bricks: Brick[], r: Resolved, proposal?: Proposal, opts: { photos?: 'stub' | 'inline' } = {}): string {
   const kept = RELATIONSHIP_KEYS.filter(k => r.values[k].provenance !== 'adapted' || r.values[k].source?.note?.startsWith('by'))
-  const photo = (b: Brick) => (b.photo.url.startsWith('data:') && opts.photos !== 'inline' ? '(embedded photo)' : b.photo.url)
+  // an `idb:<id>` pointer is internal bookkeeping for a photo kept in IndexedDB; if it is still one here, the photo did not come back and there is nothing to link
+  const photo = (b: Brick) => (b.photo.url.startsWith(IDB) ? '(photo not on this device)' : b.photo.url.startsWith('data:') && opts.photos !== 'inline' ? '(embedded photo)' : b.photo.url)
   const howPicked = (b: Brick) => {
     const p = proposal?.picks.find(x => x.brickId === b.id)
     if (!p) return proposal ? ' Added by you.' : ''

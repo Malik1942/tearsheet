@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useStore, LIBRARY_CAP } from './lib/store'
 import { ACCEPT, prepareImage } from './lib/client'
+import { retryBlocked } from './lib/queue'
 import { Link } from './lib/router'
 import { Photo } from './bricks/Photo'
 import { MiniPreview } from './shell/MiniPreview'
@@ -93,6 +94,8 @@ export function Library() {
 
 /** The 16:10 photo box is at least ~180 px tall at the narrowest layouts; a 9:16 preview 96 px wide is 170 px tall and fits in all of them. */
 const PREVIEW_W = 96
+/** The tooltip on "Try again": why it is off, or what it does. A photo that is not on this device cannot be read again, so a retry would only spend the one allowed. */
+const RETRY_TITLE = { ok: 'One manual retry, counted; makes a new version and keeps this one', used: 'One manual retry only', gone: 'The photo is not on this device any more' }
 /** L6: the flip between the photo and the mini-preview, for touch. */
 const FLIP = { showPreview: 'Show preview', showPhoto: 'Show photo' }
 
@@ -102,6 +105,7 @@ function Card({ brick: b, onRetry, onRemove }: { brick: Brick; onRetry: () => vo
   const status = b.status ?? 'ready'
   const rules = b.relations.slice(0, 2)
   const busy = status === 'extracting' || status === 'pending'
+  const blocked = retryBlocked(b)
   const [hover, setHover] = useState(false)
   const [flipped, setFlipped] = useState(false)
   const preview = status === 'ready' && (hover || flipped)
@@ -136,7 +140,7 @@ function Card({ brick: b, onRetry, onRemove }: { brick: Brick; onRetry: () => vo
         {status === 'ready' && rules.length === 0 && <span className="ink-2 text-[12px]">No transferable relation came back.</span>}
         {status === 'unparsed' && (
           <div className="flex items-center gap-2 pt-1">
-            <button type="button" className="btn" onClick={e => { e.preventDefault(); onRetry() }} disabled={(b.retries ?? 0) >= 1} title={(b.retries ?? 0) >= 1 ? 'One manual retry only' : 'One manual retry, counted; makes a new version and keeps this one'}>Try again</button>
+            <button type="button" className="btn" onClick={e => { e.preventDefault(); onRetry() }} disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']}>Try again</button>
             <button type="button" className="btn btn-quiet" onClick={e => { e.preventDefault(); onRemove() }}>Remove</button>
             {b.error && <span className="ink-2 truncate text-[11px]" title={b.error}>{b.error}</span>}
           </div>
