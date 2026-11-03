@@ -1,6 +1,6 @@
-# Bricks
+# Tearsheet
 
-Turn a few photos of things you like into composable visual material with evidence, then apply that material to a small prototype of your own product and see, with your real content, whether the character survives.
+Designers tear pages out of magazines to keep what they like. Tearsheet turns those photos into composable visual material with evidence (bricks), then apply that material to a small prototype of your own product and see, with your real content, whether the character survives.
 
 Built for the Meta Global AI Developer Hackathon (Indie track) on the Meta Model API. Vision extraction uses Muse Spark (`muse-spark-1.3`) with a constrained JSON schema; the prototype renders locally from parameters alone.
 

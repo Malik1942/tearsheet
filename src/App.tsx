@@ -19,7 +19,7 @@ export default function App() {
   return (
     <StoreProvider>
       <nav className="flex items-center gap-1 border-b border-stone-300 bg-white px-4 py-2 text-sm">
-        <span className="mr-3 font-semibold">Bricks</span>
+        <span className="mr-3 font-semibold">Tearsheet</span>
         {ROUTES.map(([h, label]) => <a key={h} href={h} className={`rounded px-2 py-1 ${hash === h ? 'bg-stone-800 text-white' : 'hover:bg-stone-100'}`}>{label}</a>)}
         <span className="ml-auto text-[11px] text-stone-500">collect first, decide later</span>
       </nav>

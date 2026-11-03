@@ -70,7 +70,7 @@ export function Compare() {
   return (
     <div className="mx-auto max-w-[1600px] p-4">
       <header className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="text-lg font-semibold">Bricks · step 2: does the character survive?</h1>
+        <h1 className="text-lg font-semibold">Tearsheet · step 2: does the character survive?</h1>
         <span className="text-sm text-stone-500">Intent: {COMPOSITIONS.g1.intent}</span>
         <div className="ml-auto flex gap-2">
           <div className="flex overflow-hidden rounded border border-stone-400 text-sm">
