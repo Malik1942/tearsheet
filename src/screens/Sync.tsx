@@ -44,7 +44,8 @@ export function SyncScreen() {
       const mergedAgain = store.mergeBricks(after.bricks)
       save({ code, last_synced: new Date().toISOString(), server_count: after.bricks.filter(b => !b.superseded_by).length })
       const got = merged + mergedAgain
-      setNotice(`${after.bricks.filter(b => !b.superseded_by).length} bricks under ${code}${got ? ` · ${got} new or updated here` : ''}.`)
+      const n = after.bricks.filter(b => !b.superseded_by).length
+      setNotice(`${n} ${n === 1 ? 'brick' : 'bricks'} under ${code}${got ? ` · ${got} new or updated here` : ''}.`)
     } catch (e) {
       setNotice((e as Error).message)
     } finally { setBusy(null); setProgress(null) }

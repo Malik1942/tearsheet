@@ -59,7 +59,7 @@ The sample library holds Malik's own photos and licensed public-domain works, ea
 
 A library can be opened on another device with a six-character code (letters A–Z and digits 2–9, never 0, O, 1 or I). The code is made on the device, shown as text and as a QR code on `/sync`, and is the only key: there is no account, no listing endpoint and no index. Anyone who has the code can open the library.
 
-What the store holds: under `libraries/<code>/` in a Vercel Blob store, one JPEG per brick at 2048 px on the long side plus a `manifest.json` with the brick values. Photos are stored under that unguessable id and are not indexed. Entering a code on a second device merges by brick id, newest version wins. `Forget this code` on `/sync` deletes everything under the prefix; the bricks stay on the device that pressed it. Caps: 60 bricks and 40 MB per code; one request carries at most 4 MB, so the app uploads in batches. The function authenticates with Vercel's OIDC token for the store; no long-lived token exists anywhere.
+What the store holds: under `libraries/<code>/` in a Vercel Blob store, one JPEG per brick at 2048 px on the long side plus a `manifest.json` with the brick values. Photos are stored under that unguessable id and are not indexed. Entering a code on a second device merges by brick id, newest version wins. `Forget this code` on `/sync` deletes everything under the prefix; the bricks stay on the device that pressed it. The manifest is gone at once; the CDN can still serve a deleted photo for up to a minute. Caps: 60 bricks and 40 MB per code; one request carries at most 4 MB, so the app uploads in batches. The function authenticates with Vercel's OIDC token for the store; no long-lived token exists anywhere.
 
 ## Sample credits
 
