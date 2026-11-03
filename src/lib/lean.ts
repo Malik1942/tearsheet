@@ -7,7 +7,7 @@ import { CHIP_IDS, DARK_RULE, type ChipId } from './leanFamilies'
 export type { Lean } from './leanFamilies'
 
 const DESC: Record<ChipId, string> = {
-  dark: 'have a near-black measured background',
+  dark: 'have a rule that sets a dark ground',
   airy: 'set density low (1–2 items per screen)',
   'one accent': 'keep the accent at or under 5%',
   'text-heavy': 'lead with text (image share at most half, or type-led)',

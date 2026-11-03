@@ -122,7 +122,7 @@ describe('chipsFor', () => {
   })
   it('writes the tooltip from the count and the description', () => {
     const n = (id: string, intent = INTENT) => chipsFor(SAMPLES, intent).find(c => c.id === id)!.note
-    assert.equal(n('dark'), '3 bricks in your library have a near-black measured background')
+    assert.equal(n('dark'), '3 bricks in your library have a rule that sets a dark ground')
     assert.equal(n('text-heavy'), '1 brick in your library lead with text (image share at most half, or type-led)')
     assert.equal(n('airy'), '2 bricks in your library set density low (1–2 items per screen)')
     assert.equal(n('one accent'), '2 bricks in your library keep the accent at or under 5%')
