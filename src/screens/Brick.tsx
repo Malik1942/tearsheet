@@ -36,16 +36,13 @@ export function BrickScreen({ id }: { id: string }) {
 
   return (
     <div className="chrome min-h-full">
-      <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
-        <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-        <span className="ink-2 min-w-0 truncate">/ <span className="mono">{brick.id}</span> · {originLabel(brick)}</span>
-        <div className="ml-auto flex items-center gap-2">
-          <button type="button" className={`btn ${regions ? '' : 'btn-quiet'}`} onClick={() => setRegions(v => !v)}>Regions {regions ? 'on' : 'off'}</button>
-        </div>
-      </header>
-
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        <div className="lg:sticky lg:top-[72px] lg:self-start">
+          {/* was the screen's own header: the id, the origin line, and the regions toggle */}
+          <div className="mb-2 flex items-center gap-3">
+            <span className="ink-2 min-w-0 flex-1 truncate"><span className="mono">{brick.id}</span> · {originLabel(brick)}</span>
+            <button type="button" className={`btn shrink-0 ${regions ? '' : 'btn-quiet'}`} onClick={() => setRegions(v => !v)}>Regions {regions ? 'on' : 'off'}</button>
+          </div>
           <div className="relative overflow-hidden rounded-[6px]" style={{ background: '#1f1e1c', aspectRatio: `${brick.photo.width} / ${brick.photo.height}` }}>
             <Photo src={brick.photo.url} className="h-full w-full object-cover" />
             {regions && brick.regions.map(r => {

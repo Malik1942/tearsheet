@@ -45,11 +45,7 @@ export function OpenScreen() {
 
   return (
     <div className="chrome min-h-full">
-      <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
-        <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-        <span className="ink-2">/ Open</span>
-      </header>
-      <div className="mx-auto max-w-md p-4">
+      <div className="gutter mx-auto w-full max-w-md py-8">
         <section className="panel p-4" role="status" aria-live="polite">
           {error ? (
             <>

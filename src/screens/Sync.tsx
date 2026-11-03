@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { useStore } from '../lib/store'
-import { Link, navigate } from '../lib/router'
 import { ownBricks } from '../lib/starters'
 import { readSync, writeSync, generateCode, normalizeCode, CODE_RE, forget, inlineBlobPhotos, runSync, openLink, shareLink, canShare, type SyncInfo } from '../lib/syncClient'
 
@@ -93,13 +92,8 @@ export function SyncScreen() {
 
   return (
     <div className="chrome min-h-full">
-      <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
-        <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-        <span className="ink-2">/ {COPY.title}</span>
-        <div className="ml-auto"><button type="button" className="btn btn-quiet" onClick={() => navigate('/')}>Back to library</button></div>
-      </header>
-
-      <div className="mx-auto max-w-md p-4">
+      <div className="gutter mx-auto w-full max-w-md py-8">
+        <h1 className="title mb-4">{COPY.title}</h1>
         {notice && <div className="mb-3 rounded px-3 py-2 text-[12px]" role="status" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>{notice}</div>}
         {busy && <div className="mb-3 text-[12px]" style={{ color: 'var(--accent)' }} aria-live="polite">{busy}{progress && progress.total ? ` uploading ${progress.sent}/${progress.total}` : ''}</div>}
 
@@ -120,7 +114,7 @@ export function SyncScreen() {
           </section>
         ) : (
           <section className="panel p-4">
-            <h1>{COPY.noCode}</h1>
+            <h2>{COPY.noCode}</h2>
             <p className="ink-2 mt-2 text-[12px]">{COPY.noCodeHint}</p>
             <button type="button" className="btn btn-accent mt-4" disabled={!!busy || live.length === 0} onClick={onMake} title={live.length === 0 ? 'Add a photo first' : undefined}>{COPY.make}</button>
           </section>
