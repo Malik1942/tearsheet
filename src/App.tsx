@@ -3,7 +3,8 @@ import { match, usePath, Link } from './lib/router'
 import { Library } from './Library'
 import { BrickScreen } from './screens/Brick'
 import { Compare } from './Compare'
-import { ProjectPage } from './Project'
+import { ProjectsScreen } from './screens/Projects'
+import { ComposeScreen } from './screens/Compose'
 import { Solo } from './Solo'
 
 function Routes() {
@@ -12,7 +13,9 @@ function Routes() {
   if (solo) return <Solo target={solo.target} screen={solo.screen as 'list' | 'review'} />
   const brick = match('/brick/:id', path)
   if (brick) return <BrickScreen id={brick.id} />
-  if (path === '/projects' || path.startsWith('/project/')) return <div className="chrome min-h-full"><Nav /><ProjectPage /></div>
+  if (path === '/projects') return <ProjectsScreen />
+  const proj = match('/project/:id', path) ?? match('/project/:id/export', path)
+  if (proj) return <ComposeScreen id={proj.id} />
   if (path === '/compare') return <div className="chrome min-h-full"><Nav /><Compare /></div>
   return <Library />
 }

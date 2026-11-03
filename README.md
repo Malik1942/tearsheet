@@ -46,4 +46,18 @@ src/export/             parameters.json, tokens.css, handoff.md
 src/fixtures/           the three gate bricks and the step-2 compositions
 ```
 
-Reference photos and screenshots that show downloaded material are kept out of the repository.
+Reference photos and screenshots that show downloaded material are kept out of the repository. The only exceptions are the public-domain and free-to-use images under Sample credits, which are kept with their credit.
+
+## Sample credits
+
+`public/samples/` holds the sample library. `g1`, `g2`, `calmmouse`, `greencar` and `c1` are the author's own photos. The images below were picked by axis, not by looks: type only, image only, all-over pattern, at least 60% negative space, a single accent colour, and black and white, plus one counterpoint. They were downscaled to 2048 px on the long edge, the extraction size, and each file name is its slug. Wherever the product shows one of these images, it carries the line in the Credit column.
+
+| Slug | Axis | Credit | Work | License | Source |
+|---|---|---|---|---|---|
+| `bauhaus-1923-staatliches-bauhaus-weimar` | Type only: letters fill the cover, no image | Minneapolis Institute of Art, 1923 | Herbert Bayer and László Moholy-Nagy, *Staatliches Bauhaus in Weimar 1919–1923*, cover | Public Domain (Mia rights field) | [Mia 40353](https://collections.artsmia.org/art/40353) |
+| `haeckel-1904-trochilidae-plate-99` | Image only, no text; dense, four hue families | Wikimedia Commons, 1904 | Ernst Haeckel, *Kunstformen der Natur*, plate 99, Trochilidae | Public domain (Commons PD-old) | [Commons](https://commons.wikimedia.org/wiki/File:Haeckel_Trochilidae.jpg) |
+| `iran-1260s-star-cross-luster-tiles` | All-over repeat with no focal point; the highest edge density of the 18 designed candidates | The Metropolitan Museum of Art, 1260–70 | Panel of star and cross tiles, Kashan | Met Open Access, public domain | [Met 450438](https://www.metmuseum.org/art/collection/search/450438) |
+| `matthews-19c-glyphography-trade-card` | Negative space: 88% of pixels are paper colour; centre axis | The Metropolitan Museum of Art, 19th century | Trade card for Charles H. Matthews, glyphographic draughtsman | Met Open Access, public domain | [Met 813051](https://www.metmuseum.org/art/collection/search/813051) |
+| `lissitzky-1923-dlya-golosa` | Single accent: red is the only hue, about 7% of pixels, on cream with black | Minneapolis Institute of Art, 1923 | El Lissitzky, *Dlya Golosa* (For the Voice), page | Public Domain (Mia rights field) | [Mia 8553](https://collections.artsmia.org/art/8553) |
+| `secession-1902-beethoven-catalogue` | Black and white: 0.3% chromatic pixels; a woodcut with one caption line | Minneapolis Institute of Art, 1902 | Ernst Stöhr, woodcut in the catalogue of the 14th Vienna Secession exhibition (Beethoven) | Public Domain (Mia rights field) | [Mia 119894](https://collections.artsmia.org/art/119894) |
+| `jpl-2016-visions-mars` | Counterpoint: the most saturated hues, image-led, large sans title at the bottom | Courtesy NASA/JPL-Caltech | NASA/JPL, *Visions of the Future: Mars* | JPL image use policy: free to use with credit, no logos, no implied endorsement | [JPL](https://www.jpl.nasa.gov/galleries/visions-of-the-future/) |

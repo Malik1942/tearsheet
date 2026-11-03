@@ -73,6 +73,8 @@ export function toCssVars(p: Params): Record<string, string> {
   const ratio = Number(p.type_scale_ratio)
   const density = Number(p.density)
   const share = Number(p.image_text_dominance)
+  // the list item needs a readable text column: the layout uses at most 80% image share even when the measured value is higher; the sheet keeps the measured value
+  const layoutShare = Math.min(0.8, Math.max(0.15, share))
   const hues = Number(p.palette_hue_count)
   return {
     '--type-scale-ratio': String(ratio),
@@ -80,8 +82,8 @@ export function toCssVars(p: Params): Record<string, string> {
     '--display-size': `calc(var(--body-size) * ${ratio} * ${ratio})`,
     '--density': String(density),
     '--item-vh': `${100 / density}svh`,
-    '--image-share': String(share),
-    '--image-share-pct': `${Math.round(share * 100)}%`,
+    '--image-share': String(layoutShare),
+    '--image-share-pct': `${Math.round(layoutShare * 100)}%`,
     '--accent-coverage': String(COVERAGE_FRACTION[String(p.accent_coverage)] ?? 0.05),
     '--hue-count': String(hues),
     '--color-bg': String(p.color_bg),

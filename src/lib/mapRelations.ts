@@ -101,9 +101,14 @@ export const relRef = (brickId: string, relationId: string): RelationRef => `${b
 
 export type Project = {
   id: string
+  name?: string
   intent: string
   createdAt: string
+  updatedAt?: string
+  shell?: 'list-review'
   brickIds: string[]
+  /** Per-brick lock (spec): a locked brick keeps its values through Swap and Rotate and wins conflicts. */
+  lockedBricks?: Record<string, true>
   disabled: Record<RelationRef, true>
   choice: Partial<Record<ParameterKey, RelationRef>>
   locks: Partial<Record<ParameterKey, ParameterValue>>   // a lock freezes the whole value, provenance and source included
@@ -193,7 +198,8 @@ export function skinOf(brick: Brick): Partial<Record<ParameterKey, ParameterValu
 
 /** Derive everything the prototype and the panel need. `unexpressed` is never hand-edited. */
 export function resolveProject(project: Project, bricks: Brick[]): Resolved {
-  const inProject = project.brickIds.map(id => bricks.find(b => b.id === id)).filter((b): b is Brick => !!b)
+  const ordered = [...project.brickIds].sort((a, b) => (project.lockedBricks?.[b] ? 1 : 0) - (project.lockedBricks?.[a] ? 1 : 0))
+  const inProject = ordered.map(id => bricks.find(b => b.id === id)).filter((b): b is Brick => !!b)
   const candidates: Partial<Record<ParameterKey, Candidate[]>> = {}
   const unexpressed: Unexpressed[] = []
   const skins: Partial<Record<ParameterKey, ParameterValue[]>> = {}

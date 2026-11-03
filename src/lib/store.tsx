@@ -28,7 +28,7 @@ export type Actions = {
   updateBrick: (id: string, patch: Partial<Brick>) => void
   removeBrick: (id: string) => void
   loadSamples: () => void
-  createProject: (intent: string, brickIds?: string[]) => string
+  createProject: (intent: string, brickIds?: string[], name?: string) => string
   updateProject: (id: string, patch: Partial<Project> | ((p: Project) => Partial<Project>)) => void
   setActive: (id: string | null) => void
   reset: () => void
@@ -59,12 +59,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const fresh = SAMPLES.filter(b => !have.has(b.id)).map(b => ({ ...b, status: 'ready' as const, prompt_version: 'v3' }))
       return { ...s, bricks: [...fresh, ...s.bricks].slice(0, LIBRARY_CAP) }
     }),
-    createProject: (intent, brickIds = []) => {
+    createProject: (intent, brickIds = [], name) => {
       const id = `p_${Date.now().toString(36)}`
-      setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, { id, intent, createdAt: new Date().toISOString(), brickIds, disabled: {}, choice: {}, locks: {}, manual: {} }] }))
+      const now = new Date().toISOString()
+      setState(s => ({ ...s, activeProjectId: id, projects: [...s.projects, { id, name, intent, createdAt: now, updatedAt: now, shell: 'list-review', brickIds, lockedBricks: {}, disabled: {}, choice: {}, locks: {}, manual: {} }] }))
       return id
     },
-    updateProject: (id, patch) => setState(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, ...(typeof patch === 'function' ? patch(p) : patch) } : p) })),
+    updateProject: (id, patch) => setState(s => ({ ...s, projects: s.projects.map(p => p.id === id ? { ...p, ...(typeof patch === 'function' ? patch(p) : patch), updatedAt: new Date().toISOString() } : p) })),
     setActive: id => setState(s => ({ ...s, activeProjectId: id })),
     reset: () => setState(EMPTY),
   }), [])
