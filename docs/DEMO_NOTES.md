@@ -43,7 +43,7 @@ Recorded Tue 2026-11-03 in the dev build (spec-v2 at d4b0497 plus the shell.css 
 - `image_text_dominance` stays at g2's 0.95. The top brick wins the conflict with Chicago's 0.2, so the poster square stays large and the centered text column wraps to three lines.
 - `type_scale_ratio` stays at bauhaus's 1.125, so names lead at only 1.27× the body text. "An order of magnitude larger" is not carried over: no brick in this project reads it as a ratio.
 
-**v3, one more click:** choose Chicago's tile in the `image_text_dominance` conflict (`adapted · by you`). The posters shrink to 48 px squares and the name column owns the item. **This is the clearer still for the video.**
+**v3, one more click:** choose Chicago's tile in the `image_text_dominance` conflict (`adapted · by you`). The posters shrink to 48 px squares and the name column owns the item. **This is the video still (Malik, Tue 2026-11-03).**
 
 **How general the result is:** the swap flips `hierarchy_mode` in 900 of the 1,320 ordered three-brick sets drawn from the 12 samples. It does so whenever neither of the first two bricks sets `hierarchy_mode` (only g1 and greencar do).
 
@@ -53,7 +53,7 @@ Recorded Tue 2026-11-03 in the dev build (spec-v2 at d4b0497 plus the shell.css 
 
 1. Compose with Neutral skin on and Both selected.
 2. Swap on greencar → Chicago. For one second, the C11 outline marks the moved regions (`concert_v2_flash.png`).
-3. Optionally, click Chicago's tile in the `image_text_dominance` conflict.
+3. Click Chicago's tile in the `image_text_dominance` conflict. End on this frame (v3): the names own the item, the posters are small squares, and the sheet shows `image_text_dominance 0.2 · adapted · by you` under `hierarchy_mode type-led · adapted · by rule`.
 
 ## Files
 
