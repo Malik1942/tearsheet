@@ -55,6 +55,12 @@ src/fixtures/           the three gate bricks and the step-2 compositions
 
 The sample library holds Malik's own photos and licensed public-domain works, each with a credit line. The downloaded posters used in the gate and probe runs are not in the repository. The only exceptions are the public-domain and free-to-use images under Sample credits, which are kept with their credit.
 
+## Sync
+
+A library can be opened on another device with a six-character code (letters A–Z and digits 2–9, never 0, O, 1 or I). The code is made on the device, shown as text and as a QR code on `/sync`, and is the only key: there is no account, no listing endpoint and no index. Anyone who has the code can open the library.
+
+What the store holds: under `libraries/<code>/` in a Vercel Blob store, one JPEG per brick at 2048 px on the long side plus a `manifest.json` with the brick values. Photos are stored under that unguessable id and are not indexed. Entering a code on a second device merges by brick id, newest version wins. `Forget this code` on `/sync` deletes everything under the prefix; the bricks stay on the device that pressed it. Caps: 60 bricks and 40 MB per code; one request carries at most 4 MB, so the app uploads in batches. The function authenticates with Vercel's OIDC token for the store; no long-lived token exists anywhere.
+
 ## Sample credits
 
 `public/samples/` holds the sample library. `g1`, `g2`, `calmmouse`, `greencar` and `c1` are the author's own photos. The images below were picked by axis, not by looks: type only, image only, all-over pattern, at least 60% negative space, a single accent colour, and black and white, plus one counterpoint. They were downscaled to 2048 px on the long edge, the extraction size, and each file name is its slug. Wherever the product shows one of these images, it carries the line in the Credit column.

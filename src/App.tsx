@@ -4,6 +4,7 @@ import { Library } from './Library'
 import { BrickScreen } from './screens/Brick'
 import { Compare } from './Compare'
 import { ProjectsScreen } from './screens/Projects'
+import { SyncScreen } from './screens/Sync'
 import { ComposeScreen } from './screens/Compose'
 import { ExportScreen } from './screens/Export'
 import { Solo } from './Solo'
@@ -15,6 +16,7 @@ function Routes() {
   const brick = match('/brick/:id', path)
   if (brick) return <BrickScreen id={brick.id} />
   if (path === '/projects') return <ProjectsScreen />
+  if (path === '/sync') return <SyncScreen />
   const exp = match('/project/:id/export', path)
   if (exp) return <ExportScreen id={exp.id} />
   const proj = match('/project/:id', path)

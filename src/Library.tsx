@@ -49,6 +49,7 @@ export function Library() {
         <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
         <span className="ink-2 mono min-w-0 truncate text-[12px]" aria-live="polite">Saved {live.length}{reading ? ` · reading ${reading}` : ''}</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Link href="/sync" className="btn btn-quiet" title="Show this library's code, or enter one">Sync</Link>
           <Link href="/projects" className="btn btn-quiet hidden sm:inline-block">Projects</Link>
           <button type="button" className="btn whitespace-nowrap" onClick={() => pick.current?.click()}>Add from library</button>
           <button type="button" className="btn btn-accent whitespace-nowrap" onClick={() => shoot.current?.click()}>Shoot</button>

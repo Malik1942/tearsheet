@@ -30,6 +30,10 @@ export type Actions = {
   /** B4: a retry creates a new version that supersedes the old brick; the old values stay. */
   retry: (id: string) => void
   loadSamples: () => void
+  /** S3: merge bricks from the sync store by id; newest version wins. Returns how many were new or changed. */
+  mergeBricks: (incoming: Brick[]) => number
+  /** Replace bricks wholesale (used before a code is forgotten, to inline photos that lived on the store). */
+  replaceBricks: (bricks: Brick[]) => void
   createProject: (intent: string, brickIds?: string[], name?: string) => string
   updateProject: (id: string, patch: Partial<Project> | ((p: Project) => Partial<Project>)) => void
   setActive: (id: string | null) => void
@@ -102,6 +106,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const fresh = SAMPLES.filter(b => !have.has(b.id)).map(b => ({ ...b, status: 'ready' as const, prompt_version: 'v3' }))
       return { ...s, bricks: [...fresh, ...s.bricks].slice(0, LIBRARY_CAP) }
     }),
+    mergeBricks: incoming => {
+      const cur = stateRef.current.bricks
+      const byId = new Map(cur.map(b => [b.id, b]))
+      let changed = 0
+      for (const inc of incoming) {
+        const have = byId.get(inc.id)
+        const vi = inc.version ?? 1, vh = have?.version ?? 1
+        if (!have) { byId.set(inc.id, { ...inc, status: inc.status === 'ready' ? 'ready' : inc.status === 'unparsed' ? 'unparsed' : 'pending' }); changed++; continue }
+        const incWins = vi > vh || (vi === vh && inc.status === 'ready' && have.status !== 'ready')
+        if (!incWins && (have.superseded_by || !inc.superseded_by)) continue
+        byId.set(inc.id, incWins ? { ...have, ...inc, photo: have.photo.url.startsWith('data:') ? have.photo : inc.photo } : { ...have, superseded_by: have.superseded_by ?? inc.superseded_by })
+        changed++
+      }
+      const bricks = [...byId.values()]
+      setState(s => ({ ...s, bricks }))
+      stateRef.current = { ...stateRef.current, bricks }
+      const stale = bricks.filter(b => b.status === 'pending' && !waiting.current.includes(b.id) && !inFlight.current.has(b.id)).map(b => b.id)
+      if (stale.length) { waiting.current.push(...stale); pump() }
+      return changed
+    },
+    replaceBricks: bricks => { setState(s => ({ ...s, bricks })); stateRef.current = { ...stateRef.current, bricks } },
     createProject: (intent, brickIds = [], name) => {
       const id = `p_${Date.now().toString(36)}`
       const now = new Date().toISOString()
