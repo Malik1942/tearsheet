@@ -4,6 +4,7 @@ import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
 import { propose, proposeEnabled } from '../lib/proposeClient'
 import { proposedNow } from '../export'
+import { savedLabel } from '../lib/brickLabels'
 import type { Proposal, ProposalPick } from '../lib/mapRelations'
 import type { Brick } from '../lib/types'
 
@@ -212,6 +213,7 @@ function ProposalCard({ pick: c, brick: b, spare, swapping, onSwap, onPick }: { 
           <a href={`/brick/${c.brickId}`} target="_blank" rel="noopener" className="mono truncate" title="Opens the brick in a new tab; the proposal stays here">{c.brickId}</a>
           <span className={`chip ${c.status === 'proposed' ? 'chip-proposed' : 'chip-adapted'} shrink-0 px-1.5 text-[10px]`}>{c.status === 'proposed' ? COPY.proposedBy : COPY.swappedBy}</span>
         </div>
+        {b && <div className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{savedLabel(b.saved_at)}</div>}
         {c.status === 'proposed' ? (
           <>
             <blockquote className="m-0 border-l-2 pl-2" style={{ borderColor: 'var(--line)' }} title="This brick's rule, quoted by the model character for character">“{c.quotedRule}”</blockquote>
