@@ -3,6 +3,7 @@ import { StoreProvider } from './lib/store'
 import { Compare } from './Compare'
 import { CollectPage } from './Collect'
 import { ProjectPage } from './Project'
+import { Solo } from './Solo'
 
 const ROUTES = [['#/collect', 'Collect'], ['#/project', 'Project'], ['#/compare', 'Compare (step 2)']] as const
 
@@ -13,6 +14,8 @@ export default function App() {
     window.addEventListener('hashchange', on)
     return () => window.removeEventListener('hashchange', on)
   }, [])
+  const solo = hash.match(/^#\/solo\/([^/]+)\/(list|review)$/)
+  if (solo) return <Solo target={solo[1]} screen={solo[2] as 'list' | 'review'} />
   return (
     <StoreProvider>
       <nav className="flex items-center gap-1 border-b border-stone-300 bg-white px-4 py-2 text-sm">
