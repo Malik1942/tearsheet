@@ -10,6 +10,8 @@ export type Brick = {
   id: string
   photo: { url: string; width: number; height: number }
   saved_at: string
+  /** When the photo was taken, `YYYY-MM-DD`, from its EXIF DateTimeOriginal at import; absent when the file carried none. */
+  taken_at?: string
   /** Licensed sample material only: the one line that must travel with the photo wherever it is shown (see README, Sample credits). */
   credit?: string
   /** Where the brick came from (spec v3 SB2): `own` is anything a person added, `starter` ships with Tearsheet. Absent reads by id (see `originOf` in starters.ts). Not a provenance. */

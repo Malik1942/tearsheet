@@ -57,7 +57,7 @@ export function Library() {
       try { prepared = await prepareImage(file) } catch (e) { setNotice(`Could not read ${file.name}: ${(e as Error).message}`); continue }
       const brick: Brick = {
         id: `b_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`, photo: { url: prepared.dataUrl, width: prepared.width, height: prepared.height },
-        saved_at: new Date().toISOString().slice(0, 10), origin: 'own', status: 'pending', retries: 0, version: 1,
+        saved_at: new Date().toISOString().slice(0, 10), ...(prepared.takenAt ? { taken_at: prepared.takenAt } : {}), origin: 'own', status: 'pending', retries: 0, version: 1,
         measurements: [], hypotheses: [], relations: [], regions: [], fragile_if_changed: '',
         model: { id: 'muse-spark-1.3', effort: 'medium', latency_ms: 0, input_tokens: 0, output_tokens: 0 },
       }

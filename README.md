@@ -94,7 +94,7 @@ We ran the same task both ways on 2026-11-03, one call each. The input was the t
 | Reason lands on a screen element | partly: "header title, subhead info, footer details" for a template it does not show | yes: the quoted rule sets `accent_coverage`; the photo's title rule moves the list and year-review titles |
 | We kept the change | no screen changed, so there was nothing to keep | yes: the title-led layout is the shot in the video |
 
-**What separated them.** Both found the CHICAGO photo. The chat chose it because it shows a concert, and set aside the three car photos because they are cars ("wrong subject"). Tearsheet never sees the photos: it chose CHICAGO for its one-warm-accent rule and a car photo (g2) for the same kind of rule, and the change shows on the screen with its provenance. The chat's answer is kept verbatim in `../meta-eval/docs/FAIR_COMPARISON_2026-11-03.md`.
+**The chat picked it because it's a concert. Tearsheet picked it because of a rule, and it never saw the photo.** The chat also set aside the three car photos because they are cars ("wrong subject"). Tearsheet picked a car photo (g2) for the same kind of accent rule, and the change shows on the screen with its provenance. The chat's answer is kept verbatim in `../meta-eval/docs/FAIR_COMPARISON_2026-11-03.md`.
 
 ## Measured by mask (after the video)
 

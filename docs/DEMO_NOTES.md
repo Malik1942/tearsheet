@@ -27,7 +27,7 @@
 - On the public site (2026-11-03, one live call, $0.0098) the model proposed:
   1. **Chicago first**, quoting r2 ("restrict the single warm accent…"), with the reason "A dark log with a tiny warm title accent reads like a venue at night and makes each show title easy to scan."
   2. Then g2 and secession.
-- The proposal is a fresh call on every take. If Chicago does not come back, use "More like this one" with Chicago as the starting point, and say so: "I start from this one".
+- **Takes:** the proposal is a fresh call each time. Record the proposal page up to three times and use a take where Chicago appears. If none of the three has it, use "More like this one" with Chicago as the starting point, and say what that shows: "I start from this one".
 
 **2. Accept all → Compose**, Neutral skin on, Both. Chicago sits on top. Its r1 readings lead: the name leads, centered, and the poster is a small square on the right. The year review has text rows with no thumbnails.
 
@@ -44,9 +44,17 @@
 
 Re-checking r1 gives exactly the frame it started from (pixel-identical capture).
 
+**4. Second beat, only if time allows: `adapted · by you`.**
+1. Pick the composition with g2 on top. The image-share conflict then resolves to g2's 0.95, and the title stays type-led.
+2. In the conflict, choose Chicago's 0.2. The posters shrink to small squares, and the row shows `image_text_dominance 0.2 · adapted · by you`.
+3. Say: "they compete for image share; I chose Chicago's".
+
+Cut this beat first if time runs short.
+
 ## Narration facts
 
-- **Proposal card date.** It shows the *save* date. Saved today, it reads "saved Nov 3". Say "a photo from last December's show" (taken 2025-12-27), not "saved months ago".
+- **Proposal card date.** Since this deploy, a photo whose JPEG carries an EXIF capture date shows both dates: "taken Dec 27, 2025 · saved Nov 3". A photo without one shows "saved …" alone. The narration matches the card: "a photo from last December's show". IMG_6966.jpeg reads 2025-12-27 in a dry import in the dev build. The iPhone path is untested: after importing on the phone, check that the card shows "taken …". If it shows "saved" alone, iOS did not pass the capture date. Then import that photo on desktop from the original file, or keep the narration to "a photo from last December's show" without pointing at the card.
+- **Comparison line, verbatim:** "The chat picked it because it's a concert. Tearsheet picked it because of a rule, and it never saw the photo."
 - **What the proposal quoted.** The model picked Chicago for its accent rule (r2). The structural change comes from the same photo's title rule (r1), which the product reads by rule. Say "the photo it found also carries a rule about the title", not "the model proposed the title rule".
 - **What not to credit to Chicago:** the centering (secession sets it too) and the colors (Neutral skin hides them).
 
