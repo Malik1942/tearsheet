@@ -34,7 +34,7 @@ export function BrickScreen({ id }: { id: string }) {
         </div>
       </header>
 
-      <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="lg:sticky lg:top-4 lg:self-start">
           <div className="relative overflow-hidden rounded-[6px]" style={{ background: '#1f1e1c', aspectRatio: `${brick.photo.width} / ${brick.photo.height}` }}>
             <Photo src={brick.photo.url} className="h-full w-full object-cover" />
@@ -110,10 +110,10 @@ export function BrickScreen({ id }: { id: string }) {
                 return (
                   <li key={h.id} id={h.id} className="rounded px-2 py-1">
                     <div className="flex items-baseline gap-2"><span className="mono ink-2">{h.id}</span><span>{h.statement}</span></div>
-                    <div className="mt-1 flex items-center gap-2 pl-8 text-[12px]">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 pl-8 text-[12px]">
                       <span className="inline-block h-1 w-24 overflow-hidden rounded" style={{ background: 'var(--line)' }}><span className="block h-full" style={{ width: `${Math.round(h.confidence * 100)}%`, background: 'var(--ink-2)' }} /></span>
                       <span className="mono ink-2">{Math.round(h.confidence * 100)}%</span>
-                      <span className="ink-2">rests on {h.rests_on.length ? h.rests_on.map(x => <a key={x} href={`#${x}`} className="mono mr-1" style={mIds.has(x) ? undefined : { color: 'var(--accent)' }}>{x}</a>) : <span style={{ color: 'var(--accent)' }}>nothing</span>}</span>
+                      <span className="ink-2 min-w-0 [overflow-wrap:anywhere]">rests on {h.rests_on.length ? h.rests_on.map(x => <a key={x} href={`#${x}`} className="mono mr-1" style={mIds.has(x) ? undefined : { color: 'var(--accent)' }}>{x}</a>) : <span style={{ color: 'var(--accent)' }}>nothing</span>}</span>
                       {(dangling.length > 0 || h.rests_on.length === 0) && <span style={{ color: 'var(--accent)' }}>no support</span>}
                     </div>
                   </li>
