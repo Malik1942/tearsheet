@@ -3,6 +3,7 @@ import type { Brick } from './types'
 import type { Project } from './mapRelations'
 import { IDB } from './persist'
 import { fitProjectForSync } from './versions'
+import { ownBricks } from './starters'
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 export const CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
@@ -78,7 +79,7 @@ export type SyncStore = { bricks: Brick[]; projects: Project[]; mergeBricks: (b:
 export async function runSync(code: string, store: SyncStore, onProgress?: (sent: number, total: number) => void): Promise<{ info: SyncInfo; live: number; got: number; projects: Project[] }> {
   const before = await pull(code)
   let got = store.mergeBricks(before.bricks) + store.mergeProjects(before.projects ?? [])
-  const local = store.bricks.filter(b => b.status !== 'extracting')
+  const local = ownBricks(store.bricks).filter(b => b.status !== 'extracting')   // SB2: the starters ship with Tearsheet; only the person's own bricks go to the code
   const after = await push(code, local, store.projects, onProgress)
   got += store.mergeBricks(after.bricks) + store.mergeProjects(after.projects ?? [])
   const live = after.bricks.filter(b => !b.superseded_by).length

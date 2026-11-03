@@ -58,7 +58,7 @@ src/fixtures/           the sample library, the three gate bricks and the step-2
 scripts/                check-ui.js (console sweep), check-prompt-sha.ts (prompts and schemas against the harness)
 ```
 
-The sample library holds Malik's own photos and licensed public-domain works, each with a credit line. The downloaded posters used in the gate and probe runs are not in the repository. The only exceptions are the public-domain and free-to-use images under Sample credits, which are kept with their credit.
+The sample library holds Malik's own photos and licensed public-domain works, each with a credit line. In the product these twelve are the starters (spec v3 SB1–SB4, L7): built in, never saved or synced, `origin: "starter"`, shown under an empty Library and used by Projects only until a person has three bricks of their own; the `Include starters` checkbox hides them. The downloaded posters used in the gate and probe runs are not in the repository. The only exceptions are the public-domain and free-to-use images under Sample credits, which are kept with their credit.
 
 ## Sync
 

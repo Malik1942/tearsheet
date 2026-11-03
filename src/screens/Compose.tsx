@@ -13,6 +13,8 @@ import { ProvenanceChip } from '../compose/ProvenanceChip'
 import { Section, Row } from '../compose/Sheet'
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { download, exportCss, exportHandoff, exportJson } from '../export'
+import { originLabel } from '../lib/brickLabels'
+import { originOf } from '../lib/starters'
 
 const NEUTRAL = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const
 const CONFLICT_W = 130   // C6: width of each mini-screen in a conflict tile
@@ -33,7 +35,7 @@ export function ComposeScreen({ id }: { id: string }) {
   const update = (patch: Partial<Project> | ((p: Project) => Partial<Project>)) => store.updateProject(project.id, patch)
   const materials = project.brickIds.map(bid => store.bricks.find(b => b.id === bid)).filter((b): b is NonNullable<typeof b> => !!b)
   const locked = project.lockedBricks ?? {}
-  const spare = store.bricks.filter(b => (b.status ?? 'ready') === 'ready' && !project.brickIds.includes(b.id))
+  const spare = store.bricks.filter(b => (b.status ?? 'ready') === 'ready' && !project.brickIds.includes(b.id) && (store.showStarters || originOf(b) === 'own'))   // SB3: with starters hidden, Swap and Add offer own bricks only
   const params = neutral ? { ...resolved.params, ...NEUTRAL } : resolved.params
 
   const rotate = () => update(p => {
@@ -77,7 +79,7 @@ export function ComposeScreen({ id }: { id: string }) {
               <div className="flex items-center gap-2">
                 <Link href={`/brick/${b.id}`} aria-label={`Open brick ${b.id}`}><Photo src={b.photo.url} className="h-10 w-14 rounded object-cover" /></Link>
                 <div className="min-w-0 flex-1">
-                  <div className="mono text-[12px]">{b.id}</div><div className="ink-2 text-[11px]">saved {b.saved_at}</div>
+                  <div className="mono text-[12px]">{b.id}</div><div className="ink-2 truncate text-[11px]" title={originLabel(b)}>{originLabel(b)}</div>
                   {(() => { const p = pickOf(b.id); return p ? <span className={`chip ${p.status === 'proposed' ? 'chip-proposed' : 'chip-adapted'} mt-0.5 px-1.5 text-[10px]`} title={p.status === 'proposed' ? `Proposed by the model for this intent, quoting: ${p.quotedRule}` : p.status === 'anchor' ? 'Chosen by you as the starting point' : `Swapped in by you for ${p.swappedFrom}`}>{p.status === 'proposed' ? 'proposed · model' : 'adapted · by you'}</span> : null })()}
                 </div>
                 {locked[b.id] && <span title="Locked: keeps its values through Swap and Rotate">🔒</span>}

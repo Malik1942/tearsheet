@@ -12,6 +12,8 @@ export type Brick = {
   saved_at: string
   /** Licensed sample material only: the one line that must travel with the photo wherever it is shown (see README, Sample credits). */
   credit?: string
+  /** Where the brick came from (spec v3 SB2): `own` is anything a person added, `starter` ships with Tearsheet. Absent reads by id (see `originOf` in starters.ts). Not a provenance. */
+  origin?: 'own' | 'starter'
   measurements: Measurement[]
   hypotheses: Hypothesis[]
   relations: Relation[]
