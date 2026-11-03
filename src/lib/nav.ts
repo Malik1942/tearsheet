@@ -9,5 +9,3 @@ export function tabOf(path: string): Tab {
 /** Every route has the shared header except the solo shell renders (`/solo/*`), which are bare screens for capture. */
 export const hasHeader = (path: string): boolean => !path.startsWith('/solo/')
 
-/** The phone routes that keep their own fixed footer (DesktopFooter: "Open on desktop"). The bottom bar would sit on top of it, so there the header keeps its tabs and Shoot instead. */
-export const hasOwnFooter = (path: string): boolean => /^\/project\/[^/]+\/(preview|instructions)$/.test(path)

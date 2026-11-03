@@ -4,7 +4,7 @@ import { useStore } from '../lib/store'
 import { useAddPhotos } from '../bricks/AddPhotos'
 import { originOf } from '../lib/starters'
 import { readingCount } from '../lib/addPhotos'
-import { hasOwnFooter, tabOf, type Tab } from '../lib/nav'
+import { tabOf, type Tab } from '../lib/nav'
 import { useModal } from './useModal'
 
 const COPY = {
@@ -37,17 +37,16 @@ const COPY = {
 const CREDITS_URL = 'https://github.com/Malik1942/tearsheet#sample-credits'
 
 /** 15_SIMPLIFY §1: one header above every screen (not the solo shell renders): wordmark · `Library` `Make` · `Shoot` · `⋯`.
- *  On a phone the tabs and Shoot move to a bottom bar, Shoot in the middle; the routes with their own fixed footer keep them in the header instead. */
+ *  On a phone the tabs and Shoot move to a bottom bar, Shoot in the middle. */
 export function AppChrome({ children }: { children: ReactNode }) {
   const path = usePath()
   const tab = tabOf(path)
-  const bar = !hasOwnFooter(path)
   return (
     <div className="chrome flex min-h-full flex-col">
-      <AppHeader tab={tab} bar={bar} />
+      <AppHeader tab={tab} />
       <AddNotice />
-      <main className={`flex min-w-0 flex-1 flex-col ${bar ? 'with-bar' : ''}`}>{children}</main>
-      {bar && <BottomBar tab={tab} />}
+      <main className="with-bar flex min-w-0 flex-1 flex-col">{children}</main>
+      <BottomBar tab={tab} />
     </div>
   )
 }
@@ -73,14 +72,14 @@ function ShootButton({ className = '' }: { className?: string }) {
   )
 }
 
-function AppHeader({ tab, bar }: { tab: Tab; bar: boolean }) {
+function AppHeader({ tab }: { tab: Tab }) {
   return (
     <header className="app-header gutter">
       <Link href="/" className="wordmark">Tearsheet</Link>
-      <nav aria-label="Main" className={`${bar ? 'hidden md:flex' : 'flex'} items-center gap-5`}><Tabs tab={tab} /></nav>
+      <nav aria-label="Main" className="hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
       <div className="ml-auto flex items-center gap-3">
         <QueueStatus />
-        <ShootButton className={bar ? 'hidden md:inline-block' : ''} />
+        <ShootButton className="hidden md:inline-block" />
         <MoreMenu />
       </div>
     </header>

@@ -1,7 +1,7 @@
 /** 15_SIMPLIFY §1: the shared header's two tabs, where the header and the phone's bottom bar show, and the one way photos come in. Run: npm test */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { hasHeader, hasOwnFooter, tabOf } from '../src/lib/nav.ts'
+import { hasHeader, tabOf } from '../src/lib/nav.ts'
 import { brickFromPhoto, readingCount } from '../src/lib/addPhotos.ts'
 import { originOf } from '../src/lib/starters.ts'
 import type { Brick } from '../src/lib/types.ts'
@@ -19,11 +19,6 @@ describe('where the header and the bottom bar show', () => {
   it('every route has the header but the solo renders', () => {
     assert.equal(hasHeader('/solo/chicago/list'), false)
     for (const p of ['/', '/make', '/brick/b_1', '/project/p_1', '/sync', '/open', '/compare']) assert.equal(hasHeader(p), true, p)
-  })
-  it('the phone routes with their own fixed footer keep the tabs in the header', () => {
-    assert.equal(hasOwnFooter('/project/p_1/preview'), true)
-    assert.equal(hasOwnFooter('/project/p_1/instructions'), true)
-    for (const p of ['/', '/make', '/project/p_1', '/project/p_1/export', '/project/p_1/share']) assert.equal(hasOwnFooter(p), false, p)
   })
 })
 

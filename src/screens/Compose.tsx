@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../lib/store'
 import { Link } from '../lib/router'
+import { rowHeadline, whatChanged } from '../lib/landing'
 import { resolveProject, relRef, type Project } from '../lib/mapRelations'
 import { standInLine } from '../lib/standIns'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS } from '../shell/params'
@@ -15,22 +16,20 @@ import { useChangeFlash } from '../compose/useChangeFlash'
 import { download, exportCss, exportHandoff, exportJson } from '../export'
 import { originLabel } from '../lib/brickLabels'
 import { originOf } from '../lib/starters'
+import { NEUTRAL_SKIN } from '../lib/makeFlow'
 
-const NEUTRAL = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const
+const NEUTRAL = NEUTRAL_SKIN
 const CONFLICT_W = 130   // C6: width of each mini-screen in a conflict tile
-const COPY = { unexpressedEmpty: 'Everything from these bricks found a slot.', conflictDefault: 'Using the top brick until you choose.', phone: 'Compose needs a wider screen. On this phone:' }
+const COPY = { unexpressedEmpty: 'Everything from these bricks found a slot.', conflictDefault: 'Using the top brick until you choose.', changed: 'What changed and why', changedEmpty: 'These bricks set no relationship yet; the screens use the shell defaults.' }
 
-/** Compose: three columns at >= 960 px. Materials (left) feed the shell (center); the sheet (right) shows every value with its provenance. */
-export function ComposeScreen({ id }: { id: string }) {
+/** Fine-tune (15_SIMPLIFY §2, 3 See): today's Compose, opened in a drawer from See; logic unchanged. Three columns at >= 960 px, stacked below:
+ *  materials (left) feed the shell (center); the sheet (right) shows every value with its provenance. Neutral skin is See's, so the drawer and See agree. */
+export function ComposePanel({ project, neutral, onNeutral, screen }: { project: Project; neutral: boolean; onNeutral: () => void; screen: 'both' | 'list' | 'review' }) {
   const store = useStore()
-  const project = store.projects.find(p => p.id === id)
-  const [screen, setScreen] = useState<'both' | 'list' | 'review'>('both')
-  const [neutral, setNeutral] = useState(false)
   const [swapping, setSwapping] = useState<string | null>(null)
-  const resolved = useMemo(() => project ? resolveProject(project, store.bricks) : null, [project, store.bricks])
+  const resolved = useMemo(() => resolveProject(project, store.bricks), [project, store.bricks])
   // C11: for one second after an accepted change (Swap, Rotate, a conflict choice, a lock release, swap-in), the parameters it moved are outlined on both shells and tinted in the sheet
   const flash = useChangeFlash(project)
-  if (!project || !resolved) return <div className="chrome min-h-full p-4"><Link href="/projects" className="ink-2 text-[12px]">← Projects</Link><p className="mt-4 ink-2">No project with id {id}.</p></div>
 
   const update = (patch: Partial<Project> | ((p: Project) => Partial<Project>)) => store.updateProject(project.id, patch)
   const materials = project.brickIds.map(bid => store.bricks.find(b => b.id === bid)).filter((b): b is NonNullable<typeof b> => !!b)
@@ -53,23 +52,23 @@ export function ComposeScreen({ id }: { id: string }) {
   const thumbOf = (pv: ParameterValue) => store.bricks.find(b => b.id === pv.source?.brickId)?.photo.url
   const byBrick = (bid: string) => PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === bid && resolved.values[k].provenance !== 'adapted')
   const pickOf = (bid: string) => project.proposal?.picks.find(p => p.brickId === bid)
+  const changed = whatChanged(project, resolved, store.bricks)
 
   return (
-    <div className="chrome min-h-full">
-      <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
-        <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-        <span className="ink-2">/ <Link href="/projects" className="ink-2">Projects</Link> / {project.name || 'Untitled'}</span>
-        <span className="mono ink-2 text-[11px]" title="Every accepted change makes a new version">{`v${project.version ?? 1}`}</span>
-        <span className="ink-2 hidden truncate md:inline">· {project.intent}</span>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="flex overflow-hidden rounded border hairline text-[12px]">
-            {(['list', 'review', 'both'] as const).map(s => <button key={s} type="button" onClick={() => setScreen(s)} className="px-2 py-1" style={screen === s ? { background: 'var(--ink)', color: '#fff' } : { background: 'var(--panel)' }}>{s === 'list' ? 'List' : s === 'review' ? 'Year review' : 'Both'}</button>)}
-          </div>
-          <Link href={`/project/${project.id}/export`} className="btn btn-accent">Export</Link>
-        </div>
-      </header>
-      <div className="px-4 py-1 text-[12px] ink-2 min-[960px]:hidden" style={{ borderBottom: '1px solid var(--line)' }}>{COPY.phone} <Link href={`/project/${project.id}/preview`}>Preview</Link> · <Link href={`/project/${project.id}/instructions`}>Instructions</Link></div>
-
+    <div className="chrome">
+      {/* V1, moved from the phone Preview: up to three rule lines with the brick that set them */}
+      <div className="px-4 pt-4"><Section title={COPY.changed}>
+        {changed.length === 0 ? <div className="ink-2 text-[12px]">{COPY.changedEmpty}</div> : (
+          <ul className="space-y-2">
+            {changed.map(pv => (
+              <li key={pv.key} className="flex items-start gap-2 text-[12px]">
+                <Photo src={thumbOf(pv)} className="mt-px h-6 w-6 shrink-0 rounded object-cover" />
+                <span className="min-w-0 flex-1 break-words">{rowHeadline(pv, resolved.params, store.bricks)} <span className="inline-block max-w-full align-middle"><ProvenanceChip pv={pv} showKey={false} /></span></span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section></div>
       <div className="grid min-w-0 gap-4 p-4 min-[960px]:grid-cols-[260px_minmax(0,1fr)_320px]">
         {/* Materials */}
         <aside className="flex min-w-0 flex-col gap-2">
@@ -117,19 +116,19 @@ export function ComposeScreen({ id }: { id: string }) {
           )}
           <div className="mt-1 flex flex-wrap gap-2">
             <button type="button" className="btn" onClick={rotate} disabled={materials.filter(b => !locked[b.id]).length < 2} title="Cycles which brick sits on top; locked bricks stay">Rotate</button>
-            <button type="button" className={`btn ${neutral ? '' : 'btn-quiet'}`} onClick={() => setNeutral(v => !v)} title="Same colors, radius, type and spacing on every shell; only the relationship parameters remain">Neutral skin{neutral ? ' on' : ''}</button>
+            <button type="button" className={`btn ${neutral ? '' : 'btn-quiet'}`} onClick={onNeutral} title="Same colors, radius, type and spacing on every shell; only the relationship parameters remain">Neutral skin{neutral ? ' on' : ''}</button>
           </div>
         </aside>
 
         {/* Shell */}
-        <main className="flex flex-wrap justify-center gap-4 self-start">
+        <div className="flex flex-wrap justify-center gap-4 self-start">
           {(screen === 'both' ? (['list', 'review'] as const) : [screen]).map(s => (
             <div key={s} className="w-full max-w-[320px] overflow-hidden rounded-[20px]" style={{ border: '1px solid var(--line)', background: '#111', padding: 6, height: 652 }}>
               <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} flash={flash} /></div>
             </div>
           ))}
           <p className="w-full text-center text-[11px] ink-2">Renders locally from one parameters.json; no model call. Edits happen through materials and the sheet.</p>
-        </main>
+        </div>
 
         {/* Parameter sheet (block 3 version; block 4 adds conflicts and the cap rows) */}
         <aside className="flex min-w-0 flex-col gap-3">

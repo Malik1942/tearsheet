@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../lib/store'
 import { Link } from '../lib/router'
 import { CODE_RE, normalizeCode, pull, runSync } from '../lib/syncClient'
+import { openDestination } from '../lib/makeFlow'
 
 const COPY = {
   opening: (code: string) => `Opening library ${code}…`,
@@ -12,8 +13,8 @@ const COPY = {
   sync: 'Open Sync',
 }
 
-/** S4: the deep link a phone shares. Adopts the code, merges the library (bricks and projects), then lands in the project
- *  (Compose on a wide screen, the read-only preview on a phone) or the Library. */
+/** S4: the deep link a phone shares, and E1's Share link. Adopts the code, merges the library (bricks and projects), then lands in the project
+ *  (its Instructions page when the link says `to=instructions`, else 3 See) or the Library. */
 export function OpenScreen() {
   const store = useStore()
   const params = new URLSearchParams(location.search)
@@ -33,10 +34,9 @@ export function OpenScreen() {
         return runSync(code, store, (sent, total) => setProgress({ sent, total }))
       })
       .then(({ projects }) => {
-        const known = projectId && (projects.some(p => p.id === projectId) || store.projects.some(p => p.id === projectId))
-        const wide = matchMedia('(min-width: 960px)').matches
-        // replace, not push: Back from the landed page must not return here and sync again
-        history.replaceState(null, '', known ? (wide ? `/project/${projectId}` : `/project/${projectId}/preview`) : projectId ? '/projects' : '/')
+        const known = !!projectId && (projects.some(p => p.id === projectId) || store.projects.some(p => p.id === projectId))
+        // replace, not push: Back from the landed page must not return here and sync again. A Share link (to=instructions) lands on the Instructions page; See works at any width
+        history.replaceState(null, '', openDestination(projectId, known, params.get('to')))
         window.dispatchEvent(new PopStateEvent('popstate'))
       })
       .catch(e => setError((e as Error).message))
