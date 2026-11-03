@@ -6,7 +6,7 @@ import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { provenanceOf, resolveProject, type Project, type Resolved } from '../src/lib/mapRelations.ts'
 import type { Brick } from '../src/lib/types.ts'
 import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, type ParameterKey, type Params } from '../src/shell/params.ts'
-import { colorName, footnoteFor, footnoteOf, landsOn, rowHeadline, ruleTextOf } from '../src/lib/landing.ts'
+import { colorName, footnoteFor, footnoteMeasurement, footnoteOf, landsOn, rowHeadline, ruleTextOf } from '../src/lib/landing.ts'
 import { exportCss } from '../src/export/index.ts'
 
 const p = (patch: Partial<Params> = {}): Params => ({ ...DEFAULT_PARAMS, ...patch })
@@ -108,10 +108,11 @@ describe('landsOn: type_scale_ratio with a featured first show', () => {
 })
 
 describe('landsOn: rhythm reads the hierarchy', () => {
+  // "every other", not "every second": section titles shift the nth-child parity, so the first row to move is not always the second
   const ALTERNATING = {
-    'type-led': 'With type-led items the poster is already on the right, so alternating changes nothing on the list; on the year review every second row moves its date to the front.',
-    'image-led': 'Every second item puts its poster below the text, on both screens.',
-    balanced: 'Every second item puts its poster on the other side, on both screens.',
+    'type-led': 'With type-led items the poster is already on the right, so alternating changes nothing on the list; on the year review every other row moves its date to the front.',
+    'image-led': 'Every other item puts its poster below the text, on both screens.',
+    balanced: 'Every other item puts its poster on the other side, on both screens.',
   }
   it('alternating: one sentence per hierarchy', () => {
     for (const [hierarchy_mode, sentence] of Object.entries(ALTERNATING)) assert.equal(landsOn('rhythm', p({ rhythm: 'alternating', hierarchy_mode })), sentence, hierarchy_mode)
@@ -121,6 +122,35 @@ describe('landsOn: rhythm reads the hierarchy', () => {
       assert.equal(landsOn('rhythm', p({ rhythm: 'uniform', hierarchy_mode })), 'Every list item has the same shape.', hierarchy_mode)
       assert.equal(landsOn('rhythm', p({ rhythm: 'featured-first', hierarchy_mode })), 'The first show becomes a large feature; the year review opens with “Show of the year” and puts the biggest section first.', hierarchy_mode)
     }
+  })
+})
+
+describe('landsOn: where a type-led poster sits under alignment_edge right', () => {
+  // shell.css: `.shell[data-align="right"] .item { direction: rtl }` flips the item grid, so the type-led square moves from the right to the left
+  const SQUARE_RIGHT = 'The artist name leads each list item at headline size and the poster shrinks to a square on the right; year-review rows drop their thumbnails.'
+  const SQUARE_LEFT = 'The artist name leads each list item at headline size and the poster shrinks to a square on the left; year-review rows drop their thumbnails.'
+  const ALT_RIGHT = 'With type-led items the poster is already on the right, so alternating changes nothing on the list; on the year review every other row moves its date to the front.'
+  const ALT_LEFT = 'With type-led items the poster is already on the left, so alternating changes nothing on the list; on the year review every other row moves its date to the front.'
+  it('the type-led hierarchy sentence says on the left when text hugs the right edge', () => {
+    assert.equal(landsOn('hierarchy_mode', p({ hierarchy_mode: 'type-led', alignment_edge: 'right' })), SQUARE_LEFT)
+  })
+  it('the type-led alternating sentence says on the left when text hugs the right edge', () => {
+    assert.equal(landsOn('rhythm', p({ hierarchy_mode: 'type-led', rhythm: 'alternating', alignment_edge: 'right' })), ALT_LEFT)
+  })
+  it('under every other alignment both sentences keep saying on the right', () => {
+    for (const alignment_edge of ['left', 'center', 'split']) {
+      assert.equal(landsOn('hierarchy_mode', p({ hierarchy_mode: 'type-led', alignment_edge })), SQUARE_RIGHT, alignment_edge)
+      assert.equal(landsOn('rhythm', p({ hierarchy_mode: 'type-led', rhythm: 'alternating', alignment_edge })), ALT_RIGHT, alignment_edge)
+    }
+  })
+  it('the other hierarchies do not read the alignment', () => {
+    for (const hierarchy_mode of ['image-led', 'balanced']) {
+      assert.equal(landsOn('hierarchy_mode', p({ hierarchy_mode, alignment_edge: 'right' })), landsOn('hierarchy_mode', p({ hierarchy_mode, alignment_edge: 'left' })), hierarchy_mode)
+      assert.equal(landsOn('rhythm', p({ hierarchy_mode, rhythm: 'alternating', alignment_edge: 'right' })), landsOn('rhythm', p({ hierarchy_mode, rhythm: 'alternating', alignment_edge: 'left' })), hierarchy_mode)
+    }
+  })
+  it('uniform and featured-first do not read the alignment under type-led', () => {
+    for (const rhythm of ['uniform', 'featured-first']) assert.equal(landsOn('rhythm', p({ hierarchy_mode: 'type-led', rhythm, alignment_edge: 'right' })), landsOn('rhythm', p({ hierarchy_mode: 'type-led', rhythm, alignment_edge: 'left' })), rhythm)
   })
 })
 
@@ -145,7 +175,7 @@ describe('landsOn: the plain enums', () => {
     }],
     ['rhythm', {
       uniform: 'Every list item has the same shape.',
-      alternating: 'Every second item puts its poster on the other side, on both screens.',
+      alternating: 'Every other item puts its poster on the other side, on both screens.',
       'featured-first': 'The first show becomes a large feature; the year review opens with “Show of the year” and puts the biggest section first.',
     }],
     ['alignment_edge', {
@@ -429,6 +459,34 @@ describe('footnoteFor: the one helper behind the Sheet and the Brick screen', ()
     assert.equal(footnoteFor(calm, undefined), null)
     assert.equal(footnoteFor(calm, ['nope']), null)
     assert.equal(footnoteFor(undefined, ['m2']), null)
+  })
+})
+
+describe('footnoteMeasurement: the measurement the footnote cites, which the Brick screen highlights on hover', () => {
+  const calm = brick('calmmouse')
+  it('calmmouse r1 rests on m1, m2 and m7: it is m2, the one the footnote prints, not the first id', () => {
+    const ids = provenanceOf(calm, calm.relations.find(r => r.id === 'r1')!).measurementIds
+    assert.equal(footnoteMeasurement(calm, ids)?.id, 'm2')
+    assert.ok(footnoteFor(calm, ids)!.startsWith('m2: '))
+  })
+  it('is the measurement footnoteFor prints, for every relation of every sample', () => {
+    for (const b of SAMPLES) for (const r of b.relations) {
+      const ids = provenanceOf(b, r).measurementIds
+      const m = footnoteMeasurement(b, ids), note = footnoteFor(b, ids)
+      if (note === null) assert.equal(m, undefined, `${b.id}/${r.id}`)
+      else assert.equal(note, `${m!.id}: ${m!.value}`, `${b.id}/${r.id}`)
+    }
+  })
+  it('follows the same rules: order of the ids, skip a missing id, no digit anywhere takes the first that exists', () => {
+    assert.equal(footnoteMeasurement(calm, ['m1', 'm3', 'm2'])?.id, 'm3')
+    assert.equal(footnoteMeasurement(calm, ['nope', 'm1', 'm2'])?.id, 'm2')
+    assert.equal(footnoteMeasurement(calm, ['nope', 'm1'])?.id, 'm1')
+  })
+  it('is undefined when there is no id, no brick or no such measurement', () => {
+    assert.equal(footnoteMeasurement(calm, []), undefined)
+    assert.equal(footnoteMeasurement(calm, undefined), undefined)
+    assert.equal(footnoteMeasurement(calm, ['nope']), undefined)
+    assert.equal(footnoteMeasurement(undefined, ['m2']), undefined)
   })
 })
 

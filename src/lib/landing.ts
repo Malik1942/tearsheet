@@ -29,11 +29,12 @@ export function colorName(hex: string): string {
   return l >= 0.7 ? `light ${hue}` : l <= 0.3 ? `dark ${hue}` : hue
 }
 
-const HIERARCHY: Record<string, string> = {
-  'type-led': 'The artist name leads each list item at headline size and the poster shrinks to a square on the right; year-review rows drop their thumbnails.',
+/** `side` is where a type-led item puts its poster square: the right, or the left under `alignment_edge: right` (see `landsOn`). */
+const HIERARCHY = (side: string): Record<string, string> => ({
+  'type-led': `The artist name leads each list item at headline size and the poster shrinks to a square on the ${side}; year-review rows drop their thumbnails.`,
   'image-led': 'The poster leads each list item, full width above the text; year-review rows become full-width images.',
   balanced: 'Poster and text sit side by side in each list item.',
-}
+})
 const DENSITY: Record<string, string> = {
   1: 'One list item fills the screen, with its note.',
   2: 'Two list items per screen, with notes.',
@@ -48,14 +49,15 @@ const GROUPING: Record<string, string> = {
 }
 const RHYTHM: Record<string, string> = {
   uniform: 'Every list item has the same shape.',
-  alternating: 'Every second item puts its poster on the other side, on both screens.',
+  alternating: 'Every other item puts its poster on the other side, on both screens.',
   'featured-first': 'The first show becomes a large feature; the year review opens with “Show of the year” and puts the biggest section first.',
 }
-/** `alternating` moves the poster to the other side, which depends on where the hierarchy put it: type-led already has it on the right, image-led has it above the text. */
-const ALTERNATING: Record<string, string> = {
-  'type-led': 'With type-led items the poster is already on the right, so alternating changes nothing on the list; on the year review every second row moves its date to the front.',
-  'image-led': 'Every second item puts its poster below the text, on both screens.',
-}
+/** `alternating` moves the poster to the other side, which depends on where the hierarchy put it: type-led already has it at `side`, image-led has it above the text.
+ *  "Every other", not "every second": section titles shift the `nth-child` parity, so the first row to move is not always the second. */
+const ALTERNATING = (side: string): Record<string, string> => ({
+  'type-led': `With type-led items the poster is already on the ${side}, so alternating changes nothing on the list; on the year review every other row moves its date to the front.`,
+  'image-led': 'Every other item puts its poster below the text, on both screens.',
+})
 const ALIGNMENT: Record<string, string> = {
   left: 'Text hugs the left edge; the right side stays empty.',
   right: 'Text hugs the right edge and posters move to the right.',
@@ -98,6 +100,8 @@ export function landsOn(key: ParameterKey, params: Params): string {
   const s = Number(params.image_text_dominance), layout = Math.min(0.8, Math.max(0.15, s)), P = Math.round(layout * 100)   // the shell clamps the share the same way (toCssVars)
   const hues = Number(params.palette_hue_count)
   const n = colorName(String(params.color_accent))
+  // shell.css reverses each item under `alignment_edge: right` (`direction: rtl`), which moves the type-led square from the right end of the row to the left
+  const side = params.alignment_edge === 'right' ? 'left' : 'right'
   switch (key) {
     case 'type_scale_ratio': {
       const base = H === 'type-led' ? `Artist names lead at ${R}× the body text; the “2025” headline is ${R}× too.`
@@ -106,10 +110,10 @@ export function landsOn(key: ParameterKey, params: Params): string {
       // the featured first show sets its title in the display size; under type-led every name already does
       return params.rhythm === 'featured-first' && H !== 'type-led' ? `${base} The first show's title is ${R}×.` : base
     }
-    case 'hierarchy_mode': return entry(HIERARCHY, key, params)
+    case 'hierarchy_mode': return entry(HIERARCHY(side), key, params)
     case 'density': return entry(DENSITY, key, params)
     case 'grouping': return entry(GROUPING, key, params)
-    case 'rhythm': return params.rhythm === 'alternating' && ALTERNATING[String(H)] ? ALTERNATING[String(H)] : entry(RHYTHM, key, params)
+    case 'rhythm': return (params.rhythm === 'alternating' ? ALTERNATING(side)[String(H)] : undefined) ?? entry(RHYTHM, key, params)
     case 'alignment_edge': return entry(ALIGNMENT, key, params)
     case 'image_text_dominance': {
       const base = H === 'type-led' ? `The poster sits right as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
@@ -171,11 +175,16 @@ export function rowHeadline(pv: ParameterValue, params: Params, bricks: Brick[])
   return L
 }
 
-/** The footnote under a row, one derivation for the Sheet and the Brick screen: `m3: ~4% of frame`. Of the measurements a value rests on, the first one (in the order of `measurementIds`) that the brick has and whose value contains a digit;
- *  when none has a digit, the first that exists; null when there is none. */
-export function footnoteFor(brick: Brick | undefined, measurementIds: string[] | undefined): string | null {
+/** The measurement a footnote cites, one pick for the Sheet and the Brick screen (the footnote prints it, the Brick screen highlights it on hover). Of the measurements a value rests on, the first one
+ *  (in the order of `measurementIds`) that the brick has and whose value contains a digit; when none has a digit, the first that exists; undefined when there is none. */
+export function footnoteMeasurement(brick: Brick | undefined, measurementIds: string[] | undefined): Measurement | undefined {
   const have = (measurementIds ?? []).map(id => brick?.measurements.find(m => m.id === id)).filter((m): m is Measurement => m !== undefined)
-  const m = have.find(x => /\d/.test(String(x.value))) ?? have[0]
+  return have.find(x => /\d/.test(String(x.value))) ?? have[0]
+}
+
+/** The footnote under a row: `m3: ~4% of frame`, the measurement `footnoteMeasurement` picks; null when there is none. */
+export function footnoteFor(brick: Brick | undefined, measurementIds: string[] | undefined): string | null {
+  const m = footnoteMeasurement(brick, measurementIds)
   return m ? `${m.id}: ${m.value}` : null
 }
 

@@ -23,7 +23,7 @@ export function Row({ k, pv, params, bricks, swatch, thumb }: { k: ParameterKey;
           {thumb ? <Photo src={thumb} className="h-4 w-4 shrink-0 rounded-sm object-cover" /> : <span className="inline-block h-4 w-4 shrink-0" />}
           {swatch && <span className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: String(pv.value), border: '1px solid var(--line)' }} />}
           {isShellDefault(pv)
-            ? <span className="ink-2"><span className="mono">{String(pv.value)}</span> · default</span>
+            ? <span className="ink-2 min-w-0 truncate" title={`${String(pv.value)} · default`}><span className="mono">{String(pv.value)}</span> · default</span>
             : <span className="min-w-0 overflow-hidden"><ProvenanceChip pv={pv} showKey={false} /></span>}
         </div>
         {note && <span className="mono ink-2 min-w-0 max-w-full truncate" title={note}>{note}</span>}

@@ -3,11 +3,11 @@ import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
 import { proposeValue, provenanceOf, typeFamilyOf } from '../lib/mapRelations'
-import { footnoteFor, landsOn } from '../lib/landing'
+import { footnoteFor, footnoteMeasurement, landsOn } from '../lib/landing'
 import { DEFAULT_PARAMS, type ParameterKey } from '../shell/params'
 
-/** Brick screen: one photo, its measurements (the honest layer, first), relations, hypotheses, and the fragile sentence.
- *  Every item has an id anchor (#m3, #h2, #r1) so a provenance chip anywhere can land here. */
+/** Brick screen (spec v3 B3): one photo, then the transferable relations (rule → where it would land, `none` last as `no slot`), the measurements they rest on, the letterform description,
+ *  the hypotheses, and the fragile sentence. Every item has an id anchor (#m3, #h2, #r1) so a provenance chip anywhere can land here. */
 export function BrickScreen({ id }: { id: string }) {
   const store = useStore()
   const brick = store.bricks.find(b => b.id === id)
@@ -55,6 +55,32 @@ export function BrickScreen({ id }: { id: string }) {
 
         <div className="flex flex-col gap-4">
           <section className="panel p-3">
+            <h2 className="mb-2 text-[13px] font-semibold">Transferable relations</h2>
+            <ol className="space-y-2">
+              {relations.map(r => {
+                const prov = provenanceOf(brick, r)
+                const value = r.parameter === 'none' ? null : proposeValue(r.parameter as ParameterKey, r)
+                // C4′: where the rule would land on the shell (every other parameter at its default); the footnote is the same helper the Sheet uses, and hovering highlights the measurement it cites
+                const lands = value === null ? null : landsOn(r.parameter as ParameterKey, { ...DEFAULT_PARAMS, [r.parameter]: value })
+                const note = footnoteFor(brick, prov.measurementIds)
+                return (
+                  <li key={r.id} id={r.id} className="rounded px-2 py-1" onMouseEnter={() => setHl(footnoteMeasurement(brick, prov.measurementIds)?.id ?? null)} onMouseLeave={() => setHl(null)}>
+                    <div className="flex items-baseline gap-2"><span className="mono ink-2">{r.id}</span><span>{r.rule}{lands && ` → ${lands}`}</span></div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 pl-8 text-[12px]">
+                      {r.parameter === 'none'
+                        ? <span className="chip chip-adapted">no slot</span>
+                        : <span className="chip chip-measured"><span className="mono">{r.parameter}</span>{value !== null && <span className="mono">= {String(value)}</span>}</span>}
+                      {r.parameter !== 'none' && value === null && <span className="ink-2">no value could be read from the rule</span>}
+                      <span className="ink-2">from <a href={`#${r.source_hypothesis}`} className="mono">{r.source_hypothesis}</a> · {prov.provenance}</span>
+                      {note && <span className="mono ink-2 min-w-0 max-w-full truncate" title={note}>{note}</span>}
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+
+          <section className="panel p-3">
             <h2 className="mb-2 text-[13px] font-semibold">Measurements</h2>
             <ol className="space-y-2">
               {brick.measurements.map(m => (
@@ -75,31 +101,6 @@ export function BrickScreen({ id }: { id: string }) {
               <p className="mt-1 text-[11px]"><span className="chip chip-adapted">adapted · by rule</span> <span className="ink-2">no font name reported; the stack is the shell's substitute for the description.</span></p>
             </section>
           ) : null })()}
-          <section className="panel p-3">
-            <h2 className="mb-2 text-[13px] font-semibold">Transferable relations</h2>
-            <ol className="space-y-2">
-              {relations.map(r => {
-                const prov = provenanceOf(brick, r)
-                const value = r.parameter === 'none' ? null : proposeValue(r.parameter as ParameterKey, r)
-                // C4′: where the rule would land on the shell (every other parameter at its default); the footnote is the same helper the Sheet uses
-                const lands = value === null ? null : landsOn(r.parameter as ParameterKey, { ...DEFAULT_PARAMS, [r.parameter]: value })
-                const note = footnoteFor(brick, prov.measurementIds)
-                return (
-                  <li key={r.id} id={r.id} className="rounded px-2 py-1" onMouseEnter={() => setHl(prov.measurementIds[0] ?? null)} onMouseLeave={() => setHl(null)}>
-                    <div className="flex items-baseline gap-2"><span className="mono ink-2">{r.id}</span><span>{r.rule}{lands && ` → ${lands}`}</span></div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 pl-8 text-[12px]">
-                      {r.parameter === 'none'
-                        ? <span className="chip chip-adapted">no slot</span>
-                        : <span className="chip chip-measured"><span className="mono">{r.parameter}</span>{value !== null && <span className="mono">= {String(value)}</span>}</span>}
-                      {r.parameter !== 'none' && value === null && <span className="ink-2">no value could be read from the rule</span>}
-                      <span className="ink-2">from <a href={`#${r.source_hypothesis}`} className="mono">{r.source_hypothesis}</a> · {prov.provenance}</span>
-                      {note && <span className="mono ink-2 min-w-0 max-w-full truncate" title={note}>{note}</span>}
-                    </div>
-                  </li>
-                )
-              })}
-            </ol>
-          </section>
 
           <section className="panel p-3" style={{ opacity: 0.85 }}>
             <h2 className="mb-2 text-[13px] font-semibold">Hypotheses</h2>
