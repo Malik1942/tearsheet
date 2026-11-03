@@ -256,17 +256,17 @@ describe('landsOn: image_text_dominance', () => {
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.55 })), "Posters run full width above the text, 55% as tall as the room density gives each item; year-review images grow with it.")
   })
   it('balanced: posters take the share of each list item width', () => {
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.4 })), "Posters take up to 40% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.4 })), "Posters take up to 40% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.")
   })
   it('adds the cap note above 0.8 and the raise note below 0.15, each after one space', () => {
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.95 })), "Posters run full width above the text, 80% as tall as the room density gives each item; year-review images grow with it. Capped at 80% so the text stays readable.")
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.1 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it. Raised to 15% so the poster stays visible.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.1 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it. Raised to 15% so the poster stays visible.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 1 })), "The poster sits on the right as a square up to 48% of the item's width; year-review rows have no thumbnails. Capped at 80% so the text stays readable.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0 })), "The poster sits on the right as a square up to 9% of the item's width; year-review rows have no thumbnails. Raised to 15% so the poster stays visible.")
   })
   it('adds no note exactly at 0.8 and at 0.15', () => {
-    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.8 })), "Posters take up to 80% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.")
-    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.15 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.8 })), "Posters take up to 80% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.")
+    assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.15 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.")
   })
 })
 

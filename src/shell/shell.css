@@ -37,6 +37,13 @@
 .shell[data-align="right"]  .item > * { direction: ltr; }
 .shell[data-align="right"]  .group-title, .shell[data-align="right"] .screen-title { text-align: right; }
 .shell[data-align="center"] .group-title, .shell[data-align="center"] .screen-title { text-align: center; }
+/* center never centers a wrapped multi-line meta (A5): the date and the venue take a fixed line each, cut with an ellipsis, and the tags keep to one line */
+.shell[data-align="center"] .item .meta :is(.date, .venue) { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shell[data-align="center"] .item .meta .sep { display: none; }
+.shell[data-align="center"] .item .tags { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* measure: a list item's text column stops at 32 characters, at the edge the alignment names */
+.item .text { max-width: 32ch; }
+.shell[data-align="center"] .item .text { justify-self: center; width: 100%; }
 
 /* ---------- top bar: the screen title, one control on the right, a hairline below; no status bar. It follows the alignment like the headings ---------- */
 .bar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--space); min-height: 44px; padding: calc(var(--space) * 0.5) var(--side); background: var(--color-bg); border-bottom: 1px solid var(--color-line); }
@@ -54,7 +61,7 @@
 .item {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words */
+  grid-template-columns: minmax(calc(48px * 16 / 10), calc(var(--image-share) * 100%)) minmax(9em, 1fr);   /* the text keeps 9em: at phone width a high image share shrinks the poster, not the words. The poster column never drops under 76.8 px, the width of a 48 px tall 16:10 poster, so a low share never pushes it over the text */
   gap: calc(var(--space) * 2);
   padding: var(--item-pad) calc(var(--side) + 12px + var(--space)) var(--item-pad) var(--side);   /* density sets this padding (params.ts ITEM_PAD), never a min-height: an item is as tall as what it holds. The right side keeps room for the chevron */
   align-items: center;

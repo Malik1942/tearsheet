@@ -113,3 +113,22 @@ describe('A6 year review hierarchy', () => {
     assert.match(declsOf('.shell[data-align="right"] .stats'), /justify-content: flex-end/)
   })
 })
+
+describe('A5 alignment fixes', () => {
+  const markup = readFileSync(new URL('../src/shell/ListScreen.tsx', import.meta.url), 'utf8')
+  it('the list meta is a date, a separator and a venue, so center can put date and venue on lines of their own', () => {
+    assert.match(markup, /<p className="meta"><span className="date">\{shortDate\(c\.date\)\}<\/span><span className="sep"> · <\/span><span className="venue">\{c\.venue\}, \{c\.city\}<\/span><\/p>/)
+  })
+  it('under center: one line each for date and venue, cut with an ellipsis; no separator; tags on one line', () => {
+    assert.ok(readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8').includes('.shell[data-align="center"] .item .meta :is(.date, .venue) { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }'))
+    assert.match(declsOf('.shell[data-align="center"] .item .meta .sep'), /display: none/)
+    assert.match(declsOf('.shell[data-align="center"] .item .tags'), /white-space: nowrap; overflow: hidden; text-overflow: ellipsis/)
+  })
+  it('the text column stops at 32 characters', () => {
+    assert.match(declsOf('.item .text'), /max-width: 32ch/)
+  })
+  it('the balanced poster column never drops under a 48 px tall 16:10 poster, and the text keeps 9em; the type-led square keeps its 48 px floor', () => {
+    assert.match(declsOf('.item'), /grid-template-columns: minmax\(calc\(48px \* 16 \/ 10\), calc\(var\(--image-share\) \* 100%\)\) minmax\(9em, 1fr\)/)
+    assert.match(declsOf('.shell[data-hierarchy="type-led"] .item'), /grid-template-columns: 1fr minmax\(48px, calc\(var\(--image-share\) \* 60%\)\)/)
+  })
+})

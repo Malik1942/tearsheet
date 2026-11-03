@@ -31,7 +31,7 @@ function Item({ c, hues }: { c: Concert; hues: number }) {
       <div className="pic"><img src={posterFor(c)} alt="" /></div>
       <div className="text">
         <h3 className="title">{c.artist}</h3>
-        <p className="meta">{shortDate(c.date)} · {c.venue}, {c.city}</p>
+        <p className="meta"><span className="date">{shortDate(c.date)}</span><span className="sep"> · </span><span className="venue">{c.venue}, {c.city}</span></p>
         <p className="note">{c.note}</p>
         <p className={hues >= 3 ? 'tags palette-3' : 'tags'}>
           {c.tags.map(t => <span key={t} className="tag">{t}</span>)}

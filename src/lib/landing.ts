@@ -147,7 +147,7 @@ export function landsOn(key: ParameterKey, params: Params): string {
     case 'image_text_dominance': {
       const base = H === 'type-led' ? `The poster sits on the ${side} as a square up to ${Math.round(layout * 60)}% of the item's width; year-review rows have no thumbnails.`
         : H === 'image-led' ? `Posters run full width above the text, ${P}% as tall as the room density gives each item; year-review images grow with it.`
-        : `Posters take up to ${P}% of each list item's width (less on a narrow screen, so names stay whole); year-review thumbnails grow with it.`
+        : `Posters take up to ${P}% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.`
       return s > 0.8 ? `${base} Capped at 80% so the text stays readable.` : s < 0.15 ? `${base} Raised to 15% so the poster stays visible.` : base
     }
     case 'accent_placement': {
