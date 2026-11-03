@@ -69,8 +69,8 @@ function devApi(): Plugin {
         for await (const c of req) chunks.push(c as Buffer)
         let json: any = null
         try { json = JSON.parse(Buffer.concat(chunks).toString('utf8')) } catch { res.statusCode = 400; res.end('bad json'); return }
-        const { handleExtract } = await server.ssrLoadModule('/src/lib/extract.ts') as { handleExtract: (body: unknown, key: string | undefined) => Promise<{ code: number; body: unknown }> }
-        const { code, body } = await handleExtract(json, readKey())
+        const { handleExtract } = await server.ssrLoadModule('/src/lib/extract.ts') as { handleExtract: (body: unknown, key: string | undefined, o: { ip?: string }) => Promise<{ code: number; body: unknown }> }
+        const { code, body } = await handleExtract(json, readKey(), { ip: req.socket.remoteAddress ?? 'dev' })
         res.statusCode = code
         res.setHeader('Content-Type', 'application/json')
         res.end(JSON.stringify(body))

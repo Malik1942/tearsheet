@@ -9,7 +9,12 @@ const COPY = {
   empty: 'Nothing saved yet.',
   hint: "Add a photo of anything you like the look of. You don't need to know what it's for.",
   extracting: 'Reading… usually 15–25 s',
+  /** Second line under the extracting state: what the reading is, said plainly (spec v3 L6). */
+  measuring: 'Measuring ratios, shares and hues. Not tagging.',
   queued: 'Queued',
+  /** L11: the server's daily or hourly limit; the photo stays pending and is read on a later open. */
+  limit: 'Daily reading limit reached. Your photo is saved and will be read later.',
+  offline: (waiting: number) => `Offline · ${waiting} waiting`,
   unparsed: "Couldn't read this one.",
   composePhone: 'Open on a larger screen to compose.',
   phoneProjects: 'Projects open here as preview and instructions.',
@@ -26,6 +31,7 @@ export function Library() {
   const live = store.bricks.filter(b => !b.superseded_by)
   const bricks = [...live].sort((a, b) => (b.saved_at > a.saved_at ? 1 : b.saved_at < a.saved_at ? -1 : 0))
   const reading = live.filter(b => b.status === 'pending' || b.status === 'extracting').length
+  const waiting = live.filter(b => b.status === 'pending').length
 
   const onFiles = async (files: FileList | null) => {
     if (!files || !files.length) return
@@ -48,7 +54,7 @@ export function Library() {
     <div className="chrome min-h-full">
       <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
         <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-        <span className="ink-2 mono min-w-0 truncate text-[12px]" aria-live="polite">Saved {live.length}{reading ? ` · reading ${reading}` : ''}</span>
+        <span className="ink-2 mono min-w-0 truncate text-[12px]" aria-live="polite">{store.online ? `Saved ${live.length}${reading ? ` · reading ${reading}` : ''}` : COPY.offline(waiting)}</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <Link href="/sync" className="btn btn-quiet" title="Show this library's code, or enter one">Sync</Link>
           <Link href="/projects" className="btn btn-quiet hidden sm:inline-block">Projects</Link>
@@ -96,9 +102,11 @@ function Card({ brick: b, onRetry, onRemove }: { brick: Brick; onRetry: () => vo
         <div className="flex items-center justify-between">
           <span className="ink-2 text-[12px]">saved {b.saved_at}{(b.version ?? 1) > 1 ? ` · v${b.version}` : ''}</span>
           {status === 'extracting' && <span className="text-[12px]" style={{ color: 'var(--accent)' }}>{COPY.extracting}</span>}
-          {status === 'pending' && <span className="ink-2 text-[12px]">{COPY.queued}</span>}
+          {status === 'pending' && b.held !== 'limit' && <span className="ink-2 text-[12px]">{COPY.queued}</span>}
           {status === 'unparsed' && <span className="text-[12px]" style={{ color: 'var(--accent)' }}>{COPY.unparsed}</span>}
         </div>
+        {status === 'extracting' && <span className="ink-2 text-[11px]">{COPY.measuring}</span>}
+        {status === 'pending' && b.held === 'limit' && <span className="ink-2 text-[12px]">{COPY.limit}</span>}
         {b.credit && <span className="ink-2 truncate text-[11px]" title={b.credit}>{b.credit}</span>}
         {status === 'ready' && rules.map(r => (
           <div key={r.id} className="flex items-baseline gap-2 text-[12px]">
