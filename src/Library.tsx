@@ -7,7 +7,7 @@ import type { Brick } from './lib/types'
 
 const COPY = {
   empty: 'Nothing saved yet.',
-  hint: "Add a photo of anything you like the look of. You don't need to know what it's for.",
+  hint: "Add anything you like the look of. You don't need to know what it's for.",
   extracting: 'Reading… usually 15–25 s',
   /** Second line under the extracting state: what the reading is, said plainly (spec v3 L6). */
   measuring: 'Measuring ratios, shares and hues. Not tagging.',
@@ -16,8 +16,9 @@ const COPY = {
   limit: 'Daily reading limit reached. Your photo is saved and will be read later.',
   offline: (waiting: number) => `Offline · ${waiting} waiting`,
   unparsed: "Couldn't read this one.",
-  composePhone: 'Open on a larger screen to compose.',
-  phoneProjects: 'Projects open here as preview and instructions.',
+  /** L9: the phone line under the header; the link keeps the phone's way to a project's Preview and Instructions. */
+  composePhone: 'Compose needs a wider screen. Your library is here on your phone.',
+  phoneProjects: 'Projects →',
   full: `The library holds ${LIBRARY_CAP} bricks. Remove one to add another.`,
 }
 
