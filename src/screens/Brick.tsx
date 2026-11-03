@@ -7,6 +7,11 @@ import { footnoteFor, footnoteMeasurement, landsOn } from '../lib/landing'
 import { DEFAULT_PARAMS, type ParameterKey } from '../shell/params'
 import { MiniPreview } from '../shell/MiniPreview'
 import { brickParams } from '../lib/brickPreview'
+import { originLabel } from '../lib/brickLabels'
+import { originOf } from '../lib/starters'
+
+/** A starter ships with Tearsheet: it cannot be removed, only hidden. */
+const STARTER_KEEP = 'Starters ship with Tearsheet; hide them with the Starters toggle.'
 
 /** Brick screen (spec v3 B2, B3): one photo; on the right a mini-preview of the List screen made from this brick alone (its three parameters, its own skin, the shell's defaults for the rest),
  *  then the transferable relations (rule → where it would land, `none` last as `no slot`), the measurements they rest on, the letterform description,
@@ -27,12 +32,13 @@ export function BrickScreen({ id }: { id: string }) {
   const mIds = new Set(brick.measurements.map(m => m.id))
   const relations = [...brick.relations].sort((a, b) => (a.parameter === 'none' ? 1 : 0) - (b.parameter === 'none' ? 1 : 0))
   const mini = brickParams(brick)
+  const starter = originOf(brick) === 'starter'
 
   return (
     <div className="chrome min-h-full">
       <header className="flex items-center gap-3 border-b px-4 py-2 hairline" style={{ background: 'var(--panel)' }}>
         <Link href="/" className="font-semibold no-underline" style={{ color: 'var(--ink)' }}>Tearsheet</Link>
-        <span className="ink-2">/ <span className="mono">{brick.id}</span> · saved {brick.saved_at}</span>
+        <span className="ink-2 min-w-0 truncate">/ <span className="mono">{brick.id}</span> · {originLabel(brick)}</span>
         <div className="ml-auto flex items-center gap-2">
           <button type="button" className={`btn ${regions ? '' : 'btn-quiet'}`} onClick={() => setRegions(v => !v)}>Regions {regions ? 'on' : 'off'}</button>
         </div>
@@ -134,7 +140,7 @@ export function BrickScreen({ id }: { id: string }) {
 
           <footer className="flex items-center gap-2">
             <button type="button" className="btn btn-accent" onClick={() => navigate(`/projects?brick=${brick.id}`)}>Use in a project →</button>
-            <button type="button" className="btn btn-quiet" onClick={() => { if (confirm(`Remove ${brick.id}? Projects using it lose its parameters and unexpressed items.`)) { store.removeBrick(brick.id); navigate('/') } }}>Remove</button>
+            <button type="button" className="btn btn-quiet" disabled={starter} title={starter ? STARTER_KEEP : undefined} onClick={() => { if (confirm(`Remove ${brick.id}? Projects using it lose its parameters and unexpressed items.`)) { store.removeBrick(brick.id); navigate('/') } }}>Remove</button>
           </footer>
         </div>
       </div>

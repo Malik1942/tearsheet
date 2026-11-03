@@ -1,9 +1,10 @@
 import { useState, type ImgHTMLAttributes } from 'react'
 import { SAMPLES } from '../fixtures/samples'
 import { IDB } from '../lib/persist'
+import { creditLine } from '../lib/brickLabels'
 
-/** Licensed samples carry their credit everywhere, including thumbnails too small for a visible line. */
-const CREDITS = new Map(SAMPLES.flatMap(b => (b.credit ? [[b.photo.url, b.credit] as const] : [])))
+/** Starters carry their credit everywhere, including thumbnails too small for a visible line (spec v3 SB2). */
+const CREDITS = new Map(SAMPLES.map(b => [b.photo.url, creditLine(b)] as const))
 
 const WITHHELD = `data:image/svg+xml;utf8,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="#2a2a2a"/><text x="200" y="140" font-family="system-ui, sans-serif" font-size="18" fill="#bbb" text-anchor="middle">reference photo withheld</text><text x="200" y="168" font-family="system-ui, sans-serif" font-size="13" fill="#888" text-anchor="middle">downloaded material is not published with the repo</text></svg>`,

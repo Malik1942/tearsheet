@@ -6,6 +6,8 @@ import { Link } from './lib/router'
 import { Photo } from './bricks/Photo'
 import { MiniPreview } from './shell/MiniPreview'
 import { brickParams } from './lib/brickPreview'
+import { originLabel } from './lib/brickLabels'
+import { originOf } from './lib/starters'
 import type { Brick } from './lib/types'
 
 const COPY = {
@@ -23,6 +25,13 @@ const COPY = {
   composePhone: 'Compose needs a wider screen. Your library is here on your phone.',
   phoneProjects: 'Projects →',
   full: `The library holds ${LIBRARY_CAP} bricks. Remove one to add another.`,
+  /** L7 and SB4: under the empty state; the starters are built in and persistent, and they step aside as the library fills. */
+  starters: 'These are starters. Yours replace them as you save.',
+  startersHidden: 'Starters are hidden.',
+  showStarters: 'Show starters',
+  /** SB3: the toggle that hides every starter (also on the Projects form). */
+  includeStarters: 'Include starters',
+  includeTitle: 'Starters fill your proposals only while you have fewer than three bricks of your own.',
 }
 
 /** Library: collect photos over time; see what was extracted. Adding never asks for an intent.
@@ -32,8 +41,11 @@ export function Library() {
   const shoot = useRef<HTMLInputElement>(null)
   const pick = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const live = store.bricks.filter(b => !b.superseded_by)
-  const bricks = [...live].sort((a, b) => (b.saved_at > a.saved_at ? 1 : b.saved_at < a.saved_at ? -1 : 0))
+  // L7: the Library is the person's own bricks; the starters show only while there are none (below), and Saved counts the own ones
+  const live = store.bricks.filter(b => originOf(b) === 'own' && !b.superseded_by)
+  const newestFirst = (list: Brick[]) => [...list].sort((a, b) => (b.saved_at > a.saved_at ? 1 : b.saved_at < a.saved_at ? -1 : 0))
+  const bricks = newestFirst(live)
+  const starters = newestFirst(store.bricks.filter(b => originOf(b) === 'starter'))
   const reading = live.filter(b => b.status === 'pending' || b.status === 'extracting').length
   const waiting = live.filter(b => b.status === 'pending').length
 
@@ -45,7 +57,7 @@ export function Library() {
       try { prepared = await prepareImage(file) } catch (e) { setNotice(`Could not read ${file.name}: ${(e as Error).message}`); continue }
       const brick: Brick = {
         id: `b_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`, photo: { url: prepared.dataUrl, width: prepared.width, height: prepared.height },
-        saved_at: new Date().toISOString().slice(0, 10), status: 'pending', retries: 0, version: 1,
+        saved_at: new Date().toISOString().slice(0, 10), origin: 'own', status: 'pending', retries: 0, version: 1,
         measurements: [], hypotheses: [], relations: [], regions: [], fragile_if_changed: '',
         model: { id: 'muse-spark-1.3', effort: 'medium', latency_ms: 0, input_tokens: 0, output_tokens: 0 },
       }
@@ -71,18 +83,38 @@ export function Library() {
       </header>
       <div className="sm:hidden px-4 py-1 text-[12px] ink-2" style={{ borderBottom: '1px solid var(--line)' }}>{COPY.composePhone} <Link href="/projects">{COPY.phoneProjects}</Link></div>
 
+      {bricks.length > 0 && (
+        <label className="ink-2 flex items-center gap-2 px-4 py-1 text-[12px]" style={{ borderBottom: '1px solid var(--line)' }} title={COPY.includeTitle}>
+          <input type="checkbox" checked={store.showStarters} onChange={e => store.setShowStarters(e.target.checked)} />{COPY.includeStarters}
+        </label>
+      )}
+
       {notice && <div className="mx-4 mt-3 rounded px-3 py-2 text-[12px]" style={{ background: 'var(--panel)', border: '1px solid var(--accent)' }}>{notice}</div>}
 
       {bricks.length === 0 ? (
-        <div className="mx-auto max-w-md px-4 pt-20 text-center">
-          <h1>{COPY.empty}</h1>
-          <p className="ink-2 mt-2">{COPY.hint}</p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <button type="button" className="btn btn-accent" onClick={() => shoot.current?.click()}>Shoot</button>
-            <button type="button" className="btn" onClick={() => pick.current?.click()}>Add from library</button>
-            <button type="button" className="btn" onClick={() => store.loadSamples()}>Load sample library</button>
+        <>
+          <div className="mx-auto max-w-md px-4 pt-12 text-center">
+            <h1>{COPY.empty}</h1>
+            <p className="ink-2 mt-2">{COPY.hint}</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <button type="button" className="btn btn-accent" onClick={() => shoot.current?.click()}>Shoot</button>
+              <button type="button" className="btn" onClick={() => pick.current?.click()}>Add from library</button>
+            </div>
           </div>
-        </div>
+          {store.showStarters ? (
+            <section className="px-4 pb-4 pt-10" aria-label="Starters">
+              <p className="ink-2 mb-3 text-center">{COPY.starters}</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {starters.map(b => <Card key={b.id} brick={b} onRetry={noop} onRemove={noop} />)}
+              </div>
+            </section>
+          ) : (
+            <div className="mx-auto max-w-md px-4 pt-8 text-center">
+              <p className="ink-2">{COPY.startersHidden}</p>
+              <button type="button" className="btn mt-2" onClick={() => store.setShowStarters(true)}>{COPY.showStarters}</button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {bricks.map(b => <Card key={b.id} brick={b} onRetry={() => store.retry(b.id)} onRemove={() => store.removeBrick(b.id)} />)}
@@ -91,6 +123,8 @@ export function Library() {
     </div>
   )
 }
+
+const noop = () => undefined
 
 /** The 16:10 photo box is at least ~180 px tall at the narrowest layouts; a 9:16 preview 96 px wide is 170 px tall and fits in all of them. */
 const PREVIEW_W = 96
@@ -123,14 +157,14 @@ function Card({ brick: b, onRetry, onRemove }: { brick: Brick; onRetry: () => vo
       </div>
       <div className="flex flex-col gap-1 px-3 py-2">
         <div className="flex items-center justify-between">
-          <span className="ink-2 text-[12px]">saved {b.saved_at}{(b.version ?? 1) > 1 ? ` · v${b.version}` : ''}</span>
+          {/* SB2: one origin line, `saved Jun 21, 2025` or `starter · <credit>`; a starter's credit travels with it here */}
+          <span className="ink-2 min-w-0 truncate text-[12px]" title={originLabel(b)}>{originLabel(b)}{(b.version ?? 1) > 1 ? ` · v${b.version}` : ''}</span>
           {status === 'extracting' && <span className="text-[12px]" style={{ color: 'var(--accent)' }}>{COPY.extracting}</span>}
           {status === 'pending' && b.held !== 'limit' && <span className="ink-2 text-[12px]">{COPY.queued}</span>}
           {status === 'unparsed' && <span className="text-[12px]" style={{ color: 'var(--accent)' }}>{COPY.unparsed}</span>}
         </div>
         {status === 'extracting' && <span className="ink-2 text-[11px]">{COPY.measuring}</span>}
         {status === 'pending' && b.held === 'limit' && <span className="ink-2 text-[12px]">{COPY.limit}</span>}
-        {b.credit && <span className="ink-2 truncate text-[11px]" title={b.credit}>{b.credit}</span>}
         {status === 'ready' && rules.map(r => (
           <div key={r.id} className="flex items-baseline gap-2 text-[12px]">
             <span className="min-w-0 flex-1 truncate">{r.rule}</span>

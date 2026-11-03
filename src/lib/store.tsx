@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { SAMPLES } from '../fixtures/samples'
 import type { Brick } from './types'
 import type { Project } from './mapRelations'
 import { extractBrick } from './client'
@@ -7,26 +6,31 @@ import { firstVersion, mergeProjectLists, withNextVersion } from './versions'
 import { OFFLINE_RETRY_MS, afterResult, reinsertFirst, retryBlocked, shouldArmRetry, type Held } from './queue'
 import { IDB, PHOTO_GONE, needsHydration, persistState, readPhotos, settleHydration, unreadBrickIds } from './persist'
 import { deletePhoto, getPhotos, putPhoto } from './photoStore'
+import { STARTER_IDS, ownBricks, withStarters, withoutStarters } from './starters'
 
-/** Versioned key (PRD L9). The library starts empty; `Load sample library` seeds it. Older keys are ignored. */
+/** Versioned key (PRD L9). The saved library holds the person's own bricks only: the starters are built in (starters.ts), never saved. Older keys are ignored. */
 const KEY = 'tearsheet.v2'
 export const LIBRARY_CAP = 60
 /** Extraction queue (PRD L5): at most this many requests in flight, first in first out. */
 export const MAX_IN_FLIGHT = 2
 
-export type State = { bricks: Brick[]; projects: Project[]; activeProjectId: string | null }
-const EMPTY: State = { bricks: [], projects: [], activeProjectId: null }
+/** `bricks` here is the saved state: the person's own bricks. The store hands the screens `bricks` with the starters added (see the provider). `showStarters` is SB3's toggle. */
+export type State = { bricks: Brick[]; projects: Project[]; activeProjectId: string | null; showStarters: boolean }
+const EMPTY: State = { bricks: [], projects: [], activeProjectId: null, showStarters: true }
 
-/** localStorage holds the metadata and, for own photos, an `idb:<id>` pointer; older saves still hold the data URLs, which the next save moves. */
+/** localStorage holds the metadata and, for own photos, an `idb:<id>` pointer; older saves still hold the data URLs, which the next save moves.
+ *  An older save also holds the copies of the samples that `Load sample library` made: they are starters now and are dropped here. A save without `showStarters` shows them. */
 const initial = (): State => {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return JSON.parse(raw) as State
+    if (raw) { const s = JSON.parse(raw) as State; return { ...withoutStarters(s), showStarters: s.showStarters !== false } }
   } catch { /* storage unavailable: run in memory */ }
   return EMPTY
 }
 
 export type Actions = {
+  /** SB3: hide every starter (the Library, the manual grid, the proposal pool, Compose's swap and add lists); a project that already uses one still resolves it. */
+  setShowStarters: (show: boolean) => void
   addBrick: (b: Brick) => boolean
   updateBrick: (id: string, patch: Partial<Brick>) => void
   removeBrick: (id: string) => void
@@ -34,10 +38,9 @@ export type Actions = {
   enqueue: (id: string) => void
   /** B4: a retry creates a new version that supersedes the old brick; the old values stay. */
   retry: (id: string) => void
-  loadSamples: () => void
-  /** S3: merge bricks from the sync store by id; newest version wins. Returns how many were new or changed. */
+  /** S3: merge bricks from the sync store by id; newest version wins. Returns how many were new or changed. A starter that comes back from a code (an older library synced its copies) is ignored. */
   mergeBricks: (incoming: Brick[]) => number
-  /** Replace bricks wholesale (used before a code is forgotten, to inline photos that lived on the store). */
+  /** Replace the own bricks wholesale (used before a code is forgotten, to inline photos that lived on the store). Starters in the list are dropped. */
   replaceBricks: (bricks: Brick[]) => void
   createProject: (intent: string, brickIds?: string[], name?: string, extra?: Partial<Project>) => string
   /** Sync: projects ride along with the bricks; merge by id, the newest `updatedAt` wins. Returns how many were new or changed. */
@@ -188,6 +191,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     updateBrick: update,
     removeBrick: id => {
+      if (STARTER_IDS.has(id) && !stateRef.current.bricks.some(b => b.id === id && b.origin === 'own')) return   // SB2: a starter ships with Tearsheet and cannot be removed
       stored.current.delete(id); unread.current.delete(id)
       deletePhoto(id).catch(() => { /* best effort: an orphan photo costs space, nothing else */ })
       setState(s => ({ ...s, bricks: s.bricks.filter(b => b.id !== id), projects: s.projects.map(p => ({ ...p, brickIds: p.brickIds.filter(x => x !== id) })) }))
@@ -198,22 +202,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // one counted retry, and not on a photo that is no longer on this device: there is nothing to send, so it would only spend the retry
       if (!old || retryBlocked(old)) return
       const nid = `${id.split('.v')[0]}.v${(old.version ?? 1) + 1}`
-      const next: Brick = { ...old, id: nid, version: (old.version ?? 1) + 1, supersedes: id, superseded_by: undefined, status: 'pending', error: undefined, retries: (old.retries ?? 0) + 1,
+      const next: Brick = { ...old, id: nid, origin: 'own', version: (old.version ?? 1) + 1, supersedes: id, superseded_by: undefined, status: 'pending', error: undefined, retries: (old.retries ?? 0) + 1,
         measurements: [], hypotheses: [], relations: [], regions: [], fragile_if_changed: '' }
       setState(s => ({ ...s, bricks: [next, ...s.bricks.map(b => b.id === id ? { ...b, superseded_by: nid, retries: (b.retries ?? 0) + 1 } : b)] }))
       stateRef.current = { ...stateRef.current, bricks: [next, ...stateRef.current.bricks] }
       waiting.current.push(nid); pump()
     },
-    loadSamples: () => setState(s => {
-      const have = new Set(s.bricks.map(b => b.id))
-      const fresh = SAMPLES.filter(b => !have.has(b.id)).map(b => ({ ...b, status: 'ready' as const, prompt_version: 'v3' }))
-      return { ...s, bricks: [...fresh, ...s.bricks].slice(0, LIBRARY_CAP) }
-    }),
     mergeBricks: incoming => {
       const cur = stateRef.current.bricks
       const byId = new Map(cur.map(b => [b.id, b]))
       let changed = 0
-      for (const inc of incoming) {
+      for (const inc of ownBricks(incoming)) {
         const have = byId.get(inc.id)
         const vi = inc.version ?? 1, vh = have?.version ?? 1
         if (!have) { byId.set(inc.id, { ...inc, status: inc.status === 'ready' ? 'ready' : inc.status === 'unparsed' ? 'unparsed' : 'pending' }); changed++; continue }
@@ -229,7 +228,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (stale.length) { waiting.current.push(...stale); pump() }
       return changed
     },
-    replaceBricks: bricks => { setState(s => ({ ...s, bricks })); stateRef.current = { ...stateRef.current, bricks } },
+    replaceBricks: all => { const bricks = ownBricks(all); setState(s => ({ ...s, bricks })); stateRef.current = { ...stateRef.current, bricks } },
     createProject: (intent, brickIds = [], name, extra) => {
       const id = `p_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
       const now = new Date().toISOString()
@@ -246,12 +245,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       stateRef.current = { ...stateRef.current, projects }
       return changed
     },
-    // C9: every accepted change bumps the version and records what it moved; a rename or anything outside the composition does not. Read the bricks from the same state the update applies to.
+    // C9: every accepted change bumps the version and records what it moved; a rename or anything outside the composition does not. Read the bricks from the same state the update applies to (the starters included: a project may use one).
     updateProject: (id, patch) => setState(s => {
       const at = new Date().toISOString()
-      return { ...s, projects: s.projects.map(p => p.id === id ? withNextVersion(p, { ...p, ...(typeof patch === 'function' ? patch(p) : patch), updatedAt: at }, s.bricks, at) : p) }
+      return { ...s, projects: s.projects.map(p => p.id === id ? withNextVersion(p, { ...p, ...(typeof patch === 'function' ? patch(p) : patch), updatedAt: at }, withStarters(s.bricks), at) : p) }
     }),
     setActive: id => setState(s => ({ ...s, activeProjectId: id })),
+    setShowStarters: show => setState(s => s.showStarters === show ? s : { ...s, showStarters: show }),
     reset: () => {
       for (const id of stored.current.keys()) deletePhoto(id).catch(() => { /* best effort */ })
       stored.current.clear()
@@ -261,7 +261,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])
   const queue = useMemo(() => ({ waiting: waiting.current.length, inFlight: inFlight.current.size }), [queueTick, state.bricks.length])
-  return <Ctx.Provider value={{ ...state, ...actions, queue, online }}>{children}</Ctx.Provider>
+  // SB2: the screens see the own bricks and the starters; the saved state, the queue and every write below see the own bricks only
+  const bricks = useMemo(() => withStarters(state.bricks), [state.bricks])
+  return <Ctx.Provider value={{ ...state, bricks, ...actions, queue, online }}>{children}</Ctx.Provider>
 }
 
 export function useStore() {

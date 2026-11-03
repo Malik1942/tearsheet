@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
+import { ownBricks } from '../lib/starters'
 import { readSync, writeSync, generateCode, normalizeCode, CODE_RE, forget, inlineBlobPhotos, runSync, openLink, shareLink, canShare, type SyncInfo } from '../lib/syncClient'
 
 const COPY = {
@@ -35,7 +36,7 @@ export function SyncScreen() {
   const [progress, setProgress] = useState<{ sent: number; total: number } | null>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const fromUrl = new URLSearchParams(location.search).get('code')
-  const live = store.bricks.filter(b => b.status !== 'extracting')
+  const live = ownBricks(store.bricks).filter(b => b.status !== 'extracting')   // the starters ship with Tearsheet and are not under the code
 
   const save = (next: SyncInfo | null) => { writeSync(next); setInfo(next) }
 

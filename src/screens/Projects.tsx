@@ -4,7 +4,8 @@ import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
 import { propose, proposeEnabled } from '../lib/proposeClient'
 import { proposedNow } from '../export'
-import { savedLabel } from '../lib/brickLabels'
+import { originLabel } from '../lib/brickLabels'
+import { orderOwnFirst, originOf, proposalPool } from '../lib/starters'
 import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
 import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
@@ -45,7 +46,10 @@ const COPY = {
   preview: 'Preview',
   instructions: 'Instructions',
   phone: 'Compose needs a wider screen. Projects open here as a preview and as instructions.',
-  empty: 'Nothing in the library yet. Add photos or load the sample library first.',
+  empty: 'Nothing to pick from yet. Add photos, or turn on Include starters.',
+  /** SB3: the toggle that hides every starter (also in the Library header). */
+  includeStarters: 'Include starters',
+  includeTitle: 'Starters fill your proposals only while you have fewer than three bricks of your own.',
 }
 
 type Stage = 'intent' | 'proposing' | 'proposal' | 'compositions' | 'manual'
@@ -81,10 +85,13 @@ export function ProjectsScreen() {
   const [meta, setMeta] = useState<Meta | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [swapping, setSwapping] = useState<string | null>(null)
-  const ready = store.bricks.filter(b => (b.status ?? 'ready') === 'ready' && !b.superseded_by)
+  // SB3: one pool feeds the chips, the proposal, the swap list and the manual grid: the ready own bricks, then the starters while the library is thin and they are shown
+  const pool = useMemo(() => proposalPool(store.bricks, store.showStarters), [store.bricks, store.showStarters])
+  const ready = useMemo(() => pool.map(p => p.brick), [pool])
+  const fillsOf = (id: string) => pool.find(p => p.brick.id === id)?.fills
   const withRules = ready.filter(b => b.relations.length > 0)
-  // chips are offered for this intent from the library's own relations; one that has fallen out of the six as the intent changed is no longer set
-  const offered = useMemo(() => chipsFor(store.bricks, intent), [store.bricks, intent])
+  // chips are offered for this intent from the pool's own relations; one that has fallen out of the six as the intent changed is no longer set
+  const offered = useMemo(() => chipsFor(ready, intent), [ready, intent])
   const active = chips.filter(c => offered.some(o => o.id === c))
   const anchorBrick = anchor ? withRules.find(b => b.id === anchor) : undefined
   const withAnchor = (p: string[]) => anchorBrick && !p.includes(anchorBrick.id) ? [anchorBrick.id, ...p].slice(0, MAX_BRICKS) : p
@@ -104,7 +111,8 @@ export function ProjectsScreen() {
     if (!out.ok) { setStage('manual'); setPicked(withAnchor); if (out.disabled) setEnabled(false); setNote(COPY.noProposal(out.reason.replace(/\.$/, ''))); return }
     // the starting point is the first card: the person's own pick, not the model's
     const first: Card[] = lean.anchor_id ? [{ brickId: lean.anchor_id, quotedRule: '', why: '', status: 'anchor' }] : []
-    setCards([...first, ...out.picks.map((p): Card => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' }))])
+    // SB3: own bricks outrank starters, so the proposed cards go own first, the model's order kept inside each group; the starting point stays ahead of both
+    setCards([...first, ...orderOwnFirst(out.picks.map((p): Card => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' })), ready)])
     setMeta({ model: out.model, effort: out.effort, latency_ms: out.latency_ms, dropped: out.dropped, intent: sent, ...(lean.chips.length || lean.anchor_id ? { lean } : {}) })
     setNote(out.dropped ? COPY.dropped(out.dropped) : null)
     setStage('proposal')
@@ -148,6 +156,11 @@ export function ProjectsScreen() {
   // back to the intent stage with the intent, the chips and the starting point kept; asking again is a new call
   const changeLean = () => { req.current++; setCards([]); setMeta(null); setAccepted(null); setNote(null); setSwapping(null); setStage('intent') }
   const busy = stage === 'proposing'
+  // hiding the starters also takes them out of the hand-picked set; the chips and the starting point follow the pool by themselves
+  const setStarters = (on: boolean) => {
+    store.setShowStarters(on)
+    if (!on) setPicked(p => p.filter(id => { const b = brickOf(id); return !b || originOf(b) === 'own' }))
+  }
 
   return (
     <div className="chrome min-h-full">
@@ -206,6 +219,9 @@ export function ProjectsScreen() {
               <span className="chip chip-adapted" title="next">Dashboard · next</span>
               <span className="chip chip-adapted" title="next">Form · next</span>
             </div>
+            <label className="mt-3 flex w-fit items-center gap-2 text-[12px] ink-2" title={COPY.includeTitle}>
+              <input type="checkbox" checked={store.showStarters} disabled={busy || stage === 'proposal' || stage === 'compositions'} onChange={e => setStarters(e.target.checked)} />{COPY.includeStarters}
+            </label>
 
             {stage === 'intent' && (
               <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -228,7 +244,7 @@ export function ProjectsScreen() {
                   <button type="button" className="btn btn-quiet px-2 py-0.5 text-[11px]" onClick={changeLean}>{COPY.changeLean}</button>
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-3" aria-live="polite" aria-label="Proposed bricks">
-                  {cards.map(c => <ProposalCard key={c.brickId} pick={c} brick={brickOf(c.brickId)} spare={spare} swapping={swapping === c.brickId} onSwap={() => setSwapping(swapping === c.brickId ? null : c.brickId)} onPick={to => swapCard(c.brickId, to)} />)}
+                  {cards.map(c => <ProposalCard key={c.brickId} pick={c} brick={brickOf(c.brickId)} fills={fillsOf(c.brickId)} spare={spare} swapping={swapping === c.brickId} onSwap={() => setSwapping(swapping === c.brickId ? null : c.brickId)} onPick={to => swapCard(c.brickId, to)} />)}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button type="button" className="btn btn-accent" onClick={acceptAll}>{COPY.acceptAll}</button>
@@ -264,7 +280,7 @@ export function ProjectsScreen() {
                     return (
                       <button key={b.id} type="button" onClick={() => toggle(b.id)} aria-pressed={on} className="overflow-hidden rounded text-left" style={{ border: `2px solid ${on ? 'var(--accent)' : 'var(--line)'}`, background: 'var(--panel)' }}>
                         <div style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" /></div>
-                        <div className="px-1.5 py-1 text-[11px]"><span className="mono">{b.id}</span> <span className="ink-2">{b.saved_at}</span></div>
+                        <div className="px-1.5 py-1 text-[11px]"><div className="mono truncate">{b.id}</div><div className="ink-2 truncate" title={originLabel(b)}>{originLabel(b)}</div></div>
                       </button>
                     )
                   })}
@@ -306,9 +322,9 @@ export function ProjectsScreen() {
   )
 }
 
-/** One proposed brick: the photo, the quoted rule as the reason, the model's one sentence, and Swap. A swapped card says so and names what it replaced;
+/** One proposed brick: the photo, where it came from (SB2: `saved Jun 21` or `starter · <credit>`, and for a starter filling a thin library why it is here), the quoted rule as the reason, the model's one sentence, and Swap. A swapped card says so and names what it replaced;
  *  the starting point the person chose ("More like this one") says so and carries no quote, because the model did not pick it. */
-function ProposalCard({ pick: c, brick: b, spare, swapping, onSwap, onPick }: { pick: ProposalPick; brick?: Brick; spare: Brick[]; swapping: boolean; onSwap: () => void; onPick: (to: string) => void }) {
+function ProposalCard({ pick: c, brick: b, fills, spare, swapping, onSwap, onPick }: { pick: ProposalPick; brick?: Brick; fills?: string; spare: Brick[]; swapping: boolean; onSwap: () => void; onPick: (to: string) => void }) {
   return (
     <article className="panel overflow-hidden">
       <div style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}>{b && <Photo src={b.photo.url} className="h-full w-full object-cover" />}</div>
@@ -317,7 +333,8 @@ function ProposalCard({ pick: c, brick: b, spare, swapping, onSwap, onPick }: { 
           <a href={`/brick/${c.brickId}`} target="_blank" rel="noopener" className="mono truncate" title="Opens the brick in a new tab; the proposal stays here">{c.brickId}</a>
           <span className={`chip ${c.status === 'proposed' ? 'chip-proposed' : 'chip-adapted'} shrink-0 px-1.5 text-[10px]`}>{c.status === 'proposed' ? COPY.proposedBy : COPY.swappedBy}</span>
         </div>
-        {b && <div className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{savedLabel(b.saved_at)}</div>}
+        {b && <div className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{originLabel(b)}</div>}
+        {fills && <div className="ink-2 text-[11px]">{fills}</div>}
         {c.status === 'proposed' ? (
           <>
             <blockquote className="m-0 border-l-2 pl-2" style={{ borderColor: 'var(--line)' }} title="This brick's rule, quoted by the model character for character">“{c.quotedRule}”</blockquote>
