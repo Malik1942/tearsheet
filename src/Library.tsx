@@ -4,7 +4,7 @@ import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
 import { BrickSheet } from './bricks/BrickSheet'
 import { RETRY_TITLE } from './bricks/retryCopy'
-import { dateLine, issueLine } from './lib/brickLabels'
+import { dateLine, issueParts, shortOriginLine } from './lib/brickLabels'
 import { originOf } from './lib/starters'
 import type { Brick } from './lib/types'
 
@@ -20,8 +20,8 @@ const COPY = {
   unparsed: "Couldn't read this one",
   retry: 'Try again',
   open: (date: string) => `Open photo, ${date}`,
-  /** L7 and SB4: under the empty state; the starters are built in and persistent, and they step aside as the library fills. */
-  starters: 'These are starters. Yours replace them as you save.',
+  /** L7 and SB4: the starters are built in and persistent, and they step aside as the library fills. Said once, in the issue line, with their count. */
+  starterCount: (n: number) => `${n} starter ${n === 1 ? 'photo' : 'photos'}`,
   startersHidden: 'Starters are hidden.',
   showStarters: 'Show starters',
 }
@@ -43,22 +43,18 @@ export function Library() {
   return (
     <div className="chrome min-h-full">
       <div className="gutter pb-8">
-        <Masthead bricks={bricks} />
+        <Masthead bricks={bricks} starters={store.showStarters ? starters.length : 0} />
         {bricks.length === 0 ? (
-          <>
-            <p className="empty-line">{COPY.empty}</p>
-            {store.showStarters ? (
-              <section aria-label="Starters">
-                <p className="ink-2 mb-4">{COPY.starters}</p>
-                <Grid bricks={starters} onOpen={setOpenId} />
-              </section>
-            ) : (
-              <div>
-                <p className="ink-2">{COPY.startersHidden}</p>
-                <button type="button" className="btn mt-2" onClick={() => store.setShowStarters(true)}>{COPY.showStarters}</button>
-              </div>
-            )}
-          </>
+          store.showStarters ? (
+            // the masthead already says what these are and how many (Malik, 2026-11-03: no bare "0 photos")
+            <section aria-label="Starters"><Grid bricks={starters} onOpen={setOpenId} /></section>
+          ) : (
+            <div>
+              <p className="empty-line">{COPY.empty}</p>
+              <p className="ink-2">{COPY.startersHidden}</p>
+              <button type="button" className="btn mt-2" onClick={() => store.setShowStarters(true)}>{COPY.showStarters}</button>
+            </div>
+          )
         ) : (
           <Grid bricks={bricks} onOpen={setOpenId} />
         )}
@@ -68,14 +64,24 @@ export function Library() {
   )
 }
 
-/** The loud Library's masthead (C+D §12.3): LIBRARY in display type, the count on the one red block, and the issue line under it with real counts only:
- *  how many photos are the person's own, and since when (the earliest date a card shows, so a photo's EXIF date counts). */
-function Masthead({ bricks }: { bricks: Brick[] }) {
+/** The loud Library's masthead (C+D §12.3): LIBRARY in display type, the count on the one red block, and the issue line under it with real counts only.
+ *  The block counts what the grid shows and names it (Malik, 2026-11-03: a bare "0" beside twelve photos said nothing): the person's own photos and since
+ *  when (the earliest date a card shows, so a photo's EXIF date counts), or, before there are any, the starters standing in for them. */
+function Masthead({ bricks, starters }: { bricks: Brick[]; starters: number }) {
   const first = bricks.map(b => b.taken_at ?? b.saved_at).sort()[0]
+  const own = bricks.length, startersShown = own === 0 && starters > 0
+  const parts = startersShown ? { count: COPY.starterCount(starters), since: '' } : issueParts(own, first)
   return (
     <section aria-label={COPY.title}>
-      <div className="masthead"><h1 className="display">{COPY.title}</h1><div className="count-block"><span className="display tnum" aria-hidden="true">{bricks.length}</span></div></div>
-      <p className="issue-line"><span>{issueLine(bricks.length, first)}</span></p>
+      <div className="masthead">
+        <h1 className="display">{COPY.title}</h1>
+        <div className="count-block" aria-hidden="true"><span className="display tnum">{startersShown ? starters : own}</span></div>
+      </div>
+      {/* says what the red number is, nothing more (Malik, 2026-11-03): "12 starter photos", or "14 photos" and, quieter, since when */}
+      <p className="issue-line" id="library-count">
+        <span className="issue-count">{parts.count}</span>
+        {parts.since && <span className="issue-since">{parts.since}</span>}
+      </p>
     </section>
   )
 }
@@ -138,7 +144,8 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
             disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']} onClick={() => { setAlert(false); store.retry(b.id) }}>{COPY.retry}</button>
         </div>
       )}
-      <div className="caption ink-2 mt-2 truncate" title={date}>{date}</div>
+      {/* the short credit ("Mia, 1923"), as on the swap sheet, so an institution's name is never cut; the full credit is its hover and the Brick sheet's */}
+      <div className="caption ink-2 mt-2 truncate" title={date}>{shortOriginLine(b)}</div>
     </li>
   )
 }

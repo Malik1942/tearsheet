@@ -36,9 +36,16 @@ export function dateLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' 
   return b.taken_at ? dayLabel(b.taken_at, today) : savedLabel(b.saved_at, today)
 }
 
-/** The loud Library's issue line (C+D §8), real counts only: "14 photos · since Dec 27, 2025", the date being the earliest a card shows; "0 photos" when empty. */
-export const issueLine = (n: number, first: string | undefined, today: Date = new Date()): string =>
-  `${n} ${n === 1 ? 'photo' : 'photos'}${n > 0 && first ? ` · since ${dayLabel(first, today)}` : ''}`
+/** The issue line's two halves (Malik, 2026-11-03: the line set as a rail, the count left and the note right): "14 photos" and "since Dec 27, 2025",
+ *  the date being the earliest a card shows; no date when empty. */
+export const issueParts = (n: number, first: string | undefined, today: Date = new Date()): { count: string; since: string } =>
+  ({ count: `${n} ${n === 1 ? 'photo' : 'photos'}`, since: n > 0 && first ? `since ${dayLabel(first, today)}` : '' })
+
+/** The loud Library's issue line (C+D §8), real counts only: "14 photos · since Dec 27, 2025"; "0 photos" when empty. */
+export const issueLine = (n: number, first: string | undefined, today: Date = new Date()): string => {
+  const p = issueParts(n, first, today)
+  return p.since ? `${p.count} · ${p.since}` : p.count
+}
 
 /** The one credit line a starter carries wherever its photo is shown (spec v3 SB2). The licensed works have their own (README, Sample credits); a starter without one is the author's own work. */
 export const creditLine = (b: Pick<Brick, 'credit' | 'saved_at'>): string => b.credit ?? `Malik Zhang, ${b.saved_at.slice(0, 4)}`
