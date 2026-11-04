@@ -468,21 +468,16 @@ a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
     :root[data-nav="back"]::view-transition-old(root) { animation: 220ms var(--ease) both page-out-right; }
     :root[data-nav="back"]::view-transition-new(root) { animation: 300ms var(--ease) both page-in-left; }
   }
-  /* the desktop's card to sheet (Library.tsx openCard): the photo grows into the sheet's, cropped as it goes rather than stretched; the panel slides in beside it */
-  ::view-transition-group(photo) { animation-duration: 340ms; animation-timing-function: var(--ease); }
-  ::view-transition-old(photo), ::view-transition-new(photo) { width: 100%; height: 100%; object-fit: cover; overflow: clip; }
-  dialog.sheet-side.is-morphing { view-transition-name: sheet; animation: none; }
-  ::view-transition-new(sheet) { animation: 340ms var(--ease) both sheet-in; }
-
-  /* sheets in and out (useModal.ts plays the exit before closing): the side panel from the right, the phone's sheet from the bottom, the small ones a fade */
+  /* sheets in and out (useModal.ts plays the exit before closing): the side panel from the right as the page dims, in one motion (a photo flown into it from its card
+     was tried and dropped: the sheet is a modal in the browser's top layer, and the flight measured its landing wrong), the phone's sheet from the bottom, the small ones a fade */
   .sheet[open] { animation: var(--t-reveal) var(--ease) both sheet-fade; }
-  .sheet-side[open]:not(.is-morphing) { animation: var(--t-sheet) var(--ease) both sheet-in; }
+  .sheet-side[open] { animation: var(--t-sheet) var(--ease) both sheet-in; }
   .sheet[open]::backdrop { animation: 260ms ease-out both veil; }
   .sheet[data-closing] { animation: var(--t-exit) var(--ease) both sheet-fade-out; }
   .sheet-side[data-closing] { animation: var(--t-exit) var(--ease) both sheet-out; }
   .sheet[data-closing]::backdrop { animation: var(--t-exit) ease-in both veil-out; }
   @media (max-width: 767.98px) {
-    .sheet-side[open]:not(.is-morphing) { animation-name: sheet-up; }
+    .sheet-side[open] { animation-name: sheet-up; }
     .sheet-side[data-closing] { animation-name: sheet-down; }
   }
   /* the exact rules unfold */

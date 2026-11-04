@@ -84,6 +84,28 @@ Added 2026-11-04, after Malik asked how to make the desktop feel like an app. Th
   - Keys never fire while you type in a field, or while a sheet is open (except the sheet's own arrows). Phones show neither the list nor its item.
 - **Make as a workspace, from 1180 px.** The screens sit at the left. At the right, in a sticky column, are the intent, then "From your photos": each photo with what it sets and why it was picked. That list is the photo row re-laid, with its switches, swap and badges as they are. Below 1180 px, the photo row stays under the screens.
 
+## 4c. Motion
+
+Added 2026-11-04. Malik approved the phone motion as prototyped and asked for a smoother desktop.
+- **One system:** one curve that starts quickly and stops softly (`--ease`), and four lengths: a press 90 ms, a reveal 240 ms, a sheet 320 ms, an exit 220 ms.
+- **Reduced motion:** with reduced motion set, pages and sheets change at once, and nothing else moves.
+- **Pages.** A move between pages is a view transition: the header and the tab bar stay still while the page cross-fades. On a phone it also slides 28 px the way the tabs run. The browser's back and forward stay instant.
+- **Sheets.**
+  - The photo sheet slides in from the right on desktop, as the page dims, in one motion, and rises from the bottom on a phone. Each leaves the way it came, Escape included. On a phone, a swipe down its top row closes it.
+  - The small sheets fade in.
+  - A photo flown from its card into the desktop sheet was tried and dropped. The sheet is a modal in the browser's top layer, and the flight measured its landing wrong.
+- **Content.**
+  - The exact rules unfold.
+  - Make's result rises, its photos follow 60 ms apart, and the leaders draw once the screens land.
+  - Presses give a little, and a Library photo leans in 2% under the pointer.
+
+The photo sheet's frame:
+- a top row with the handle (on a phone) and the × on paper, never on the photo;
+- the photo on paper, with the réseau at half strength;
+- the exact rules as a full row;
+- Use in Make pinned at the bottom;
+- region tags that would cover each other moved to their box's bottom corner.
+
 ## 5. The measured layer
 
 | Mark | Where it shows |
