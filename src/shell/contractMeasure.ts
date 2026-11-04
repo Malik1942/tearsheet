@@ -56,6 +56,12 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year
   const edges = new Map<string, string[]>()
   for (const h of heads) { const e = edgeOf(h); edges.set(e, [...(edges.get(e) ?? []), label(h)]) }
   if (edges.size > 1) out.push({ rule: 'one-axis', magnitude: edges.size - 1, detail: [...edges].map(([e, ls]) => `${e}: ${[...new Set(ls)].join(' ')}`).join('; ') })
+  // a centred title must sit on the screen's centre, not only be set to center: a column beside it (a hidden poster's) moves its centre off the axis
+  if (shell.dataset.align === 'center') {
+    const box = shell.getBoundingClientRect(), mid = box.left + shell.clientWidth / 2
+    const off = heads.filter(h => edgeOf(h) === 'center').map(h => { const r = h.getBoundingClientRect(); return { h, d: Math.round((r.left + r.right) / 2 - mid) } }).filter(o => Math.abs(o.d) > 2)
+    if (off.length) out.push({ rule: 'one-axis', magnitude: off.length, detail: `${off.length} centred titles off the screen's centre: ${[...new Set(off.map(o => `${label(o.h)} ${o.d > 0 ? '+' : ''}${o.d}px`))].slice(0, 4).join(', ')}` })
+  }
   if (screen === 'list' && shell.dataset.align === 'center') {
     const beside = all('.item').filter(item => {
       const pic = item.querySelector('.pic'), text = item.querySelector('.text')

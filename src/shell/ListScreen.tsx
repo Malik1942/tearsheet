@@ -3,10 +3,13 @@ import { groupBy, shortDate, type Entry, type ShellContent } from './content'
 import type { Params } from './params'
 
 /** The minimal top bar inside each phone frame (design pass A3): the screen title at title size, one control on the right, a hairline below.
- *  Without a title (the List, whose large title sits below it) it holds the control alone, so the title is said once (layout contract rule 5). */
-export function TopBar({ title, children }: { title?: string; children: ReactNode }) {
+ *  Without a title (the List under a left or right edge, whose large title sits below it) it holds the control alone, so the title is said once (layout contract rule 5).
+ *  `balance` (centred screens): a hidden, inert copy of the control on the empty side, so both sides are as wide and the title sits on the screen's
+ *  centre; a long title is cut with an ellipsis instead of sliding toward the empty side. */
+export function TopBar({ title, children, balance }: { title?: string; children: ReactNode; balance?: ReactNode }) {
   return (
     <header className="bar">
+      {title && balance && <span className="bar-balance" aria-hidden="true">{balance}</span>}
       {title && <h1 className="bar-title">{title}</h1>}
       {children}
     </header>
@@ -45,14 +48,18 @@ function Item({ e, hues }: { e: Entry; hues: number }) {
 }
 
 /** `staticRender` draws every control as a non-interactive element with the same class (a span for the top bar's Add show), for a copy that sits inside a button or a link.
- *  Large-title navigation (item 3): the bar holds the control, and the title sits under it at the screen's largest size (shell.css). */
+ *  Large-title navigation (item 3): the bar holds the control, and the title sits under it at the screen's largest size (shell.css). On a centred screen the
+ *  title sits in the bar instead, between nothing and the control, as on the year review: a centred large title under a bar holding only + read as a gap (Malik). */
 export function ListScreen({ params, staticRender = false, content }: { params: Params; staticRender?: boolean; content: ShellContent }) {
   const groups = groupBy(content.entries, String(params.grouping))
   const hues = Number(params.palette_hue_count)
+  const centred = params.alignment_edge === 'center'
   return (
     <div>
-      <TopBar><AddShow label={content.add} labelled={params.accent_placement === 'actions'} staticRender={staticRender} /></TopBar>
-      <h1 className="large-title">{content.screenTitles.list}</h1>
+      <TopBar title={centred ? content.screenTitles.list : undefined} balance={centred && <AddShow label={content.add} labelled={params.accent_placement === 'actions'} staticRender />}>
+        <AddShow label={content.add} labelled={params.accent_placement === 'actions'} staticRender={staticRender} />
+      </TopBar>
+      {!centred && <h1 className="large-title">{content.screenTitles.list}</h1>}
       {groups.map(g => (
         <section className="group" key={g.label || 'all'}>
           {g.label && <h2 className="group-title">{g.label}</h2>}

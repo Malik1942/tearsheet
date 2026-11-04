@@ -9,7 +9,7 @@
 
 | # | Rule | How it holds |
 |---|---|---|
-| 1 | One alignment axis per screen | Under `center`: balanced becomes image-led (thumbnail above the text), type-led hides the thumbnails (image share 0), alternating becomes uniform. The year review's rows and month labels follow the screen's edge (shell.css). |
+| 1 | One alignment axis per screen | Under `center`: balanced becomes image-led (thumbnail above the text), type-led hides the thumbnails (image share 0), alternating becomes uniform. The year review's rows and month labels follow the screen's edge (shell.css). Measured, not only declared: every centred title must sit within 2 px of the screen's centre (added 2026-11-03 after a hidden poster's column put the List's entries 32 px left of its title; on the old code 176 of 1,320 concert compositions fail it). |
 | 2 | Spacing only from 4 8 12 16 24 32 48 (× spacing_unit) | Side margins 16 (were 20). Title → meta 4, meta → tags 8. Item padding 32 24 16 16 as density goes 1 2 4 6 (density 6 was 12). The text column's percentage paddings are gone. A spacing unit outside 4–16 px snaps to 8px. |
 | 3 | At most three type sizes per screen | Already held: one type scale, three sizes a screen. |
 | 4 | No empty band over 24 px in a list item; text column ≥ 9em; tap targets ≥ 44 px | Top-bar controls 44 × 44 (were 34 × 32). The measure counts the text, not the chevron's padding. Alternating side-by-side rows swap their columns with the poster, so the text keeps its 9em. |

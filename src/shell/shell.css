@@ -75,7 +75,8 @@
 .bar-title { flex: 1; min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shell[data-align="right"] .bar { flex-direction: row-reverse; }
 .shell[data-align="right"] .bar-title { text-align: right; }
-.shell[data-align="center"] .bar { display: grid; grid-template-columns: 1fr auto 1fr; }
+.shell[data-align="center"] .bar { display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; }   /* the title column may shrink: a long title is cut, never pushed off the centre */
+.shell[data-align="center"] .bar-balance { grid-column: 1; justify-self: start; display: inline-flex; visibility: hidden; }   /* the control's twin on the empty side: both sides as wide, so the title sits on the centre */
 .shell[data-align="center"] .bar-title { grid-column: 2; text-align: center; }
 .shell[data-align="center"] .bar > :last-child { grid-column: 3; justify-self: end; }
 /* the quiet control: a 44 px square (a tap target, contract rule 4) on the surface tint, muted. The list's is .action, the one place the accent goes under accent_placement: actions */
@@ -96,7 +97,7 @@
 .chev { position: absolute; right: 0; top: 50%; translate: 0 -50%; width: 12px; height: 12px; color: var(--color-muted); }
 .item .pic { aspect-ratio: 16 / 10; min-height: 48px; max-height: calc(var(--slot) - var(--item-pad) * 2); align-self: start; } /* 16:10 is the shell's own choice (adapted): no brick measures the thumbnail's shape. The slot density gives an item caps its height */
 .item .text { min-width: 0; }
-.shell[data-thumbs="none"] .item { grid-template-columns: 1fr; }
+.shell[data-thumbs="none"][data-hierarchy] .item { grid-template-columns: 1fr; }   /* outranks the hierarchy grids below: a hidden poster keeps no column, so centred text sits on the screen's centre */
 .item .title { margin: 0 0 calc(var(--space) * 0.5); overflow-wrap: anywhere; hyphens: auto; }   /* title → meta: 4 */
 .item .meta { color: var(--color-muted); margin: 0; }
 .item .note { margin: var(--space) 0 0; color: var(--color-fg); }   /* meta → note: 8 */

@@ -16,7 +16,7 @@ export function DetailScreen({ params, staticRender = false, content }: { params
   const ordered = rhythm === 'featured-first' ? [...groups].sort((a, b) => b.items.length - a.items.length) : groups
   return (
     <div>
-      <TopBar title={content.screenTitles.review}>
+      <TopBar title={content.screenTitles.review} balance={params.alignment_edge === 'center' && <span className="bar-icon"><ShareIcon /></span>}>
         {staticRender ? <span className="bar-icon"><ShareIcon /></span> : <button className="bar-icon" type="button" aria-label="Share"><ShareIcon /></button>}
       </TopBar>
       <header className="review-head">

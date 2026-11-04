@@ -46,6 +46,16 @@ describe('device details inside each phone frame', () => {
     assert.match(review, /<h1 class="bar-title">Year review<\/h1>/)
     assert.doesNotMatch(review, /large-title/)
   })
+  it('on a centred screen the List title sits in the bar, with a hidden twin of the control on the empty side so it sits on the centre (Malik, 2026-11-03)', () => {
+    const centred = { ...DEFAULT_PARAMS, alignment_edge: 'center' }
+    const list = renderToStaticMarkup(h(Shell, { params: centred, screen: 'list' })), review = renderToStaticMarkup(h(Shell, { params: centred, screen: 'review' }))
+    assert.match(list, /<h1 class="bar-title">Shows<\/h1>/)
+    assert.doesNotMatch(list, /large-title/)
+    assert.match(list, /<span class="bar-balance" aria-hidden="true"><span class="action">/, 'the twin is a span, never a second button')
+    assert.equal((list.match(/<button class="action"/g) ?? []).length, 1, 'one real control')
+    assert.match(review, /<span class="bar-balance" aria-hidden="true"><span class="bar-icon">/)
+    assert.doesNotMatch(render('list'), /bar-balance/, 'a left-aligned bar has no twin')
+  })
   it('never repeats a screen title in the tab bar', () => {
     const titles = ['shows', 'year review']
     for (const screen of ['list', 'review'] as const) for (const t of tabs(render(screen))) assert.equal(titles.includes(t.label.trim().toLowerCase()), false, t.label)
