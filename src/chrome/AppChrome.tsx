@@ -62,14 +62,22 @@ function Tabs({ tab }: { tab: Tab }) {
   )
 }
 
-/** The queue count rides on Shoot as a small badge ("3"), never as a text line. */
+/** A camera (lucide `camera`, ISC), drawn in currentColor. */
+const CameraIcon = () => (
+  <svg className="shoot-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" />
+  </svg>
+)
+
+/** Shoot is a camera (Malik, 2026-11-03: an icon, not plain text): a round shutter in the phone's bottom bar, the camera beside its word in the header.
+ *  The word stays the button's name for a screen reader. The queue count rides on it as a small badge ("3"), never as a text line. */
 function ShootButton({ className = '' }: { className?: string }) {
   const store = useStore()
   const add = useAddPhotos()
   const n = readingCount(store.bricks, b => originOf(b) === 'own')
   return (
-    <button type="button" className={`btn btn-accent shoot whitespace-nowrap ${className}`} onClick={add.shoot} aria-label={n ? COPY.reading(n) : undefined}>
-      {COPY.shoot}{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}
+    <button type="button" className={`btn btn-accent shoot whitespace-nowrap ${className}`} onClick={add.shoot} aria-label={n ? COPY.reading(n) : undefined} title={COPY.shoot}>
+      <CameraIcon /><span className="shoot-label">{COPY.shoot}</span>{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}
     </button>
   )
 }
