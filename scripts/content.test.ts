@@ -110,13 +110,15 @@ describe('handlePropose: content from the same call, never at the cost of the pi
 describe('the shell reads every word from its content', () => {
   const render = (screen: 'list' | 'review', content = toShellContent(READING)) => renderToStaticMarkup(h(Shell, { params: DEFAULT_PARAMS, screen, content }))
   /** The words as a reader sees them: tags and the server renderer's text separators dropped. */
-  const text = (html: string) => html.replace(/<!-- -->/g, '').replace(/<[^>]+>/g, '')
+  // the text as it reads: a no-break space (a separator's dot held to the word before it, whole words rule 7) reads as a space
+  const text = (html: string) => html.replace(/<!-- -->/g, '').replace(/<[^>]+>/g, '').replaceAll(' ', ' ')
   it('falls back to the concert sample when there is none', () => {
     assert.equal(toShellContent(null), CONCERT_CONTENT)
     assert.equal(toShellContent(undefined), CONCERT_CONTENT)
   })
   it('shows the written titles, tabs and entries on the List', () => {
-    const html = render('list')
+    // as it reads: a title's last two words may be bound by a no-break space (whole words, rule 7)
+    const html = render('list').replaceAll('\u00A0', ' ')
     assert.match(html, /<h1 class="large-title">My Weekly Shelf<\/h1>/)
     assert.deepEqual([...html.matchAll(/<span class="tab-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Shelf', 'Pace', 'Me'])
     for (const e of READING.entries) assert.ok(html.includes(`>${e.title}<`), e.title)
@@ -124,7 +126,7 @@ describe('the shell reads every word from its content', () => {
     assert.equal(/Khruangbin|Fox Theater|Add show/.test(html), false, 'no concert word is left')
   })
   it('shows its year, generic totals and a highlight on the year review', () => {
-    const html = render('review', toShellContent(READING))
+    const html = render('review', toShellContent(READING)).replaceAll('\u00A0', ' ')
     assert.match(html, /<h1 class="bar-title">My Year in Books<\/h1>/)
     assert.match(html, /<h2 class="screen-title">2026<\/h2>/)
     // eight entries in eight months (the first total's word is fixed, not the list title); seven tags, since sci-fi and literary come back

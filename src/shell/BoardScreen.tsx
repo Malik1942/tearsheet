@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { groupTiles, type ShellContent, type Tile } from './content'
 import { TopBar } from './ListScreen'
 import type { Params } from './params'
+import { keepLastTwo } from './wholeWords'
 
 /** The board's one control: its period, named by the content ("Today"). Under `accent_placement: actions` it is labelled and carries the accent, like the list's Add;
  *  under any other placement it is a quiet clock with the same name. */
@@ -20,9 +21,9 @@ function TileCard({ t, hues }: { t: Tile; hues: number }) {
   return (
     <article className="tile">
       <div className="pic" aria-hidden="true" />
-      <p className="label">{t.label}</p>
+      <p className="label">{keepLastTwo(t.label)}</p>
       <p className="value">{t.value}</p>
-      <p className="note">{t.note}</p>
+      <p className="note">{keepLastTwo(t.note)}</p>
       <p className={hues >= 3 ? 'tags palette-3' : 'tags'}><span className="tag">{t.tag}</span></p>
     </article>
   )
@@ -41,7 +42,7 @@ export function BoardScreen({ params, staticRender = false, content }: { params:
       <TopBar title={centred ? content.screenTitles.review : undefined} balance={centred && <Period label={content.add} labelled={labelled} staticRender />}>
         <Period label={content.add} labelled={labelled} staticRender={staticRender} />
       </TopBar>
-      {!centred && <h1 className="large-title">{content.screenTitles.review}</h1>}
+      {!centred && <h1 className="large-title">{keepLastTwo(content.screenTitles.review)}</h1>}
       {groups.map(g => (
         <section className="group board" key={g.label || 'all'}>
           {g.label && <h2 className="group-title">{g.label}</h2>}

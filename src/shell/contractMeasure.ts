@@ -2,7 +2,9 @@
  *  Runs in the browser on one rendered `.shell`: the dev page /dev/contract exposes it, and scripts/shell-contract.test.ts calls it for
  *  every three-brick composition of the sample library. Reads layout only: no parameter, no measurement of a brick. */
 
-export type RuleId = 'one-axis' | 'spacing-scale' | 'type-sizes' | 'readable-item' | 'no-duplicates' | 'no-text-in-thumbnails'
+import { BODY_BLOCKS, TITLE_BLOCKS, wordBoxes, wordIssues } from './wholeWords'
+
+export type RuleId = 'one-axis' | 'spacing-scale' | 'type-sizes' | 'readable-item' | 'no-duplicates' | 'no-text-in-thumbnails' | 'whole-words'
 export const RULES: Record<RuleId, string> = {
   'one-axis': 'one alignment axis',
   'spacing-scale': 'spacing scale',
@@ -10,6 +12,7 @@ export const RULES: Record<RuleId, string> = {
   'readable-item': 'readable item',
   'no-duplicates': 'no duplicated information',
   'no-text-in-thumbnails': 'no text in thumbnails',
+  'whole-words': 'whole words',
 }
 /** The spacing steps at an 8 px spacing unit; a unit of u px multiplies each by u / 8. */
 export const SCALE_AT_8 = [4, 8, 12, 16, 24, 32, 48] as const
@@ -173,6 +176,18 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review' | 'bo
   // 6. no text inside thumbnails: a placeholder is a flat block, no image, no glyph
   const texty = all('.pic').filter(p => p.querySelector('img, svg, canvas') || p.textContent?.trim())
   if (texty.length) out.push({ rule: 'no-text-in-thumbnails', magnitude: texty.length, detail: `${texty.length} thumbnails hold an image or text` })
+
+  // 7. whole words (2026-11-04): every block keeps its words whole and inside its box, and never ends on a one-word line when it has three words or more;
+  //    a line with an ellipsis never wraps and is outside the rule
+  const words: string[] = []
+  for (const el of all(`${TITLE_BLOCKS}, ${BODY_BLOCKS}`)) {
+    const cs = getComputedStyle(el)
+    if (cs.whiteSpace === 'nowrap') continue
+    const width = el.getBoundingClientRect().width - px(cs.paddingLeft) - px(cs.paddingRight)
+    for (const i of wordIssues(wordBoxes(el), width)) words.push(`${label(el)} ${i.kind === 'split' ? 'splits' : 'ends on'} "${i.word}"`)
+    if (el.scrollWidth > el.clientWidth + 1) words.push(`${label(el)} ${el.scrollWidth - el.clientWidth}px wider than its box: "${el.textContent?.trim()}"`)
+  }
+  if (words.length) out.push({ rule: 'whole-words', magnitude: words.length, detail: [...new Set(words)].slice(0, 6).join('; ') })
 
   return out
 }

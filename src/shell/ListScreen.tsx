@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { groupBy, shortDate, type Entry, type ShellContent } from './content'
 import type { Params } from './params'
+import { Tags } from './Tags'
+import { keepLastTwo } from './wholeWords'
 
 /** The minimal top bar inside each phone frame (design pass A3): the screen title at title size, one control on the right, a hairline below.
  *  Without a title (the List under a left or right edge, whose large title sits below it) it holds the control alone, so the title is said once (layout contract rule 5).
@@ -10,7 +12,7 @@ export function TopBar({ title, children, balance }: { title?: string; children:
   return (
     <header className="bar">
       {title && balance && <span className="bar-balance" aria-hidden="true">{balance}</span>}
-      {title && <h1 className="bar-title">{title}</h1>}
+      {title && <h1 className="bar-title">{keepLastTwo(title)}</h1>}
       {children}
     </header>
   )
@@ -35,11 +37,11 @@ function Item({ e, hues }: { e: Entry; hues: number }) {
     <article className="item">
       <div className="pic" aria-hidden="true" />
       <div className="text">
-        <h3 className="title">{e.title}</h3>
-        <p className="meta"><span className="date">{shortDate(e.date)}</span><span className="sep"> · </span><span className="venue">{e.place ? `${e.subtitle}, ${e.place}` : e.subtitle}</span></p>
-        {e.note && <p className="note">{e.note}</p>}
+        <h3 className="title">{keepLastTwo(e.title)}</h3>
+        <p className="meta"><span className="date">{shortDate(e.date)}</span><span className="sep">{'\u00A0· '}</span><span className="venue">{e.place ? `${e.subtitle}, ${e.place}` : e.subtitle}</span></p>
+        {e.note && <p className="note">{keepLastTwo(e.note)}</p>}
         <p className={hues >= 3 ? 'tags palette-3' : 'tags'}>
-          {e.tags.map(t => <span key={t} className="tag">{t}</span>)}
+          <Tags tags={e.tags} />
         </p>
         <Chevron />
       </div>
@@ -59,7 +61,7 @@ export function ListScreen({ params, staticRender = false, content }: { params: 
       <TopBar title={centred ? content.screenTitles.list : undefined} balance={centred && <AddShow label={content.add} labelled={params.accent_placement === 'actions'} staticRender />}>
         <AddShow label={content.add} labelled={params.accent_placement === 'actions'} staticRender={staticRender} />
       </TopBar>
-      {!centred && <h1 className="large-title">{content.screenTitles.list}</h1>}
+      {!centred && <h1 className="large-title">{keepLastTwo(content.screenTitles.list)}</h1>}
       {groups.map(g => (
         <section className="group" key={g.label || 'all'}>
           {g.label && <h2 className="group-title">{g.label}</h2>}

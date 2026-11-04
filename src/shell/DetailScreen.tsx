@@ -1,6 +1,8 @@
 import { featured, groupBy, shortDate, statValue, yearOf, type ShellContent } from './content'
 import { TopBar } from './ListScreen'
 import type { Params } from './params'
+import { Tags } from './Tags'
+import { keepLastTwo } from './wholeWords'
 
 const ShareIcon = () => <svg className="icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 10V2.5M5 5.2 8 2.3l3 2.9M4 8v5.5h8V8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
 
@@ -28,8 +30,8 @@ export function DetailScreen({ params, staticRender = false, content }: { params
       {rhythm === 'featured-first' && best && (
         <div className="feature">
           <div className="pic" aria-hidden="true" />
-          <h2 className="title">{content.feature}: {best.title}</h2>
-          <p className="meta">{shortDate(best.date)} · {best.subtitle}</p>
+          <h2 className="title">{keepLastTwo(`${content.feature}: ${best.title}`)}</h2>
+          <p className="meta">{shortDate(best.date)}{'\u00A0· '}{best.subtitle}</p>
         </div>
       )}
       {ordered.map(g => (
@@ -39,8 +41,8 @@ export function DetailScreen({ params, staticRender = false, content }: { params
             <div className="row" key={e.id}>
               <div className="pic" aria-hidden="true" />
               <div>
-                <p className="title">{e.title}</p>
-                <p className="meta">{e.subtitle} · <span className="tags">{e.tags.map(t => <span key={t} className="tag">{t}</span>)}</span></p>
+                <p className="title">{keepLastTwo(e.title)}</p>
+                <p className="meta">{e.subtitle}{'\u00A0· '}<span className="tags"><Tags tags={e.tags} /></span></p>
               </div>
               <span className="when">{shortDate(e.date)}</span>
             </div>

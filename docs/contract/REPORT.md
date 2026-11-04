@@ -1,6 +1,6 @@
 # Layout contract report
 
-2026-11-04 09:35 UTC · 1320 compositions (ordered triples of the 12 samples), 554 distinct parameter sets, both screens (list and review) at 390 × 844, with the concert content.
+2026-11-04 14:06 UTC · 1320 compositions (ordered triples of the 12 samples), 554 distinct parameter sets, both screens (list and review) at 390 × 844, with the concert content.
 
 **0 of 1320 compositions break at least one rule.**
 
@@ -12,6 +12,7 @@
 | readable item | 0 | 0 | 0 |
 | no duplicated information | 0 | 0 | 0 |
 | no text in thumbnails | 0 | 0 | 0 |
+| whole words | 0 | 0 | 0 |
 
 ## The three worst: none, every composition passes
 

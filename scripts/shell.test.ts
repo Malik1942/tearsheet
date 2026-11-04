@@ -117,8 +117,9 @@ describe('A6 year review hierarchy', () => {
 describe('A5 alignment fixes', () => {
   const markup = readFileSync(new URL('../src/shell/ListScreen.tsx', import.meta.url), 'utf8')
   it('the list meta is a date, a separator and a venue, so center can put date and venue on lines of their own', () => {
-    // item 1: the venue span holds the entry's subtitle, with its place where the content has one (the concert log's "venue, city")
-    assert.match(markup, /<p className="meta"><span className="date">\{shortDate\(e\.date\)\}<\/span><span className="sep"> · <\/span><span className="venue">\{e\.place \? `\$\{e\.subtitle\}, \$\{e\.place\}` : e\.subtitle\}<\/span><\/p>/)
+    // item 1: the venue span holds the entry's subtitle, with its place where the content has one (the concert log's "venue, city"); the dot is held to the
+    // date by a no-break space, so it never starts a line (whole words, rule 7)
+    assert.match(markup, /<p className="meta"><span className="date">\{shortDate\(e\.date\)\}<\/span><span className="sep">\{'\\u00A0· '\}<\/span><span className="venue">\{e\.place \? `\$\{e\.subtitle\}, \$\{e\.place\}` : e\.subtitle\}<\/span><\/p>/)
   })
   it('under center: one line each for date and venue, cut with an ellipsis; no separator; tags on one line', () => {
     assert.ok(readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8').includes('.shell[data-align="center"] .item .meta :is(.date, .venue) { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }'))

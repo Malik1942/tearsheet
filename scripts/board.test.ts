@@ -63,7 +63,8 @@ describe('validateContent reads the shape and the tiles leniently', () => {
 
 describe('the overview screen', () => {
   it('shows the overview title, the period control and every tile, with its label, value, note and tag', () => {
-    const html = render('board')
+    // as it reads: a label's or note's last two words may be bound by a no-break space (whole words, contract rule 7), which reads as a space
+    const html = render('board').replaceAll('\u00A0', ' ')
     assert.match(html, /<h1 class="large-title">Overview<\/h1>/)
     assert.match(html, /<button class="action" type="button" aria-label="Today">/)
     assert.equal((html.match(/<article class="tile">/g) ?? []).length, 6)

@@ -18,12 +18,14 @@ const RUN = process.env.CONTRACT === '1'
 const READING = process.env.CONTRACT_CONTENT === 'reading'
 /** CONTRACT_CONTENT=board: the hand-written ops board, whose two screens are the overview and the list (2026-11-04). */
 const BOARD = process.env.CONTRACT_CONTENT === 'board'
+/** CONTRACT_VIEW=frame: the screen as Make's phone frame draws it, 320 × 694 (src/shell/phone.ts), where a long word has the least room (2026-11-04). */
+const FRAME = process.env.CONTRACT_VIEW === 'frame'
 const fixture = (name: string) => toShellContent(JSON.parse(readFileSync(new URL(`../src/fixtures/content/${name}.json`, import.meta.url), 'utf8')) as SampleContent)
 const CONTENT = READING ? fixture('reading-tracker') : BOARD ? fixture('ops-board') : CONCERT_CONTENT
-const OUT = process.env.CONTRACT_OUT ?? (READING ? 'docs/contract/reading' : BOARD ? 'docs/contract/board' : 'docs/contract')
+const OUT = (process.env.CONTRACT_OUT ?? (READING ? 'docs/contract/reading' : BOARD ? 'docs/contract/board' : 'docs/contract')) + (FRAME && !process.env.CONTRACT_OUT ? '/frame' : '')
 /** CONTRACT_URL measures a running site instead of a local dev server, e.g. production: its /dev/contract page ships with the build. */
 const SITE = process.env.CONTRACT_URL?.replace(/\/$/, '')
-const VIEW = { width: 390, height: 844 }
+const VIEW = FRAME ? { width: 320, height: 694 } : { width: 390, height: 844 }
 const SCREENS: readonly [ScreenKey, ScreenKey] = screensOf(CONTENT)
 const [S0, S1] = SCREENS
 
@@ -39,7 +41,7 @@ function compositions(): Combo[] {
 }
 
 describe('layout contract on every three-brick composition', { skip: !RUN && 'set CONTRACT=1 (npm run test:contract): needs a browser and a dev server' }, () => {
-  it('no composition breaks a rule on either screen at 390 px', { timeout: 30 * 60_000 }, async () => {
+  it(`no composition breaks a rule on either screen at ${VIEW.width} px`, { timeout: 30 * 60_000 }, async () => {
     const { createServer } = await import('vite')
     const { chromium } = await import('playwright-core')
     const server = SITE ? null : await createServer({ logLevel: 'error', server: { port: 0, strictPort: false } })
