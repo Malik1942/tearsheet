@@ -12,6 +12,11 @@ export type Concert = {
 
 export const INTENT = 'A concert log for someone who goes to a lot of shows and wants to look back on a year.'
 
+/** The words the shell writes on its screens besides the entries: the two screen titles and the three tab labels (list, chart, person, in that order).
+ *  The concert log is the fallback value; no tab label repeats a screen title (layout contract rule 5). */
+export type ShellContent = { screenTitles: { list: string; review: string }; tabs: [string, string, string] }
+export const CONCERT_CONTENT: ShellContent = { screenTitles: { list: 'Shows', review: 'Year review' }, tabs: ['Log', 'Stats', 'Profile'] }
+
 export const CONCERTS: Concert[] = [
   { id: 'c01', date: '2025-01-18', artist: 'Khruangbin', venue: 'Fox Theater', city: 'Oakland', tags: ['funk', 'instrumental'], note: 'Bass tone carried the whole room. Sat upstairs, still felt it.', rating: 5 },
   { id: 'c02', date: '2025-02-07', artist: 'Mitski', venue: 'The Masonic', city: 'San Francisco', tags: ['indie', 'pop'], note: 'Choreographed to the second. Crowd silent in the quiet parts.', rating: 4 },
