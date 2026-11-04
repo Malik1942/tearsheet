@@ -1,10 +1,12 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Photo } from '../bricks/Photo'
 import type { Brick } from '../lib/types'
 
 const COPY = {
   go: 'Find photos',
   finding: 'Looking through your photos',
+  wait: 'Looking through your photos · usually 15–25 s',
+  still: 'Still looking…',
   startingFrom: 'Starting from this photo',
   clear: 'Clear the starting point',
 }
@@ -20,7 +22,16 @@ export function HeadlineField({ value, onChange, onSubmit, busy, label, autoFocu
   const area = useRef<HTMLTextAreaElement>(null)
   // the field grows with its text (tokens.css stops it at three lines), also where field-sizing is not supported
   useLayoutEffect(() => { const t = area.current; if (!t) return; t.style.height = 'auto'; t.style.height = `${t.scrollHeight}px` }, [value])
+  // the wait is said (phone refine P0): live proposals take 15 to 27 s, past the point where a moving line alone holds attention; after 30 s it says so
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    setSlow(false)
+    if (!busy) return
+    const t = window.setTimeout(() => setSlow(true), 30_000)
+    return () => window.clearTimeout(t)
+  }, [busy])
   return (
+    <>
     <div ref={box} className="intent-headline headline-field">
       <textarea ref={area} className="headline-input" value={value} rows={1} maxLength={300} readOnly={busy} autoFocus={autoFocus} aria-label={label} placeholder={label} enterKeyHint="go"
         onChange={e => onChange(e.target.value)}
@@ -36,7 +47,12 @@ export function HeadlineField({ value, onChange, onSubmit, busy, label, autoFocu
         </button>
       )}
       {busy && <div className="card-progress headline-progress" role="progressbar" aria-label={COPY.finding} />}
+      {/* on touch, an empty field with no caret shows the reading line's track, still, as its underline; focus hides it (tokens.css) */}
+      {!value && !busy && <div className="headline-track" aria-hidden="true" />}
     </div>
+    {/* the page's aria-live line already says this to a screen reader */}
+    {busy && <p className="headline-wait" aria-hidden="true">{slow ? COPY.still : COPY.wait}</p>}
+    </>
   )
 }
 

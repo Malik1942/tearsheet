@@ -52,7 +52,7 @@ export function Arrangements({ project, onClose, onPick }: { project: Project; o
 export function Rename({ initial, onClose, onSave }: { initial: string; onClose: () => void; onSave: (name: string) => void }) {
   const [value, setValue] = useState(initial)
   return (
-    <Overlay title={COPY.rename} onClose={onClose} closeLabel="Cancel">
+    <Overlay title={COPY.rename} onClose={onClose} closeLabel="Cancel" sheet={false}>
       <form className="flex flex-wrap items-center gap-2" onSubmit={e => { e.preventDefault(); if (value.trim()) onSave(value.trim()) }}>
         <input value={value} onChange={e => setValue(e.target.value)} autoFocus maxLength={80} aria-label="Project name" className="min-w-0 flex-1 rounded border px-3 py-2 text-[15px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
         <button type="submit" className="btn btn-accent" disabled={!value.trim()}>{COPY.save}</button>
