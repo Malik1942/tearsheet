@@ -71,6 +71,16 @@ export function shortOriginLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'sav
   return b.taken_at ? dayLabel(b.taken_at, today) : savedLabel(b.saved_at, today)
 }
 
+/** A Library card's caption in two parts (Malik, 2026-11-03: who leads, when follows): a credited starter's short institution and its date ("Mia" and "1923";
+ *  an institution with no short name stays whole), or an own photo's date, after a quiet "saved" when the photo gave no EXIF date. The same words as the swap sheet's line. */
+export function originParts(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): { lead: string; note: string; noteFirst: boolean } {
+  if (originOf(b) === 'starter' && b.credit) {
+    const short = shortCredit(b.credit), at = short.indexOf(', ')
+    return at === -1 ? { lead: short, note: '', noteFirst: false } : { lead: short.slice(0, at), note: short.slice(at + 2), noteFirst: false }
+  }
+  return b.taken_at ? { lead: dayLabel(b.taken_at, today), note: '', noteFirst: false } : { lead: dayLabel(b.saved_at, today), note: 'saved', noteFirst: true }
+}
+
 /** The one origin line every place shows (spec v3 SB2): `saved Jun 21` (or `taken … · saved …`) for a brick of the person's own, `starter · The Metropolitan Museum of Art, 19th century` for a starter.
  *  Origin is not a provenance: the four provenance labels are unchanged. */
 export function originLabel(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {
