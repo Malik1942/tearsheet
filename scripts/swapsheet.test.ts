@@ -23,6 +23,7 @@ const RHYTHM: Rel = { parameter: 'rhythm', rule: 'alternate wide and narrow rows
 const ALIGN: Rel = { parameter: 'alignment_edge', rule: 'keep every block flush left', target: 'blocks', source_hypothesis: 'h1' }
 const HUES: Rel = { parameter: 'palette_hue_count', rule: 'use two hues only', target: 'palette', source_hypothesis: 'h1' }
 const LEADS: Rel = { parameter: 'hierarchy_mode', rule: 'make the title lead every item', target: 'items', source_hypothesis: 'h1' }
+const CENTER: Rel = { parameter: 'alignment_edge', rule: 'center every block on the page', target: 'blocks', source_hypothesis: 'h1' }
 
 // `top` sets the hue count; `x` (being replaced) sets the type scale and the rhythm
 const top = brick('top', [HUES], '2026-01-05')
@@ -77,6 +78,11 @@ describe('swap sheet groups', () => {
       ['Adds something', ['x', 'same1', 'same2', 'adds']],
       ['Everything else', ['bare', 'top✓']],
     ])
+  })
+  it('does not count a value the layout contract filled in as taken: no photo sets it', () => {
+    // a centered photo makes the contract lead with the image; what leads is still free for a photo to set
+    const centre = brick('centre', [CENTER]), leads = brick('leads', [LEADS])
+    assert.deepEqual(view(swapGroups(project({ brickIds: ['centre', 'x'] }), [leads], 'x', [...ALL, centre, leads])), [['Adds something', ['leads']]])
   })
   it('offers only the pool, never the photo being replaced', () => {
     assert.deepEqual(view(swapGroups(project(), [x, adds, top], 'x', ALL)), [

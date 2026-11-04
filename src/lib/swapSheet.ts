@@ -40,7 +40,8 @@ export function swapGroups(project: Project, pool: Brick[], replacing: string, b
   const before = resolveProject(unmuted, bricks).values
   const job = new Set(RELATIONSHIP_KEYS.filter(k => before[k].source?.brickId === replacing))
   const now = resolveProject(project, bricks).values
-  const taken = new Set(RELATIONSHIP_KEYS.filter(k => !isShellDefault(now[k])))
+  // judged before the layout contract: a value it filled in is set by a rule, not by a photo, so a photo that sets it still adds something
+  const taken = new Set(RELATIONSHIP_KEYS.filter(k => !isShellDefault(now[k].before ?? now[k])))
   const tiles: Record<SwapGroup['id'], SwapTile[]> = { same: [], adds: [], rest: [] }
   for (const brick of [...pool].sort(byRanking(project.proposal?.ranking))) {
     if (brick.id === replacing) continue

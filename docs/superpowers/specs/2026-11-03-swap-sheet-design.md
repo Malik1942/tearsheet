@@ -20,7 +20,7 @@ Inputs: the project, the pool the sheet offers (today's: ready, not superseded, 
 
 - **What the replaced photo sets:** the relationship parameters whose value on the screens comes from it now, judged with it unmuted (as the photo row judges a muted photo).
 - **What a candidate sets:** the relationship parameters of its own candidates, first three (`CAP_PER_BRICK`), the same set its short labels come from; by-rule readings (alignment from a text measurement, title-led readings) count.
-- **Taken:** a relationship parameter whose value in the project is not a shell default (`isShellDefault`), so a value set by hand or locked is taken.
+- **Taken:** a relationship parameter whose value in the project is not a shell default (`isShellDefault`), so a value set by hand or locked is taken. It is judged before the layout contract (`before`, added on spec-v2): a value the contract filled in is set by a rule, not by a photo, so it stays free.
 - Groups, in order; each photo goes to the first it qualifies for; empty groups are not shown:
   1. **Same job**: the candidate sets at least one parameter the replaced photo sets.
   2. **Adds something**: the candidate sets at least one parameter that is not taken.
