@@ -1,132 +1,205 @@
 <p align="center"><img src="public/brand/readme-banner.svg" alt="Tearsheet" width="600"></p>
 
-# Tearsheet
+<p align="center"><b>Taste you can trace.</b></p>
 
-Designers tear pages out of magazines to keep what they like. Tearsheet turns those photos into composable visual material with evidence (bricks), then apply that material to a small prototype of your own product and see, with your real content, whether the character survives.
+<p align="center">Tearsheet turns the photos you already take into design rules, then lays out product screens from them, with every choice traced back to a spot on a photo.</p>
 
-Built for the Meta Global AI Developer Hackathon (Indie track) on the Meta Model API. Vision extraction uses Muse Spark (`muse-spark-1.3`) with a constrained JSON schema; the prototype renders locally from parameters alone.
+<p align="center">
+  <a href="https://tearsheet.malikzhang.com"><b>Try it live</b></a> &nbsp;·&nbsp;
+  <a href="VIDEO_URL"><b>Watch the video</b></a> &nbsp;·&nbsp;
+  Built with Muse Spark on the Meta Model API
+</p>
+
+<p align="center">
+  <a href="VIDEO_URL"><img src="docs/readme/hero.webp" alt="Muse Spark reads a photo of a stage: blue boxes mark what it measured, three rules point back at them, and the photo tears into a tile in the library." width="840"></a>
+</p>
+<p align="center"><sub>Muse Spark reads a photo once: what it measured (in blue), the rules it keeps, and a tear made from the photo's own light.</sub></p>
+
+## Why
+
+Designers tear pages out of magazines to keep what they like. Most of us do the same with a phone: a stage at a show, a car in a parking garage, a poster on a wall. We save it because of how it looks.
+
+Then a new project starts, and none of it makes it into the design. The photos sit in a camera roll. A moodboard collects them but doesn't say what to do with them. A chat can give advice, even write a page, but only if you dig the photos out and describe your taste every time, and the answer is a one-off you can't adjust piece by piece.
+
+Tearsheet keeps what you saved as material you can build with.
+
+## Who it's for
+
+- **Product designers and indie developers** who build their own apps and want them to look like their taste, not a template.
+- **Anyone with a camera roll full of references**: designers, photographers, people who just notice things.
+- **People handing a design to a coding agent**, who want every value to arrive with a reason.
 
 ## How it works
 
-1. **Collect.** Drop a photo whenever you like something. It is made upright, downscaled to 2048 px, and sent once to Muse Spark with a product-agnostic prompt. The result is a *brick*: measurements (read off the image, with how they were measured), hypotheses (each resting on measurement ids, with a confidence), at most three transferable relations mapped onto a fixed parameter vocabulary or `none`, region boxes on a 0-1000 grid, and the one change that would destroy the image's character. Bricks persist in the browser; no project needs to exist.
-2. **Decide what to make.** One sentence of intent creates a project.
-3. **Pick materials.** Enter asks Muse Spark for up to three bricks, each with one of its rules quoted as the reason. Tap a photo to turn its contribution off, ⇄ to swap it, or ⋯ → Pick photos myself to choose by hand. In Fine-tune, each relation can be switched on or off and shows the parameter it sets. Two bricks wanting the same parameter is a conflict; you choose.
-4. **See the prototype.** Two screens render immediately from the parameters. Their shape follows the intent: a *log* (a tracker, a diary, a catalogue) gets a list and a year review; a *board* (a dashboard, a status page, a console) gets an overview of tiles and the list of items behind it. Their words are sample content: the same Spark call that proposes photos also writes the shape and the sample content for your intent, saved with the project, and the rules lay it out. It is model-written placeholder text, so it gets no provenance chip; a project picked by hand shows the built-in concert log. Every parameter carries a provenance chip: **measured** (its relation rests on a measurement), **interpreted** (a hypothesis or a hand remap; dotted outline), or **adapted** (the shell's own default). Click a measured chip to see the region it was read from. Relations no parameter can carry appear in the "could not be expressed" strip.
-5. **Lock and swap.** Lock any value. Swap one brick for another: only unlocked parameters that the new brick contributes change.
-6. **Export** `parameters.json`, `tokens.css`, and `handoff.md` for a coding agent.
+### 1. Save a photo you like
 
-## Parameters
+Muse Spark reads it once, for what makes it look that way: the proportions, how dark it is, its colors, its framing. Each measurement gets a box on the photo, and up to three rules point back at what they rest on. The photo becomes a block in your library.
 
-One parameter is filled in by rule rather than by the model: `alignment_edge`. The model measures where text aligns ("all text starts in the left sixth", "three lines left-aligned") but, in every run so far, never proposes alignment as a transferable relation. When a measurement about text names an edge, the product emits an `alignment_edge` candidate labeled `adapted · by rule` with that measurement as its source, so the chip says the rule did it, not the model. The same pattern maps a measured type description ("heavy wide low-contrast sans") onto a substitute font stack, and falls back to `system-ui` marked `no match` rather than guess.
+![What Muse Spark kept from one photo: the sign at about 0.4 of the frame width, about 70% dark, one warm hue at about 5%, and three rules linked to those measurements.](docs/readme/read.jpg)
 
-Two more readings by rule:
-- **A dominant title said in words.** A rule under `image_text_dominance` or `hierarchy_mode` that says a title dominates without giving a number ("an order of magnitude larger", "the title dominates", "one centered title") reads as `hierarchy_mode` type-led, `image_text_dominance` 0.2 (text-led), and the alignment the same sentence names. Each is `adapted · by rule` and cites the relation.
-- **One hue keeps its accent.** `palette_hue_count` 1 normally makes the accent the text color. It keeps the accent when something sets `accent_coverage`, because one hue used once as the bright spot is the accent.
+### 2. Say what you're making
 
-Relationship parameters carry character: `type_scale_ratio`, `hierarchy_mode`, `density`, `grouping`, `rhythm`, `alignment_edge`, `image_text_dominance`, `accent_placement`, `accent_coverage`, `palette_hue_count`. Appearance parameters are the skin: `color_bg`, `color_fg`, `color_accent`, `radius`, `type_family`, `spacing_unit`. See `src/shell/params.ts`. All of them become CSS custom properties plus six data-attribute switches; one JSON in, one render out, no generator.
+One sentence, like "a concert log for someone who goes to a lot of shows." Spark reads the rules in your library (never the photos), picks the photos that fit, and gives the rule it picked each one for, word for word. Two screens are laid out right away. No model draws them: the rules set them.
 
-## Run
+![Make: two phone screens for a concert log, and the three photos Spark picked, each with its reason.](docs/readme/make.png)
+
+### 3. Change anything. Trace everything.
+
+Each photo is a block. Turn one off and what it set comes out. Swap it and only what it carries changes. Lock any value you want to keep.
+
+![Turning the Chicago photo off and on, then swapping the Porsche for a BMW M4: the layout changes, then the accent turns teal.](docs/readme/change.webp)
+<p align="center"><sub>Chicago off: type and layout come out, images come in. Back on. Then the Porsche is swapped for a BMW M4, and the accent turns from red to teal.</sub></p>
+
+Every value says where it came from, with a chip: **measured**, **interpreted**, or **adapted**. A measured value points back to the box on the photo it was read from.
+
+![Fine-tune: each value with its rule, and a peek at the box on the photo it came from.](docs/readme/trace.png)
+
+### 4. Hand it off
+
+Share one read-only link with the screens and the reasons behind them, or export `parameters.json`, `tokens.css` and `handoff.md` for a coding agent.
+
+## What makes it different
+
+- **Built from your taste.** The library is the photos you already saved, not a style picked from a menu.
+- **Read once, reused everywhere.** A photo is measured when you save it. Every project after that reuses its rules.
+- **Traceable.** Every value says where it came from. A measured one points back to a box on a photo.
+- **Changeable.** One photo is one block. Turning it off or swapping it changes only what it carries.
+- **Honest about the AI.** Spark has to quote the rule it picked a photo for, character for character, or the pick is dropped. Nothing is repaired or invented.
+- **Private by default.** Your library lives in your browser. A photo goes to Muse Spark once, to be read; picking sends only text.
+
+### Compared with asking a chat
+
+We gave the same six photos to Muse Spark as a plain chat, three times, on 2026-11-04. Same model on both sides; the difference is how it's used.
+
+| | Muse Spark, plain chat | Muse Spark, through Tearsheet |
+|---|---|---|
+| What it gets | The six photos attached to one message, plus the request and two style chips (Dark, One accent) | The request, plus the rules it measured when each photo was saved |
+| What it picked | Chicago and the Porsche, judged by their colors, in all three runs | Chicago, the Porsche and a BMW E24, each with the rule it quoted (the run in the video) |
+| What comes back | Advice to read | Two screens, laid out by those rules |
+| Changing one choice | Ask again | Tap a photo off or swap it |
+| The next project | Dig the photos out and describe your taste again | The library is already there |
+
+## Try it in two minutes
+
+1. Open **[tearsheet.malikzhang.com](https://tearsheet.malikzhang.com)** on a laptop. No account. Twelve sample photos are already in the library.
+2. Go to **Make**, type what you're making (for example, "a reading tracker for the books I finish this year") and press Enter. Spark picks in about 10–30 s.
+3. Tap a photo to turn it off, or ⇄ to swap it. Open **Fine-tune** and hover or click a measured value to see the box it came from.
+4. Add your own photo with **Shoot**, or **⋯ → Add from library…**. Reading one takes about 10–40 s.
+5. **Share** gives you a read-only link to the screens and their reasons.
+
+Make works on a phone too, with the photos under the screens; on a wide screen (1180 px and up) they sit beside them.
+
+## Under the hood
+
+![Two jobs for Muse Spark: it reads each photo once into measurements and rules, and later picks photos by their rules for what you're making. A fixed shell lays out the screens, and every value traces back to a box on a photo.](docs/readme/how-it-works.png)
+
+| Job | When | What it sends | What comes back |
+|---|---|---|---|
+| **Read a photo** | Once, when you save it | The photo (2048 px on the long side) with one prompt and a strict JSON schema | Measurements with how they were measured, boxes on a 0–1000 grid, up to three rules mapped onto layout parameters, and the one change that would break the look |
+| **Pick photos** | When you say what you're making | Your sentence and each photo's rules, as text. No photos | Up to three picks, each quoting one rule word for word, plus sample content for the screens |
+
+Both calls use `muse-spark-1.3`. Everything after them is deterministic: sixteen parameters become CSS variables in a fixed shell, so the same rules always give the same layout. The Meta key stays on the server.
+
+**Checked, not assumed.**
+- The reading prompt and schema passed a sealed test before the product was built: three photos, one call each, judged against notes written in advance.
+- Across three sealed runs, the picker quoted 27 of 27 rules word for word and never matched a photo by its subject.
+- 770 tests pass. A layout contract test renders 1,320 combinations of sample photos and checks that no rule breaks: none do.
+- Every live call is logged with its tokens, cost and latency. A photo costs about 1.3–2.4¢ to read; a set of picks about 1–1.6¢.
+
+<details>
+<summary><b>Run it locally</b></summary>
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173
 ```
 
-The dev server serves `/api/extract`, `/api/propose` and `/api/sync/:code` itself (the same handlers as the Vercel functions) and reads `META_API_KEY` from the environment or from `../meta-eval/.env`. The key never reaches the browser. In development, `localStorage.setItem('tearsheet.dry', '1')` makes the app send `dry: true`: both model proxies then return the request they would have sent and nothing leaves the server.
+The dev server serves `/api/extract`, `/api/propose` and `/api/sync/:code` itself (the same handlers as the Vercel functions) and reads `META_API_KEY` from the environment. The key never reaches the browser. Without a key, `localStorage.setItem('tearsheet.dry', '1')` makes both model calls return the request they would have sent, and nothing leaves the server.
 
-Deploy: Vercel, with `META_API_KEY` set as an environment variable and `PROPOSE_ENABLED=1` for live proposals. `api/extract.ts` (`maxDuration` 120 s; a medium-effort extraction takes 10 to 26 s), `api/propose.ts` (60 s) and `api/sync/[code].ts` (60 s) are the serverless functions. `npm run check:prompts` compares the prompts and schemas with the harness files in `../meta-eval`.
+```bash
+npm test               # unit tests
+npm run test:contract  # the layout contract
+npm run check:prompts  # prompts and schemas against the evaluation harness (needs it checked out as ../meta-eval)
+npm run lint && npm run build
+```
 
-## Verification
+Deploy: Vercel, with `META_API_KEY` set and `PROPOSE_ENABLED=1` for live picks. `api/extract.ts` (up to 120 s), `api/propose.ts` and `api/sync/[code].ts` are the serverless functions.
 
-- **UI checks** (`scripts/check-ui.js`): paste it into the browser console on the public URL and run `checkUI({ all: true })`. It reports page overflow with the offending elements, controls without a label, and images without alt text, for every main route, at whatever viewport the window has. The acceptance record in `docs/ACCEPTANCE.md` quotes its output at 375 px and 1440 px.
-- **Extraction harness** (`../meta-eval`): `scripts/gate.sh --send --effort medium fixtures/images/<photo>` reproduces a brick from a photo with the same request the product sends; `PROMPT_FILE=fixtures/prompts/extract_brick_v3.md` selects the production prompt. Every live call is appended to `ledger.csv`.
+</details>
 
-## Evidence
+<details>
+<summary><b>Parameters and provenance</b></summary>
 
-Prompt in production: v3, sha256 `2a2e7fa5684fe352cf5ecfd8476776c07ff7c9878baa0168b05a61f1a4beba60` (the harness file `extract_brick_v3.md`; `src/lib/extractPrompt.ts` holds the same text without the final newline). It is the gated prompt (sha256 `5cb75981a5b31e823d6037af31173c8b6ba2542455a5143ccd1eecfd7bd197f4`) plus one instruction to describe the type when text is visible. A v2 that forced a layout relation was tried on the same three photos and rejected. Measured values are the model's reading in one run; another run can differ (one accent coverage moved from under 6% to under 15% between runs), which is why every value carries its provenance and nothing is treated as a single truth.
+Relationship parameters carry the character of a photo: `type_scale_ratio`, `hierarchy_mode`, `density`, `grouping`, `rhythm`, `alignment_edge`, `image_text_dominance`, `accent_placement`, `accent_coverage`, `palette_hue_count`. Appearance parameters are the skin: `color_bg`, `color_fg`, `color_accent`, `radius`, `type_family`, `spacing_unit`. See `src/shell/params.ts`. One JSON in, one render out, no generator.
 
-The extraction prompt and schema were gated before any of this was built: three sealed photos, one call each, judged against pre-registered notes. The harness, the sealed notes, the run report and the overlays live in `../meta-eval`. Extraction costs about $0.013 to $0.023 per photo.
+Every parameter carries a provenance chip: **measured** (its rule rests on a measurement), **interpreted** (a hypothesis or a hand remap), or **adapted** (the shell's own default, or a rule applied by Tearsheet and labeled `by rule`). Click a measured chip to see the region it was read from. Rules no parameter can carry appear in a "could not be expressed" strip, so nothing is silently dropped.
 
-## Layout
+A measured value is one run's reading. Reading the same photo again can give a slightly different number, which is why every value shows where it came from.
+
+A few readings are made by rule rather than by the model, and say so: a text measurement that names an edge sets `alignment_edge`; a measured type description maps onto a substitute font stack, or falls back to `system-ui` marked `no match`.
+
+</details>
+
+<details>
+<summary><b>How picks are checked</b></summary>
+
+`/api/propose` sends the sentence and, for every ready photo, its id and its rules with their parameters. No photo, measurement or hypothesis leaves the device. The answer is constrained to `{ picks: [{ brick_id, quoted_rule, why }], ranking, content }`, with `store: false`.
+
+Each pick must quote one of that photo's rules character for character. A pick that paraphrases, names an unknown photo, repeats one or comes fourth is dropped and reported, never repaired. If nothing survives, or the call fails, Enter opens **Pick photos myself** with one line of text. The accepted set is recorded on the project: `parameters.json` holds the whole record, and `handoff.md` says for each photo how it got there.
+
+Guards on the functions: 20 calls an hour per address and 300 a day, counted in memory on each server instance, so they are best effort.
+
+</details>
+
+<details>
+<summary><b>Sharing and sync</b></summary>
+
+**Sharing a project** (Make → Share) uploads the project and the person's own photos it uses under a code of its own, and opens as a read-only page at `/shared?code=…&project=…`. It never sends the library's code, adopts nothing and saves nothing on the device that opens it. The sample photos ship with the app and never travel. Anyone with a share link can change what that link shows; sharing again restores it. Links can't be revoked.
+
+**Sync** opens a library on another device with a six-character code, shown as text and as a QR code on `/sync`. There is no account, no listing endpoint and no index; the code is the only key. Photos are stored at 2048 px in a Vercel Blob store, merged by id on the second device, and `Forget this code` deletes them.
+
+</details>
+
+<details>
+<summary><b>Project layout</b></summary>
 
 ```
-api/extract.ts          Vercel function: image in, Brick out (key stays server-side)
-api/propose.ts          Vercel function: intent + rules in, up to three picks with verbatim quotes out (live when PROPOSE_ENABLED=1)
-api/sync/[code].ts      Vercel function: the library under a six-character code in a Blob store
-src/lib/                schema.ts (zod, exactly the Spark schema), extract.ts / propose.ts / sync.ts (shared with the dev server), guard.ts (call limits),
-                        mapRelations.ts (relations -> parameters, provenance, conflicts, locks; the Project type), store.tsx (library, queue, projects), syncClient.ts, markdown.tsx
-src/screens/            Brick, Projects (intent + proposal), Compose (desktop), Export, Sync, Open (/open?code=), Preview and Instructions (phone)
-src/shell/              params.ts, shell.css, ListScreen, DetailScreen (year review), BoardScreen (the overview of a board), Device (status bar, tab bar, home indicator), content.ts (the built-in concert log, or a project's model-written sample content)
-src/bricks/             Photo, BrickCard, RegionOverlay
-src/compose/            ProvenanceChip, Sheet (parameter rows), UnexpressedStrip, DesktopFooter
+api/extract.ts          image in, brick out (the key stays server-side)
+api/propose.ts          sentence + rules in, up to three picks with verbatim quotes out
+api/sync/[code].ts      a library or a shared project under a code, in a Blob store
+src/lib/                schemas (zod, exactly Spark's schema), model calls, call limits, rules to parameters
+src/screens/            Make (with Fine-tune and the export files inside it), Brick, Projects, Sync, Open, Shared, Instructions
+src/shell/              the layout shell: parameters, list, year review, board
+src/bricks/             photo, card, region overlay
+src/compose/            provenance chips, parameter rows, the could-not-be-expressed strip
 src/export/             parameters.json, tokens.css, handoff.md
-src/fixtures/           the sample library, the three gate bricks and the step-2 compositions
-scripts/                check-ui.js (console sweep), check-prompt-sha.ts (prompts and schemas against the harness)
+scripts/                tests, the layout contract, prompt checks, a UI console sweep
 ```
 
-The sample library holds Malik's own photos and licensed public-domain works, each with a credit line. In the product these twelve are the starters (spec v3 SB1–SB4, L7): built in, never saved or synced, `origin: "starter"`, shown under an empty Library and used by Projects only until a person has three bricks of their own; the `Include starters` checkbox hides them. The downloaded posters used in the gate and probe runs are not in the repository. The only exceptions are the public-domain and free-to-use images under Sample credits, which are kept with their credit.
+The evaluation harness (prompts, sealed photos, run records) lives in a separate repository, [tearsheet-harness](https://github.com/Malik1942/tearsheet-harness).
 
-## Sync
+</details>
 
-A library can be opened on another device with a six-character code (letters A–Z and digits 2–9, never 0, O, 1 or I). The code is made on the device, shown as text and as a QR code on `/sync`, and is the only key: there is no account, no listing endpoint and no index. Anyone who has the code can open the library.
+## Where it goes next
 
-What the store holds: under `libraries/<code>/` in a Vercel Blob store, one JPEG per brick at 2048 px on the long side plus a `manifest.json` with the brick values and the projects (intent, bricks, choices, proposal record; at most 50, the most recently edited). Photos are stored under that unguessable id and are not indexed. Entering a code on a second device merges by brick id, newest version wins. `Forget this code` on `/sync` deletes everything under the prefix; the bricks stay on the device that pressed it. The manifest is gone at once; the CDN can still serve a deleted photo for up to a minute. Caps: 60 bricks and 40 MB per code; one request carries at most 4 MB, so the app uploads in batches. The function authenticates with Vercel's OIDC token for the store; no long-lived token exists anywhere.
+- **Measured by mask.** Segment Anything (SAM 3.1) passed its test on 2 of 3 photos, with tight masks on sharp objects like a lit sign or taillights. Those will be measured from the mask; everything else keeps Spark's reading.
+- **More kinds of screens.** Tearsheet lays out a log and a board from the same rules. More screen shapes can run on the same sixteen parameters and the same library.
+- **Straight into code.** `handoff.md` already gives a coding agent every value with its source. Next is applying it to an app that already exists.
 
-**Sharing a project** (Make → Share) never sends the library's code, the only key to the whole library.
-- **What goes up:** the project and the person's own photos it uses, under a code of its own (one per project, so sharing again updates the same link). The starters ship with the app and never travel.
-- **What the link opens:** `/shared?code=…&project=…`, a read-only page with the two screens and the reasons behind them.
-- **What it leaves alone:** it adopts no code, merges nothing into the library of the device that opens it, and saves nothing there.
+## About this build
 
-## Propose
-
-When a project gets its one-line intent, the model proposes up to three bricks from the library (PRD P2–P3). It is a second kind of call, text only: `/api/propose` sends the intent and, for every ready brick, its id and its transferable rules with their parameter. No photo, no measurement and no hypothesis leaves the device. `muse-spark-1.3`, effort low, constrained to the schema `{ picks: [{ brick_id, quoted_rule, why }], ranking, content }`, at most 8,000 output tokens, `store: false`, about 1 to 1.6¢ a call.
-
-The honest part is the check: each pick must quote one of that brick's rules character for character (`quoted_rule` equals the rule after trimming). A pick that paraphrases, names an unknown brick, repeats a brick or comes fourth is dropped and reported, never repaired. If nothing survives, or the call fails, Enter opens Pick photos myself with one line of text and no error modal. The accepted set is recorded on the project: each brick carries `proposed · model` with the quoted rule and the model's sentence, a swapped card carries `adapted · by you` and names what it replaced; `parameters.json` holds the whole record under `proposal`, and `handoff.md` says per brick how it got there. Picking by hand records nothing.
-
-Live proposals are on in production (`PROPOSE_ENABLED=1` since 2026-11-03); without it the function answers 503. `GET /api/propose` returns `{ enabled }`; when proposals are off, Enter opens Pick photos myself with a line that says so. Across three sealed runs the proposer quoted 27 of 27 rules verbatim, never matched a photo by subject, and returned stable picks. But it agreed with the designer's picks on at most one of three intents (0, then 1, then 1). Adding a designer's lean (run 3) did not change that score. On the public site, the concert intent with `dark` + `one accent` returned the Chicago photo first, both before and after the ranking sentence below was added (in its first, whole-library wording). That was one call each on 2026-11-03, with the same three picks in the same order. One live call with the ten-brick wording, on the twelve starters without the Chicago photo, took 17.1 s and $0.0108, with 1,919 of the 8,000 output tokens. It picked g2, secession and calmmouse. Three live calls with the content sentence (the twelve starters, effort low, 2026-11-03 23:05 PST) took 14.6 to 26.7 s and $0.0101 to $0.0161, $0.0376 in all. All nine quoted rules held, every ranking had ten ids, and every content parsed. With the Chicago photo in the library, the current wording has not been checked yet. We ship proposals on because the reasons are always real rules and every pick can be changed where it sits (tap a photo to turn it off, ⇄ to swap it, ⋯ → Pick photos myself to choose them all by hand), not because they match a designer's taste. The records are `../meta-eval/docs/PROPOSE_RUN_2026-11-02.md` and `PROPOSE_RUN_2026-11-03.md`. The procedure is in `../meta-eval/docs/PROPOSE.md`; `scripts/propose.sh` there builds the request the product builds for the sample library (the product sorts the library by brick id, as the harness does). Prompt: `src/lib/proposePrompt.ts`, sha256 `d7f3306b6d0564b955ce10d6c16f340338e383097dd07acde97feb80d53a4548`. It is the harness prompt the sealed runs used (`../meta-eval/fixtures/prompts/propose.md`, sha256 `6b9984be1d06547b4b86e32195555146d7391c5562e8a7567cd6b6d8445e86a7`) plus two sentences added on 2026-11-03. One asks for a ranking of the ten bricks that fit best, for the swap sheet. The other asks for sample content for the intent, with a `{{YEAR}}` slot. The schema gains the matching `ranking` (at most ten) and `content` fields. The three sealed runs used the prompt before the ranking and content fields; those fields do not change the pick instructions. The sentence first asked for the whole library; one call with thirteen bricks (the twelve starters and the Chicago photo) then used 3,129 of the 4,000 output tokens (2,791 of them reasoning), and an unfinished answer fails the whole proposal, so the ranking was capped at ten and the output limit raised to 8,000 the same evening. Until the harness copies are refreshed, `npm run check:prompts` reports DIFF for the propose prompt and schema; the extract prompt and the brick schema match. Every live call writes one JSON line to the function log with tokens, cost and latency, including calls that come back unfinished or unparsed (PRD 10.4). Guards on the function: per-address 20 calls an hour and `MAX_DAILY_CALLS` a day (default 300), counted in memory.
-
-## Why not just ask a chat
-
-We ran the same task both ways on 2026-11-03, one call each. The input was the twelve sample photos plus one of our own (a December 2025 photo of the CHICAGO marquee over a stage) and the intent "a concert log for someone who goes to a lot of shows".
-- **The chat:** the same model Tearsheet uses (`muse-spark-1.3`, effort low) with the thirteen photos attached to one plain message: no system prompt, no schema, no rules.
-- **Tearsheet:** the live proposal on the public site, with a lean of `dark` + `one accent`.
-
-| | General chat | Tearsheet |
-|---|---|---|
-| Surfaced the photo we hadn't thought of (CHICAGO) | yes, "for *content* reference, not style": it is "the only actual live-performance photo" | yes, first pick, quoting its rule "restrict the single warm accent to under 10% of frame …" |
-| Reason lands on a screen element | partly: "header title, subhead info, footer details" for a template it does not show | yes: the quoted rule sets `accent_coverage`; the photo's title rule moves the list and year-review titles |
-| We kept the change | no screen changed, so there was nothing to keep | yes: the title-led layout is the shot in the video |
-
-**The chat picked it because it's a concert. Tearsheet picked it because of a rule, and it never saw the photo.** The chat also set aside the three car photos because they are cars ("wrong subject"). Tearsheet picked a car photo (g2) for the same kind of accent rule, and the change shows on the screen with its provenance. The chat's answer is kept verbatim in `../meta-eval/docs/FAIR_COMPARISON_2026-11-03.md`.
-
-## Measured by mask (after the video)
-
-SAM 3.1 passed its gate on 2026-11-03: 2 of 3 photos, with masks tight on discrete objects (the taillights, the lit sign, the audience) and missing or partial on soft, out-of-focus or flat regions. Two runs on the same photo were identical. Mask-measured subject share and accent coverage land after the video. They will be used only for sharp, separate objects; everything else keeps the model's estimate, labeled `estimated`. The gate record is `../meta-eval/docs/SAM_GATE.md`.
-
-## Phone
-
-Tearsheet is installable (`manifest.webmanifest`, a service worker that caches the app shell and never `/api/`). On a phone, `Shoot` opens the camera and `Add from library` takes several photos; the queue sends two at a time and shows `Saved N · reading M`. Compose stays desktop-only. Two read-only routes make a project useful on the phone that collected it:
-
-- `/project/:id/preview`: List and Year review full-width, swipe or tap to switch; below, the ten relationship rows with their provenance chips and the Could-not-be-expressed list.
-- `/project/:id/instructions`: `handoff.md` rendered as a page, from the same generator as Export (bricks with thumbnails, every parameter with its origin, unexpressed list, conflicts and choices).
-
-Both end in a sticky footer, `Open on desktop to compose`: each tap first uploads the library and the project under the library's code (a library without one gets a code on its first tap), then offers a link of the form `/open?code=XXXXXX&project=<id>` to copy, or to the system share sheet where there is one. Copy and Share are their own tap because iOS Safari only allows them inside a user gesture. Opening the link on another device adopts the code, merges the library, and lands in that project: Compose on a wide screen, the preview on a phone. A code with nothing stored under it is not adopted. Projects travel with the bricks: the sync manifest holds them next to the bricks, merged by id with the newest `updatedAt` winning.
-
-## Limits and next
-
-- **The board (2026-11-04).** The propose call reads a `shape` off the intent: `log` or `board`. A board shows an overview of six model-written tiles (label, value, note, one state tag) and then its list, dates hidden; a log shows the list and the year review as before. The same sixteen parameters lay out the tiles: density is the form (one column at 1 and 2, two columns at 4, rows at 6), hierarchy sizes the value and places the chart stand-in, rhythm is uniform, a featured first tile or full-half-half, alignment keeps one axis (a centred board is one column), the accent goes on the tags, the period control, the tile edges or the first tile. `CONTRACT_CONTENT=board npm run test:contract` measures every three-starter composition on the overview and the list (`docs/contract/board/`): 0 of 1,320 break a rule. One live call with the dashboard intent (2026-11-04, 11.0 s, $0.0091) returned a board; its values carried unit words ("12 tasks"), so the prompt now asks for a number with its symbol or one word and the value never breaks inside a word. Content saved before this reads as a log. The harness copies of the prompt and schema were refreshed to match (`npm run check:prompts` passes).
-- **Card titles.** Card titles are metadata, never extraction: the twelve starters carry hand-set titles (catalogue titles shortened for the licensed works, Malik's own for his five, marked `adapted · by you`). A photo you add has no title yet, so its card leads with its first short label and its date. There is no rename field; that is next.
+Built by Malik Zhang for the Meta Global AI Developer Hackathon (Indie track). Everything in this repo was built during the hackathon (Oct 26 to Nov 4, 2026), except the pictures: Malik's own photos and the credited sample images below.
 
 ## Sample credits
 
-`public/samples/` holds the sample library. `g1`, `g2`, `calmmouse`, `greencar` and `c1` are the author's own photos. The images below were picked by axis, not by looks: type only, image only, all-over pattern, at least 60% negative space, a single accent colour, and black and white, plus one counterpoint. They were downscaled to 2048 px on the long edge, the extraction size, and each file name is its slug. Wherever the product shows one of these images, it carries the line in the Credit column.
+The code is under the MIT license (see `LICENSE`). The photos in `public/samples` and `public/fixtures` are not: each keeps its source's terms. `g1`, `g2`, `c1`, `calmmouse` and `greencar` are Malik Zhang's own photos. The others were picked to cover very different looks (type only, image only, an all-over pattern, mostly empty space, one accent, black and white, and one counterpoint) and carry their credit wherever the product shows them.
 
-| Slug | Axis | Credit | Work | License | Source |
-|---|---|---|---|---|---|
-| `bauhaus-1923-staatliches-bauhaus-weimar` | Type only: letters fill the cover, no image | Minneapolis Institute of Art, 1923 | Herbert Bayer and László Moholy-Nagy, *Staatliches Bauhaus in Weimar 1919–1923*, cover | Public Domain (Mia rights field) | [Mia 40353](https://collections.artsmia.org/art/40353) |
-| `haeckel-1904-trochilidae-plate-99` | Image only, no text; dense, four hue families | Wikimedia Commons, 1904 | Ernst Haeckel, *Kunstformen der Natur*, plate 99, Trochilidae | Public domain (Commons PD-old) | [Commons](https://commons.wikimedia.org/wiki/File:Haeckel_Trochilidae.jpg) |
-| `iran-1260s-star-cross-luster-tiles` | All-over repeat with no focal point; the highest edge density of the 18 designed candidates | The Metropolitan Museum of Art, 1260–70 | Panel of star and cross tiles, Kashan | Met Open Access, public domain | [Met 450438](https://www.metmuseum.org/art/collection/search/450438) |
-| `matthews-19c-glyphography-trade-card` | Negative space: 88% of pixels are paper colour; centre axis | The Metropolitan Museum of Art, 19th century | Trade card for Charles H. Matthews, glyphographic draughtsman | Met Open Access, public domain | [Met 813051](https://www.metmuseum.org/art/collection/search/813051) |
-| `lissitzky-1923-dlya-golosa` | Single accent: red is the only hue, about 7% of pixels, on cream with black | Minneapolis Institute of Art, 1923 | El Lissitzky, *Dlya Golosa* (For the Voice), page | Public Domain (Mia rights field) | [Mia 8553](https://collections.artsmia.org/art/8553) |
-| `secession-1902-beethoven-catalogue` | Black and white: 0.3% chromatic pixels; a woodcut with one caption line | Minneapolis Institute of Art, 1902 | Ernst Stöhr, woodcut in the catalogue of the 14th Vienna Secession exhibition (Beethoven) | Public Domain (Mia rights field) | [Mia 119894](https://collections.artsmia.org/art/119894) |
-| `jpl-2016-visions-mars` | Counterpoint: the most saturated hues, image-led, large sans title at the bottom | Courtesy NASA/JPL-Caltech | NASA/JPL, *Visions of the Future: Mars* | JPL image use policy: free to use with credit, no logos, no implied endorsement | [JPL](https://www.jpl.nasa.gov/galleries/visions-of-the-future/) |
+| Sample | Work | Credit | License | Source |
+|---|---|---|---|---|
+| `bauhaus-1923-staatliches-bauhaus-weimar` | Herbert Bayer and László Moholy-Nagy, *Staatliches Bauhaus in Weimar 1919–1923*, cover | Minneapolis Institute of Art, 1923 | Public Domain (Mia rights field) | [Mia 40353](https://collections.artsmia.org/art/40353) |
+| `haeckel-1904-trochilidae-plate-99` | Ernst Haeckel, *Kunstformen der Natur*, plate 99, Trochilidae | Wikimedia Commons, 1904 | Public domain (Commons PD-old) | [Commons](https://commons.wikimedia.org/wiki/File:Haeckel_Trochilidae.jpg) |
+| `iran-1260s-star-cross-luster-tiles` | Panel of star and cross tiles, Kashan | The Metropolitan Museum of Art, 1260–70 | Met Open Access, public domain | [Met 450438](https://www.metmuseum.org/art/collection/search/450438) |
+| `matthews-19c-glyphography-trade-card` | Trade card for Charles H. Matthews, glyphographic draughtsman | The Metropolitan Museum of Art, 19th century | Met Open Access, public domain | [Met 813051](https://www.metmuseum.org/art/collection/search/813051) |
+| `lissitzky-1923-dlya-golosa` | El Lissitzky, *Dlya Golosa* (For the Voice), page | Minneapolis Institute of Art, 1923 | Public Domain (Mia rights field) | [Mia 8553](https://collections.artsmia.org/art/8553) |
+| `secession-1902-beethoven-catalogue` | Ernst Stöhr, woodcut in the catalogue of the 14th Vienna Secession exhibition (Beethoven) | Minneapolis Institute of Art, 1902 | Public Domain (Mia rights field) | [Mia 119894](https://collections.artsmia.org/art/119894) |
+| `jpl-2016-visions-mars` | NASA/JPL, *Visions of the Future: Mars* | Courtesy NASA/JPL-Caltech | JPL image use policy: free to use with credit, no logos, no implied endorsement | [JPL](https://www.jpl.nasa.gov/galleries/visions-of-the-future/) |
