@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, carryOver, leadKey, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
+import { autoName, carryByBrick, carryOver, leadKey, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
 
@@ -197,5 +197,17 @@ describe("C+D: what couldn't carry over on Make", () => {
   })
   it('only fragile notes: nothing to show', () => {
     assert.deepEqual(carryOver([{ brickId: 'g2', rule: 'daylight would flatten it', reason: 'fragile' }]), [])
+  })
+  it("a photo's dot counts the rows its sheet lists: a fragile note is neither, so a photo with only one has no dot", () => {
+    const by = carryByBrick([
+      { brickId: 'chicago', rule: 'brighten the field and it collapses', reason: 'fragile' },
+      { brickId: 'g2', rule: 'daylight would flatten it', reason: 'fragile' },
+      { brickId: 'secession', rule: 'link two focal elements with one curve', reason: 'unsupported-target' },
+      { brickId: 'secession', rule: 'a second rule with no slot', reason: 'no-slot' },
+      { brickId: 'secession', rule: 'a note on top', reason: 'fragile' },
+    ])
+    assert.equal(by.has('chicago'), false)
+    assert.equal(by.has('g2'), false)
+    assert.deepEqual(by.get('secession')?.map(u => u.rule), ['link two focal elements with one curve', 'a second rule with no slot'])
   })
 })

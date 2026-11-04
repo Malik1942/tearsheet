@@ -81,6 +81,12 @@ export function carryOver(unexpressed: Unexpressed[]): { brickId: string; items:
   return groups
 }
 
+/** A photo's dot: the rows of what couldn't carry over, by photo. The dot's count and its sheet's rows both read this, so they are the same number; a photo with only a
+ *  fragile note has no entry and no dot. */
+export function carryByBrick(unexpressed: Unexpressed[]): Map<string, Unexpressed[]> {
+  return new Map(carryOver(unexpressed).map(g => [g.brickId, g.items]))
+}
+
 /** `mutedBricks` with one photo flipped: off if it was on, on if it was off. */
 export function toggleMuted(muted: Project['mutedBricks'], id: string): Record<string, true> {
   const next = { ...(muted ?? {}) }

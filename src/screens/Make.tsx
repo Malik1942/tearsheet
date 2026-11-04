@@ -9,10 +9,9 @@ import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
 import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
 import { standInLine } from '../lib/standIns'
-import { NEUTRAL_SKIN, autoName, leadKey, photoRow, toggleMuted } from '../lib/makeFlow'
+import { NEUTRAL_SKIN, autoName, carryByBrick, leadKey, photoRow, toggleMuted } from '../lib/makeFlow'
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { Fold, Overlay } from '../make/Steps'
-import type { Unexpressed } from '../lib/types'
 import { ScaledScreens } from '../make/Screens'
 import { Callouts } from '../make/Callouts'
 import { screensOf, toShellContent, type ScreenKey } from '../shell/content'
@@ -42,7 +41,7 @@ const COPY = {
   fineTune: 'Fine-tune…', style: 'Adjust style…', arrangement: 'Try another arrangement…', neutral: 'Neutral skin', pick: 'Pick photos myself…', rename: 'Rename…',
   isOn: 'on', isOff: 'off', swap: 'Swap',
   carryBadge: (n: number, label: string) => `${n} ${n === 1 ? 'thing' : 'things'} from ${label} couldn't carry over`,
-  noSlot: 'No slot on these screens', fragile: 'Would break if changed',
+  noSlot: 'No slot on these screens',
   files: 'Files', versions: 'Versions',
   list: 'List', review: 'Year review', board: 'Overview', both: 'Both',
   missing: "This project isn't on this device.", projects: 'Projects',
@@ -99,9 +98,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const photos = useMemo(() => project ? photoRow(project, store.bricks) : [], [project, store.bricks])
   // what of each photo couldn't carry over here, for its dot (a photo tapped off contributes nothing, so it has none)
   const unexpressedBy = useMemo(() => {
-    const by = new Map<string, Unexpressed[]>()
-    for (const u of resolved?.unexpressed ?? []) by.set(u.brickId, [...(by.get(u.brickId) ?? []), u])
-    return by
+    return carryByBrick(resolved?.unexpressed ?? [])
   }, [resolved])
   // a tap turns the photo off or on, and says so next to it for two seconds
   const toggle = (id: string, label: string, nowOn: boolean) => {
@@ -259,21 +256,18 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
           initial={project && intent.trim() === project.intent.trim() ? project.brickIds : anchorBrick ? [anchorBrick.id] : pre ? [pre.id] : []} />
       )}
       {dialog && typeof dialog === 'object' && 'carry' in dialog && project && (() => {
-        // one photo's dot: what of it couldn't carry over, grouped (no slot here; fragile if changed), one line each
+        // one photo's dot: what of it couldn't carry over (no slot here), one line each; as many rows as the dot counts
         const items = unexpressedBy.get(dialog.carry) ?? []
         const row = photos.find(p => p.brick.id === dialog.carry)
-        const groups = [[COPY.noSlot, items.filter(u => u.reason !== 'fragile')], [COPY.fragile, items.filter(u => u.reason === 'fragile')]] as const
         return (
           <Overlay title={row?.label ?? (row ? cardCaption(row.brick, null).title : '')} onClose={() => setDialog(null)}>
             <div className="flex flex-col gap-4 text-[13px]">
-              {groups.filter(([, us]) => us.length > 0).map(([head, us]) => (
-                <section key={head} className="flex flex-col gap-2">
-                  <h3 className="caption ink-2 m-0 font-normal">{head}</h3>
-                  <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                    {us.map((u, i) => <li key={i}>{u.rule}{u.reason !== 'fragile' && <span className="ink-2 mt-0.5 block text-[12px]">{standInLine(u.rule)}</span>}</li>)}
-                  </ul>
-                </section>
-              ))}
+              <section className="flex flex-col gap-2">
+                <h3 className="caption ink-2 m-0 font-normal">{COPY.noSlot}</h3>
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                  {items.map((u, i) => <li key={i}>{u.rule}<span className="ink-2 mt-0.5 block text-[12px]">{standInLine(u.rule)}</span></li>)}
+                </ul>
+              </section>
             </div>
           </Overlay>
         )
