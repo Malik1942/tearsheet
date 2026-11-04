@@ -2,6 +2,8 @@
  *  drawn in currentColor so the skin colors them (shell.css). They read the skin and change no parameter. Their text is at caption size, a size every
  *  screen already uses, so a screen keeps three type sizes (layout contract rule 3). */
 
+import type { ReactNode } from 'react'
+
 /** The tab icons, a fixed mapping: list, chart, person (lucide `list`, `chart-column`, `user`, ISC license), at 24 units drawn 22 px. */
 const TAB_ICONS = [
   { id: 'list', paths: ['M3 12h.01', 'M3 18h.01', 'M3 6h.01', 'M8 12h13', 'M8 18h13', 'M8 6h13'] },
@@ -44,3 +46,10 @@ export function TabBar({ labels, active, staticRender }: { labels: readonly [str
 }
 
 export const HomeIndicator = () => <div className="home-indicator" aria-hidden="true"><span></span></div>
+
+/** The phone around a shell (device frame spec 2026-11-04, Malik: "more like iphone"), sized by `PHONE` (phone.ts). Drawn, not a photo of a phone: the page
+ *  is a measured drawing, and a side button would sit where the leaders come in. The frame and the island are device black; the skin colors only what is
+ *  inside the screen. shell.css lays the status bar out round the island, inside a frame only. */
+export const PhoneFrame = ({ children }: { children: ReactNode }) => (
+  <div className="phone"><div className="phone-screen">{children}</div><span className="phone-island" aria-hidden="true"></span></div>
+)

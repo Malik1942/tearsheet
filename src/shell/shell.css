@@ -35,6 +35,19 @@
 .home-indicator { flex: none; height: 34px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: var(--space); background: var(--color-bg); }
 .home-indicator span { display: block; width: 134px; height: 5px; border-radius: 3px; background: var(--color-fg); }
 
+/* ---------- the phone around a shell (device frame spec 2026-11-04): phone.ts PHONE, measured off the hi-fi bezel. A 320 × 694 screen with 50 px corners in an
+   even 10 px bezel (340 × 714, outer corners 60, concentric): black glass edge with a 2 px lighter rim at the outside for the metal band, and a 1 px rule
+   outside so the edge holds on paper. A 75 × 28 island 11 below the screen's top edge. Device black, not the skin. Inside a frame the status bar is 50 tall and
+   laid out round the island: the time centered in the left ear, signal and battery in the right, both level with the island's center (25). There the 50 px
+   corner is under 10 px in and the time starts about 50 in; the tab bar ends 34 above the bottom, where the corner is about 1 px in, so nothing is clipped.
+   A shell with no frame (a Library thumbnail) keeps its 44 px bar and has no island ---------- */
+.phone { position: relative; box-sizing: border-box; width: 340px; height: 714px; padding: 10px; border-radius: 60px; background: #0E0E0E; box-shadow: inset 0 0 0 2px #3A3A3A, 0 0 0 1px var(--line); }
+.phone-screen { height: 100%; overflow: hidden; border-radius: 50px; }
+.phone-island { position: absolute; top: 21px; left: 50%; translate: -50% 0; width: 75px; height: 28px; border-radius: 14px; background: #000; pointer-events: none; }
+.phone .status-bar { height: 50px; display: grid; grid-template-columns: 1fr 75px 1fr; align-items: center; padding: 0; }
+.phone .status-time { grid-column: 1; justify-self: center; }
+.phone .status-icons { grid-column: 3; justify-self: center; }
+
 /* large-title navigation on the List: the bar keeps its control, the title sits under it at the screen's largest size, never a new one (display under type-led, else title) */
 .bar:not(:has(.bar-title)) { justify-content: flex-end; }
 .large-title { margin: 0; padding: var(--space) var(--side) 0; font-family: var(--font-display); font-size: var(--t-title); font-weight: 750; line-height: 1.1; letter-spacing: -0.02em; overflow-wrap: anywhere; }

@@ -7,6 +7,7 @@ import { registerHooks } from 'node:module'
 import React, { createElement as h } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { DEFAULT_PARAMS } from '../src/shell/params.ts'
+import { PHONE, PHONE_H, PHONE_W } from '../src/shell/phone.ts'
 
 ;(globalThis as { React?: typeof React }).React = React
 registerHooks({
@@ -17,7 +18,8 @@ registerHooks({
 })
 
 let Shell: typeof import('../src/shell/Shell.tsx').Shell
-before(async () => { ({ Shell } = await import('../src/shell/Shell.tsx')) })
+let Device: typeof import('../src/shell/Device.tsx')
+before(async () => { ({ Shell } = await import('../src/shell/Shell.tsx')); Device = await import('../src/shell/Device.tsx') })
 
 const render = (screen: 'list' | 'review', staticRender = false) => renderToStaticMarkup(h(Shell, { params: DEFAULT_PARAMS, screen, staticRender }))
 const tabs = (html: string) => [...html.matchAll(/<(button|span) [^>]*class="tab-item"[^>]*>[^]*?<span class="tab-label">([^<]*)<\/span>/g)].map(m => ({ tag: m[1], label: m[2], active: /data-active="true"/.test(m[0]) }))
@@ -64,5 +66,25 @@ describe('device details inside each phone frame', () => {
     assert.deepEqual(tabs(render('list')).map(t => t.tag), ['button', 'button', 'button'])
     assert.deepEqual(tabs(render('list', true)).map(t => t.tag), ['span', 'span', 'span'])
     assert.doesNotMatch(render('review', true), /<button/)
+  })
+})
+
+describe('the phone around a shell (device frame spec 2026-11-04)', () => {
+  it('has an iPhone 15/16 Pro shape at 320 pt wide, measured off the hi-fi bezel: a 320 × 694 screen with 50 px corners in a 10 px bezel, 340 × 714 outside, and a 75 × 28 island 11 below the top', () => {
+    assert.equal(PHONE.screenW, 320)
+    assert.equal(PHONE.screenH, 694)
+    assert.equal(PHONE.bezel, 10)
+    assert.equal(PHONE.screenRadius, 50)
+    assert.deepEqual([PHONE.islandW, PHONE.islandH, PHONE.islandTop], [75, 28, 11])
+    assert.equal(PHONE_W, 340)
+    assert.equal(PHONE_H, 714)
+  })
+  it('holds the shell in a screen and draws the island over it, hidden from assistive technology', () => {
+    const html = renderToStaticMarkup(h(Device.PhoneFrame, null, h(Shell, { params: DEFAULT_PARAMS, screen: 'list', height: PHONE.screenH })))
+    assert.match(html, /^<div class="phone"><div class="phone-screen"><div class="shell"[^]*<\/div><\/div><span class="phone-island" aria-hidden="true"><\/span><\/div>$/)
+    assert.match(html, /--viewport-h:694px/)
+  })
+  it('a shell without the frame (a Library thumbnail) has no island', () => {
+    assert.doesNotMatch(render('list'), /phone-island/)
   })
 })

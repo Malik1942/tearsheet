@@ -2,10 +2,10 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { ParameterKey, Params } from '../shell/params'
 import { Shell } from '../shell/Shell'
 import { CONCERT_CONTENT, SCREEN_NAMES, screensOf, type ShellContent } from '../shell/content'
+import { PhoneFrame } from '../shell/Device'
+import { PHONE, PHONE_H as FRAME_H, PHONE_W as FRAME_W } from '../shell/phone'
 
-/** The shells render at their usual size inside a phone frame and are scaled, as MiniPreview does: one renderer, any size. */
-const SHELL_W = 320, SHELL_H = 640, PAD = 6
-const FRAME_W = SHELL_W + 2 * PAD, FRAME_H = SHELL_H + 2 * PAD
+/** The shells render at their usual size inside the phone frame (Device.tsx) and are scaled, as MiniPreview does: one renderer, any size. */
 
 const useMedia = (q: string) => {
   const [on, setOn] = useState(() => typeof matchMedia === 'function' && matchMedia(q).matches)
@@ -56,8 +56,8 @@ export function ScaledScreens({ params, flash, reserve, content }: { params: Par
           <div key={key} className="flex w-full shrink-0 snap-center justify-center md:w-auto" role="group" aria-label={label}>
             <div className="relative" style={{ width: FRAME_W * scale, height: FRAME_H * scale }}>
               {/* inert: the preview's own controls ("Add show", its Share) are a picture of the user's product, not this page's; they leave the tab order and the page outline */}
-              <div inert className="absolute left-0 top-0 overflow-hidden rounded-[22px]" style={{ width: FRAME_W, height: FRAME_H, padding: PAD, background: '#111', border: '1px solid var(--line)', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-                <div className="h-full overflow-hidden rounded-[16px]"><Shell params={params} screen={key} height={SHELL_H} flash={flash} content={content} /></div>
+              <div inert className="absolute left-0 top-0" style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+                <PhoneFrame><Shell params={params} screen={key} height={PHONE.screenH} flash={flash} content={content} /></PhoneFrame>
               </div>
             </div>
           </div>

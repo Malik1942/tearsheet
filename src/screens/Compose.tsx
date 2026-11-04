@@ -7,6 +7,8 @@ import { standInLine } from '../lib/standIns'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS } from '../shell/params'
 import type { ParameterValue } from '../lib/types'
 import { Shell } from '../shell/Shell'
+import { PhoneFrame } from '../shell/Device'
+import { PHONE } from '../shell/phone'
 import { MiniPreview } from '../shell/MiniPreview'
 import { choiceStands, conflictTiles } from '../lib/conflictPreview'
 import { Photo } from '../bricks/Photo'
@@ -126,9 +128,7 @@ export function ComposePanel({ project, neutral, onNeutral, screen }: { project:
         {/* Shell */}
         <div className="flex flex-wrap justify-center gap-4 self-start">
           {(screen === 'both' ? screensOf(toShellContent(project.content)) : [screen]).map(s => (
-            <div key={s} className="w-full max-w-[320px] overflow-hidden rounded-[20px]" style={{ border: '1px solid var(--line)', background: '#111', padding: 6, height: 652 }}>
-              <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} flash={flash} content={toShellContent(project.content)} /></div>
-            </div>
+            <PhoneFrame key={s}><Shell params={params} screen={s} height={PHONE.screenH} flash={flash} content={toShellContent(project.content)} /></PhoneFrame>
           ))}
           <p className="w-full text-center text-[11px] ink-2">Renders locally from one parameters.json; no model call. Edits happen through materials and the sheet.</p>
         </div>
