@@ -150,6 +150,8 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review' | 'bo
   }
   for (const el of all('.tile')) if (el.getBoundingClientRect().height < MIN_TARGET - 0.5) bad.push(`${label(el)} ${el.getBoundingClientRect().height.toFixed(0)}px tall`)
   for (const el of all('.item, .row')) if (el.getBoundingClientRect().height < MIN_TARGET - 0.5) bad.push(`${label(el)} ${el.getBoundingClientRect().height.toFixed(0)}px tall`)
+  // a screen's titles are read whole: none is cut with an ellipsis or clipped (a written title can be longer than the concert log's)
+  for (const el of all('.bar-title, .large-title, .screen-title')) if (el.scrollWidth > el.clientWidth + 1) bad.push(`${label(el)} cut: "${el.textContent?.trim()}"`)
   for (const el of all('button, a, [role="button"], .action, .bar-icon')) {
     const b = el.getBoundingClientRect()
     if (b.width < MIN_TARGET - 0.5 || b.height < MIN_TARGET - 0.5) bad.push(`${label(el)} target ${b.width.toFixed(0)}×${b.height.toFixed(0)}`)

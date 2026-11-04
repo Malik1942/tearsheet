@@ -66,7 +66,7 @@ describe('validateContent', () => {
     }
   })
   it('refuses a tab that repeats a screen title (layout contract rule 5)', () => {
-    assert.equal(validateContent({ ...READING, tabs: ['books', 'Pace', 'Me'] }), null)
+    assert.equal(validateContent({ ...READING, tabs: ['my weekly shelf', 'Pace', 'Me'] }), null)
   })
 })
 
@@ -117,7 +117,7 @@ describe('the shell reads every word from its content', () => {
   })
   it('shows the written titles, tabs and entries on the List', () => {
     const html = render('list')
-    assert.match(html, /<h1 class="large-title">Books<\/h1>/)
+    assert.match(html, /<h1 class="large-title">My Weekly Shelf<\/h1>/)
     assert.deepEqual([...html.matchAll(/<span class="tab-label">([^<]*)<\/span>/g)].map(m => m[1]), ['Shelf', 'Pace', 'Me'])
     for (const e of READING.entries) assert.ok(html.includes(`>${e.title}<`), e.title)
     assert.ok(text(html).includes('Jan 11 · Ursula K. Le Guin'))
@@ -125,10 +125,10 @@ describe('the shell reads every word from its content', () => {
   })
   it('shows its year, generic totals and a highlight on the year review', () => {
     const html = render('review', toShellContent(READING))
-    assert.match(html, /<h1 class="bar-title">Reading year<\/h1>/)
+    assert.match(html, /<h1 class="bar-title">My Year in Books<\/h1>/)
     assert.match(html, /<h2 class="screen-title">2026<\/h2>/)
-    // eight books in eight months; seven tags, since sci-fi and literary come back
-    assert.ok(text(html).includes('8 books8 months7 tags'), text(html).slice(0, 200))
+    // eight entries in eight months (the first total's word is fixed, not the list title); seven tags, since sci-fi and literary come back
+    assert.ok(text(html).includes('8 entries8 months7 tags'), text(html).slice(0, 200))
     assert.equal(/shows|cities|genres|Show of the year/.test(html), false)
   })
   it('keeps the concert sample word for word: Shows, Year review, Add show, shows, cities, genres, Show of the year', () => {

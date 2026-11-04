@@ -1,5 +1,5 @@
 {
-  "screen_titles": { "list": "Books", "review": "Reading year" },
+  "screen_titles": { "list": "My Weekly Shelf", "review": "My Year in Books" },
   "tabs": ["Shelf", "Pace", "Me"],
   "entries": [
     { "title": "The Left Hand of Darkness", "subtitle": "Ursula K. Le Guin", "date": "2026-01-11", "tags": ["sci-fi", "classic"] },
