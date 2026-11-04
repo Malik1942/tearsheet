@@ -8,13 +8,13 @@ import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
 import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
 import { standInLine } from '../lib/standIns'
-import { INTENT_EXAMPLES, NEUTRAL_SKIN, autoName, carryOver, photoLine, photoRow, toggleMuted } from '../lib/makeFlow'
+import { INTENT_SAMPLES, NEUTRAL_SKIN, autoName, carryOver, photoLine, photoRow, toggleMuted } from '../lib/makeFlow'
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { Fold, Overlay } from '../make/Steps'
 import { ScaledScreens } from '../make/Screens'
 import { toShellContent } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
-import { IntentField, StartPhotos } from '../make/Start'
+import { IntentField, IntentHint, StartPhotos } from '../make/Start'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
 import { ComposePanel } from './Compose'
@@ -28,7 +28,6 @@ const finePointer = () => typeof matchMedia === 'function' && matchMedia('(point
 const RESERVE = 260
 const COPY = {
   field: 'What are you making?',
-  examples: 'Try',
   placeholder: 'Describe it in one sentence',
   finding: 'Looking through your photos…',
   off: 'Finding is off here. Pick them yourself.',
@@ -146,14 +145,11 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
         {!project ? (
           // before Enter (Malik, 2026-11-03): the question, a large field with its action, examples to tap, and the photos to start from as large blocks
           <div className="make-start">
-            <h1 className="intent-headline">{COPY.field}</h1>
+            <div className="make-start-head">
+              <h1 className="intent-headline">{COPY.field}</h1>
+              <IntentHint examples={INTENT_SAMPLES} onPick={setIntent} />
+            </div>
             <IntentField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} placeholder={COPY.placeholder} autoFocus={finePointer()} primary />
-            {!busy && (
-              <div className="intent-examples">
-                <span className="ink-2 caption">{COPY.examples}</span>
-                {INTENT_EXAMPLES.map(x => <button key={x} type="button" className="btn" onClick={() => setIntent(x)}>{x}</button>)}
-              </div>
-            )}
             {!busy && withRules.length > 0 && <StartPhotos bricks={withRules} anchorId={anchorBrick?.id ?? null} onAnchor={setAnchor} onAll={() => setDialog('style')} />}
           </div>
         ) : (

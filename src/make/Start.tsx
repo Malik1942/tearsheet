@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { Fragment, useRef } from 'react'
 import { Photo } from '../bricks/Photo'
 import { photoLine } from '../lib/makeFlow'
 import { labelsOfBrick } from '../lib/shortLabels'
@@ -7,17 +7,19 @@ import type { Brick } from '../lib/types'
 
 const COPY = {
   go: 'Find photos',
-  start: 'Start from one of your photos',
+  hint: 'One sentence is enough, like',
+  or: 'or',
+  start: 'Start from a photo',
   startHint: 'Optional. The rest is proposed around it.',
   startingFrom: 'Starting from this one',
   clear: 'Clear',
   all: 'All photos…',
 }
-/** Photos shown as blocks: two rows of four on a wide screen, two rows of three on a phone (shell.css hides the seventh and eighth there). */
+/** Photos shown as blocks: two rows of four on a wide screen, two rows of three on a phone (tokens.css hides the seventh and eighth there). */
 const SHOWN = 8, SHOWN_PHONE = 6
 
-/** Make's field (Malik, 2026-11-03: a bigger, designed text box). A textarea, so a long intent wraps in view; Enter or the button proposes.
- *  `primary`: the button is the view's one red block before there is a project; on a project page Share is, so there it is a plain button. */
+/** Make's field (Malik, 2026-11-03: a bigger text box): one bordered box with the action in its corner. A textarea, so a long intent wraps in view;
+ *  Enter or the button proposes. `primary`: the button is the view's one red block before there is a project; on a project page Share is, so there it is plain. */
 export function IntentField({ value, onChange, onSubmit, busy, label, placeholder, autoFocus, primary, onEscape, onLeave }: {
   value: string; onChange: (v: string) => void; onSubmit: () => void; busy: boolean; label: string; placeholder: string
   autoFocus?: boolean; primary?: boolean; onEscape?: () => void; onLeave?: () => void
@@ -41,8 +43,24 @@ export function IntentField({ value, onChange, onSubmit, busy, label, placeholde
   )
 }
 
-/** The person's photos as large blocks to start from (spec v3 P4, "More like this one", brought out of Adjust style onto the empty page). The chosen one
- *  carries the same red ring as a photo that is on under the screens; tapping it again clears it. Their own photos first, newest saved first, then the starters. */
+/** The line under the question: the examples are words in one sentence, each a quiet link that puts its whole intent in the field (Malik, 2026-11-03: no
+ *  label row, no chips). */
+export function IntentHint({ examples, onPick }: { examples: readonly { label: string; intent: string }[]; onPick: (intent: string) => void }) {
+  return (
+    <p className="intent-hint">
+      {COPY.hint}{' '}
+      {examples.map((e, i) => (
+        <Fragment key={e.label}>
+          {i > 0 && (i === examples.length - 1 ? ` ${COPY.or} ` : ', ')}
+          <button type="button" className="intent-example" title={e.intent} onClick={() => onPick(e.intent)}>{e.label}</button>
+        </Fragment>
+      ))}.
+    </p>
+  )
+}
+
+/** Photos as large blocks to start from (spec v3 P4, "More like this one", brought out of Adjust style onto the empty page). The chosen one carries the same
+ *  red ring as a photo that is on under the screens; tapping it again clears it. The person's own photos first, newest saved first, then the starters. */
 export function StartPhotos({ bricks, anchorId, onAnchor, onAll }: { bricks: Brick[]; anchorId: string | null; onAnchor: (id: string | null) => void; onAll: () => void }) {
   const own = bricks.filter(b => originOf(b) === 'own').sort((a, b) => (b.saved_at > a.saved_at ? 1 : b.saved_at < a.saved_at ? -1 : 0))
   const ordered = [...own, ...bricks.filter(b => originOf(b) !== 'own')]
@@ -60,16 +78,16 @@ export function StartPhotos({ bricks, anchorId, onAnchor, onAll }: { bricks: Bri
           const label = labelsOfBrick(b, 1)[0]?.label
           return (
             <li key={b.id}>
-              <button type="button" className="start-photo" aria-pressed={on} onClick={() => onAnchor(on ? null : b.id)}>
+              {/* one caption, the label; the date or credit is the block's tooltip and part of its name */}
+              <button type="button" className="start-photo" aria-pressed={on} title={photoLine(b)} aria-label={`${label ? label + ', ' : ''}${photoLine(b)}`} onClick={() => onAnchor(on ? null : b.id)}>
                 <Photo src={b.photo.url} alt="" />
                 {label && <span className="start-label">{label}</span>}
-                <span className="start-meta tnum">{photoLine(b)}</span>
               </button>
             </li>
           )
         })}
       </ul>
-      {ordered.length > SHOWN_PHONE && <button type="button" className="btn btn-quiet start-all" onClick={onAll}>{COPY.all}</button>}
+      {ordered.length > SHOWN_PHONE && <button type="button" className="start-all" onClick={onAll}>{COPY.all}</button>}
     </section>
   )
 }

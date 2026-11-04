@@ -8,6 +8,10 @@ import type { Brick, Unexpressed } from './types'
 
 /** Spec v3 P2: three examples of the expected granularity, shown under the empty field. */
 export const INTENT_EXAMPLES = ['a concert log for someone who goes to a lot of shows', 'a reading tracker', 'a ride stats screen for sunlight'] as const
+/** Make's examples (Malik, 2026-11-03): a short phrase in the line under the question; tapping it puts the whole sentence in the field. */
+export const INTENT_SAMPLES: readonly { label: string; intent: string }[] = [
+  { label: 'a concert log', intent: INTENT_EXAMPLES[0] }, { label: 'a reading tracker', intent: INTENT_EXAMPLES[1] }, { label: 'a ride stats screen', intent: INTENT_EXAMPLES[2] },
+]
 
 const LEADING = new Set(['a', 'an', 'the'])
 const TRAILING = new Set(['a', 'an', 'the', 'for', 'of', 'to', 'with', 'and', 'or', 'that', 'who', 'in', 'on', 'at', 'by', 'from', 'my', 'your'])
