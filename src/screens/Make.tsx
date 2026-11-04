@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
@@ -29,10 +29,15 @@ const MAX_BRICKS = 5
 const finePointer = () => typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches
 /** Space kept under the screens for the spread's bottom padding (24) and the photo row, so screens + photos fit one 1440x900 viewport. */
 const RESERVE = 150
+/** From this width Make is a workspace (Malik, 2026-11-04): the screens at the left; the intent and each photo with its reason in a column at the right.
+ *  The photo row moves into that column, so the screens no longer keep room for it below them (tokens.css .make-page). */
+const WORKSPACE = '(min-width: 1180px)'
+const useWorkspace = () => useSyncExternalStore(l => { const m = matchMedia(WORKSPACE); m.addEventListener('change', l); return () => m.removeEventListener('change', l) }, () => matchMedia(WORKSPACE).matches, () => false)
 /** How long a photo's caption stays after a tap (Malik, 2026-11-03). */
 const CAPTION_MS = 2000
 const COPY = {
   field: 'What are you making?',
+  fromPhotos: 'From your photos',
   finding: 'Reading your photos\' rules…',
   off: 'Finding is off here. Pick them yourself.',
   noRules: 'Nothing here has a rule to quote yet. Pick them yourself.',
@@ -96,6 +101,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const resolved = useMemo(() => project ? resolveProject(project, store.bricks) : null, [project, store.bricks])
   const flash = useChangeFlash(project)
   const photos = useMemo(() => project ? photoRow(project, store.bricks) : [], [project, store.bricks])
+  const workspace = useWorkspace()
   // what of each photo couldn't carry over here, for its dot (a photo tapped off contributes nothing, so it has none)
   const unexpressedBy = useMemo(() => {
     return carryByBrick(resolved?.unexpressed ?? [])
@@ -156,10 +162,11 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   if (id && !project) return <div className="chrome min-h-full"><div className="gutter mx-auto flex max-w-3xl flex-col gap-4 py-8"><p className="ink-2 m-0">{COPY.missing}</p><Link href="/projects" className="btn w-fit no-underline">{COPY.projects}</Link></div></div>
   const params = resolved ? (neutral ? { ...resolved.params, ...NEUTRAL_SKIN } : resolved.params) : null
   const headline = !!project && !editing && !busy
+  const result = !busy && !!project && !!resolved && !!params
 
   return (
     <div className="chrome min-h-full">
-      <div className="gutter mx-auto flex w-full max-w-6xl flex-col gap-4 py-4">
+      <div className={`make-page gutter mx-auto flex w-full max-w-6xl flex-col gap-4 py-4 ${result ? 'is-result' : ''}`}>
         {project && !headline && <h1 className="sr-only">{project.intent}</h1>}
         {!project ? (
           // before Enter: the headline is the input, nothing explains it (Malik, 2026-11-03); a starting point set elsewhere shows as its photo
@@ -199,12 +206,13 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
             {/* the two screens are a spread on paper with crop marks, never on a block (docs/DESIGN_SYSTEM.md) */}
             {/* Measured drawing: each photo that is on keeps its slot number, on its thumbnail and at the end of a leader to what it changes on the List screen */}
             <div className="make-spread crop-marks">
-              <ScaledScreens params={params} flash={flash} reserve={RESERVE} content={toShellContent(project.content)} />
+              <ScaledScreens params={params} flash={flash} reserve={workspace ? 48 : RESERVE} content={toShellContent(project.content)} />
               <Callouts marks={photos.flatMap(({ brick, muted }, i) => { const key = muted ? null : leadKey(brick, resolved); return key ? [{ n: i + 1, key }] : [] })} />
             </div>
             {/* each photo is one switch, its state in the photo itself (off: faded and grey). Its first short label shows for two seconds after a tap, and on hover
                 on a desktop; a dot in one corner counts what couldn't carry over, ⇄ in the other swaps it. The slots are fixed, so a photo never moves. */}
             <div className="photo-dock">
+              <p className="dock-label">{COPY.fromPhotos}</p>
               <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">
                 {photos.map(({ brick, muted, label }, i) => {
                   const why = project.proposal?.picks.find(p => p.brickId === brick.id)?.why
@@ -217,6 +225,8 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
                         <Photo src={brick.photo.url} alt="" style={tileFit(brick.photo, 1)} />
                       </button>
                       {!muted && <span className="callout photo-callout" aria-hidden="true">{i + 1}</span>}
+                      {/* the workspace's column reads each photo: what it sets, and why it was picked (hidden below the workspace width) */}
+                      <span className="photo-text"><b aria-hidden="true">{name}</b>{why && <span>{why}</span>}</span>
                       <span className={`photo-caption ${shown ? 'is-shown' : ''}`} aria-hidden={!shown} role={shown ? 'status' : undefined}>{shown ? caption.text : name}</span>
                       {missing > 0 && (
                         <button type="button" className="photo-badge tnum" aria-label={COPY.carryBadge(missing, name)} title={COPY.carryBadge(missing, name)} onClick={() => setDialog({ carry: brick.id })}>{missing}</button>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { MoreIcon } from '../make/Steps'
 import { Link, usePath } from '../lib/router'
 import { useStore } from '../lib/store'
@@ -9,6 +9,9 @@ import { tabOf, volumeOf, type Tab } from '../lib/nav'
 import { useModal } from './useModal'
 import { PageActionsProvider, usePageActionsValue, type PageMenuItem } from './pageActions'
 import { Lockup } from '../brand/Lockup'
+import { useInstall } from './install'
+import { ShortcutsSheet } from './Shortcuts'
+import { useShortcuts } from './useShortcuts'
 
 const COPY = {
   library: 'Library',
@@ -22,6 +25,10 @@ const COPY = {
   /** SB3: the toggle that hides every starter (Library, proposals, Compose's swap and add lists). */
   includeStarters: 'Include starters',
   includeTitle: 'Starters fill your proposals only while you have fewer than three bricks of your own.',
+  install: 'Install Tearsheet',
+  installHint: 'Own window',
+  installSafari: 'In Safari, choose File › Add to Dock. Tearsheet opens in its own window from the Dock.',
+  shortcuts: 'Keyboard shortcuts',
   about: 'About…',
   aboutTitle: 'About Tearsheet',
   aboutLine: 'Save photos you like the look of. Tearsheet reads what makes them work and carries it into screens you can share.',
@@ -44,14 +51,19 @@ const CREDITS_URL = 'https://github.com/Malik1942/tearsheet#sample-credits'
 export function AppChrome({ children }: { children: ReactNode }) {
   const path = usePath()
   const tab = tabOf(path)
+  const add = useAddPhotos()
+  const [help, setHelp] = useState(false)
+  const showHelp = useCallback(() => setHelp(true), [])
+  useShortcuts({ onShoot: add.shoot, onHelp: showHelp })
   return (
     <PageActionsProvider>
       <div className="chrome flex min-h-full flex-col" data-volume={volumeOf(path)}>
         <a href="#content" className="skip-link">Skip to content</a>
-        <AppHeader tab={tab} />
+        <AppHeader tab={tab} onShortcuts={showHelp} />
         <AddNotice />
         <main id="content" tabIndex={-1} className="with-bar flex min-w-0 flex-1 flex-col outline-none">{children}</main>
         <BottomBar tab={tab} />
+        <ShortcutsSheet open={help} onClose={() => setHelp(false)} />
       </div>
     </PageActionsProvider>
   )
@@ -103,7 +115,7 @@ function ShootButton({ className = '', bar = false }: { className?: string; bar?
   )
 }
 
-function AppHeader({ tab }: { tab: Tab }) {
+function AppHeader({ tab, onShortcuts }: { tab: Tab; onShortcuts: () => void }) {
   const page = usePageActionsValue()
   return (
     // the front page's nameplate (Malik, 2026-11-04): the lockup centered, its tear ultramarine, the sections at the left, the page's actions at the right
@@ -117,7 +129,7 @@ function AppHeader({ tab }: { tab: Tab }) {
             everywhere); Share on Make, which also puts its menu items at the top of this ⋯ */}
         {tab === 'library' && <ShootButton className="hidden md:inline-flex" />}
         {page.primary}
-        <MoreMenu pageItems={page.items ?? []} />
+        <MoreMenu pageItems={page.items ?? []} onShortcuts={onShortcuts} />
       </div>
     </header>
   )
@@ -140,11 +152,13 @@ function QueueStatus() {
   )
 }
 
-function MoreMenu({ pageItems }: { pageItems: PageMenuItem[] }) {
+function MoreMenu({ pageItems, onShortcuts }: { pageItems: PageMenuItem[]; onShortcuts: () => void }) {
   const store = useStore()
   const add = useAddPhotos()
+  const app = useInstall()
   const [open, setOpen] = useState(false)
   const [about, setAbout] = useState(false)
+  const [safariHint, setSafariHint] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
 
@@ -189,10 +203,18 @@ function MoreMenu({ pageItems }: { pageItems: PageMenuItem[] }) {
             {COPY.includeStarters}<span className="switch" data-on={store.showStarters || undefined} aria-hidden />
           </button>
           <div role="separator" className="menu-sep" />
+          {/* the desktop's app items (Malik, 2026-11-04): install where the browser can, and the keys; a phone has neither */}
+          {app.kind !== 'none' && (
+            <button role="menuitem" type="button" className="menu-item desktop-only" onClick={() => { close(); if (app.kind === 'prompt') void app.install(); else setSafariHint(true) }}>
+              <span>{COPY.install}</span><span className="ink-2 caption">{COPY.installHint}</span>
+            </button>
+          )}
+          <button role="menuitem" type="button" className="menu-item desktop-only" onClick={() => { close(); onShortcuts() }}><span>{COPY.shortcuts}</span><kbd className="kbd">?</kbd></button>
           <button role="menuitem" type="button" className="menu-item" onClick={() => { close(); setAbout(true) }}>{COPY.about}</button>
         </div>
       )}
       <AboutSheet open={about} onClose={() => setAbout(false)} />
+      <NoteSheet open={safariHint} title={COPY.install} line={COPY.installSafari} onClose={() => setSafariHint(false)} />
     </div>
   )
 }
@@ -205,6 +227,20 @@ function AboutSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
         <h2 id="about-title" className="em">{COPY.aboutTitle}</h2>
         <p className="mt-2 max-w-[60ch]">{COPY.aboutLine}</p>
         <p className="ink-2 caption mt-2">{COPY.credits} <a href={CREDITS_URL} target="_blank" rel="noreferrer" className="underline">{COPY.creditsLink}</a>.</p>
+        <div className="mt-5 flex justify-end"><button type="button" className="btn" onClick={onClose}>{COPY.close}</button></div>
+      </div>
+    </dialog>
+  )
+}
+
+/** One sentence in a centered sheet, as About: how Safari installs the app. */
+function NoteSheet({ open, title, line, onClose }: { open: boolean; title: string; line: string; onClose: () => void }) {
+  const ref = useModal(open)
+  return (
+    <dialog ref={ref} className="sheet sheet-center" aria-labelledby="note-title" onClose={onClose} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="p-6">
+        <h2 id="note-title" className="em">{title}</h2>
+        <p className="mt-2 max-w-[60ch]">{line}</p>
         <div className="mt-5 flex justify-end"><button type="button" className="btn" onClick={onClose}>{COPY.close}</button></div>
       </div>
     </dialog>

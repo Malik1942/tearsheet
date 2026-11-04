@@ -394,3 +394,52 @@ a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .reading-line b { display: block; font: 600 var(--type-em)/20px var(--font-ui); color: var(--ink); }
 .reading-line .to { display: block; font: 400 var(--type-body)/18px var(--font-ui); color: var(--ink-2); }
 .exact-toggle { align-self: flex-start; padding-left: 0; }
+
+/* ---------- the desktop as an app (Malik, 2026-11-04) ---------- */
+/* items and keys a phone has no use for */
+@media (max-width: 767.98px) { .desktop-only { display: none !important; } }
+
+/* a key, as the shortcuts list and ⋯ draw it: the mono on paper in a graphite outline (4.70:1 for its edge) */
+.kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border: 1px solid var(--ink-2); border-radius: 4px; background: var(--paper); color: var(--ink); font: 500 12px/1 var(--font-mono); }
+.shortcuts-sheet { width: min(440px, calc(100vw - 40px)); }
+.shortcuts { display: grid; grid-template-columns: 112px 1fr; row-gap: 12px; align-items: center; margin: var(--space-16) 0 0; }
+.shortcuts dt { display: flex; gap: 4px; }
+.shortcuts dd { margin: 0; color: var(--ink); }
+.shortcuts hr { grid-column: 1 / -1; width: 100%; margin: 2px 0; border: 0; border-top: 1px solid var(--line); }
+
+/* photos dragged over the window: the page fades, the window shows its crop marks, DROP TO SAVE over a small stack of sheets and the count.
+   It never takes the pointer, so the drop lands on the window (AddPhotos.tsx) */
+.drop-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: color-mix(in oklab, var(--paper) 90%, transparent); pointer-events: none; }
+.drop-overlay .cm { position: absolute; width: 18px; height: 18px; border: 0 solid var(--ink); }
+.drop-overlay .tl { left: 32px; top: 32px; border-left-width: 2px; border-top-width: 2px; }
+.drop-overlay .tr { right: 32px; top: 32px; border-right-width: 2px; border-top-width: 2px; }
+.drop-overlay .bl { left: 32px; bottom: 32px; border-left-width: 2px; border-bottom-width: 2px; }
+.drop-overlay .br { right: 32px; bottom: 32px; border-right-width: 2px; border-bottom-width: 2px; }
+.drop-body { display: flex; flex-direction: column; align-items: center; gap: var(--space-24); padding: 0 var(--space-24); text-align: center; }
+.drop-stack { position: relative; width: 120px; height: 130px; }
+.drop-sheet { position: absolute; left: 20px; top: 8px; width: 80px; height: 100px; background: var(--paper); border: 1.5px solid var(--ink); }
+.drop-sheet:nth-child(1) { rotate: -7deg; translate: -12px 6px; } .drop-sheet:nth-child(2) { rotate: 5deg; translate: 10px 2px; }
+.drop-count { position: absolute; right: 0; top: -6px; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 13px; background: var(--ink); color: var(--paper); font: 600 13px/26px var(--font-ui); }
+.drop-overlay .display { font-family: var(--font-poster); font-weight: 900; font-stretch: 62%; text-transform: uppercase; line-height: 0.84; font-size: clamp(56px, 9vw, 120px); color: var(--ink); margin: 0; }
+.drop-line { margin: 0; font: 500 var(--type-em)/20px var(--font-ui); color: var(--ink-2); }
+
+/* Make as a workspace from 1180 px (Make.tsx WORKSPACE): the screens at the left; at the right, sticky, the intent and each photo with what it sets and why
+   it was picked, the photo row re-laid as that list (its switches, swap and badges as they are). Below 1180 px, the photo row under the screens as before */
+.dock-label, .photo-text { display: none; }
+@media (min-width: 1180px) {
+  .make-page.is-result { display: grid !important; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto auto 1fr; gap: 0 64px !important; align-items: start; max-width: 1312px !important; }   /* !important: over the page's own flex, gap and max-width utilities, which sit in a later layer */
+  .make-page.is-result > .make-spread { grid-column: 1; grid-row: 1 / span 3; margin: var(--space-32) auto 0; }
+  .make-page.is-result > .make-head { grid-column: 2; grid-row: 1; margin: 64px 0 0; max-width: none; }
+  .make-page.is-result > .photo-dock { grid-column: 2; grid-row: 2; position: sticky; top: 88px; margin: var(--space-32) 0 0; padding: 0; border: 0; background: none; }
+  .make-page.is-result .dock-label { display: block; margin: 0 0 var(--space-12); font: 500 11px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .make-page.is-result .photo-row { display: flex; flex-direction: column; gap: var(--space-16); padding: 0; }
+  .make-page.is-result .photo-cell { --thumb: 56px; display: grid; grid-template-columns: var(--thumb) minmax(0, 1fr); column-gap: 14px; justify-content: stretch; align-items: start; }
+  .make-page.is-result .photo-callout { left: -8px; top: calc(var(--thumb) - 12px); }
+  .make-page.is-result .photo-badge { left: calc(var(--thumb) - 10px); right: auto; }
+  .make-page.is-result .photo-swap { left: -6px; }
+  .make-page.is-result .photo-caption:not(.is-shown) { display: none; }   /* the name is in the list now; a tap's "· off" still shows */
+  .make-page.is-result .photo-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .make-page.is-result .photo-text b { font: 600 var(--type-em)/20px var(--font-ui); color: var(--ink); }
+  .make-page.is-result .photo-text span { font: 400 var(--type-body)/18px var(--font-ui); color: var(--ink-2); }
+  .make-page.is-result .photo-cell:has(.photo-switch[aria-pressed="false"]) .photo-text { opacity: 0.55; }
+}
