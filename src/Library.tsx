@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { flushSync } from 'react-dom'
 import { useStore } from './lib/store'
 import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
@@ -44,6 +45,28 @@ export function Library() {
   const starters = newestFirst(store.bricks.filter(b => originOf(b) === 'starter'))
   // a removed brick closes its sheet; so does a retry, which supersedes it
   const selected = openId ? store.bricks.find(b => b.id === openId && !b.superseded_by) ?? null : null
+  // from the tablet up, a card's photo grows into the sheet's (a view transition, tokens.css "motion"); elsewhere, or with motion unwelcome, the sheet just opens
+  const openCard = (id: string, from?: HTMLElement | null) => {
+    const doc = document as Document & { startViewTransition?: (update: () => void) => { finished: Promise<void> } }
+    const img = from?.querySelector('img')
+    if (!img || !doc.startViewTransition || !matchMedia('(min-width: 768px)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return setOpenId(id)
+    img.style.viewTransitionName = 'photo'
+    const t = doc.startViewTransition(() => {
+      img.style.viewTransitionName = ''
+      flushSync(() => setOpenId(id))
+      const sheet = document.querySelector<HTMLDialogElement>('dialog.sheet-side[open]')
+      sheet?.classList.add('is-morphing')
+      const to = sheet?.querySelector<HTMLElement>('.sheet-photo img')
+      if (to) to.style.viewTransitionName = 'photo'
+    })
+    t.finished.finally(() => {
+      const sheet = document.querySelector<HTMLDialogElement>('dialog.sheet-side')
+      sheet?.classList.remove('is-morphing')
+      const to = sheet?.querySelector<HTMLElement>('.sheet-photo img')
+      if (to) to.style.viewTransitionName = ''
+    })
+  }
+
   // ← → step through the photos the grid shows, in its order, while the sheet is open (Malik, 2026-11-04: the desktop's keys); a photo still being read has no sheet
   const shown = (bricks.length === 0 && store.showStarters ? starters : bricks).filter(b => b.status !== 'extracting' && b.status !== 'pending')
   useEffect(() => {
@@ -66,7 +89,7 @@ export function Library() {
         {bricks.length === 0 ? (
           store.showStarters ? (
             // the masthead already says what these are and how many (Malik, 2026-11-03: no bare "0 photos")
-            <section aria-label="Starters"><Grid bricks={starters} onOpen={setOpenId} /></section>
+            <section aria-label="Starters"><Grid bricks={starters} onOpen={openCard} /></section>
           ) : (
             <div>
               <p className="empty-line">{COPY.empty}</p>
@@ -75,7 +98,7 @@ export function Library() {
             </div>
           )
         ) : (
-          <Grid bricks={bricks} onOpen={setOpenId} />
+          <Grid bricks={bricks} onOpen={openCard} />
         )}
       </div>
       <BrickSheet brick={selected} onClose={() => setOpenId(null)} />
@@ -112,7 +135,7 @@ function Masthead({ bricks, starters }: { bricks: Brick[]; starters: number }) {
   )
 }
 
-function Grid({ bricks, onOpen }: { bricks: Brick[]; onOpen: (id: string) => void }) {
+function Grid({ bricks, onOpen }: { bricks: Brick[]; onOpen: (id: string, from?: HTMLElement | null) => void }) {
   return (
     <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {bricks.map(b => <Card key={b.id} brick={b} onOpen={onOpen} />)}
@@ -128,7 +151,7 @@ function waitingTip(b: Brick): string {
 
 /** One card (15_SIMPLIFY §2): the photo and its two-line caption. The state is on the photo: a thin line while it waits or is read (no text), a small `!` when it could not be read,
  *  which opens "Couldn't read this one · Try again". A read or failed card is a link to `/brick/:id` that opens the Brick sheet in place (a new tab still gets the page). */
-function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void }) {
+function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string, from?: HTMLElement | null) => void }) {
   const store = useStore()
   const status = b.status ?? 'ready'
   const busy = status === 'extracting' || status === 'pending'
@@ -148,7 +171,7 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
   const open = (e: MouseEvent<HTMLAnchorElement>) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
     e.preventDefault()
-    onOpen(b.id)
+    onOpen(b.id, e.currentTarget)
   }
   const photo = <Photo src={b.photo.url} className={`h-full w-full object-cover ${busy ? 'opacity-60' : ''}`} style={tileFit(b.photo, 4 / 5)} />   // .card-tile is 4:5
   return (

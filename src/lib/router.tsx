@@ -1,10 +1,22 @@
 import { useEffect, useState, type AnchorHTMLAttributes, type MouseEvent } from 'react'
+import { flushSync } from 'react-dom'
 
-/** Tiny path router: history API, no dependency. Routes are matched in App. */
+type ViewTransitions = Document & { startViewTransition?: (update: () => void) => { finished: Promise<void> } }
+
+/** Which side of the app a path is on (the Library's, then Make's), so a page transfer slides the way the tabs run. */
+const sideOf = (path: string) => (/^\/(make|project)(\/|$|\?)/.test(path) ? 1 : 0)
+
+/** Tiny path router: history API, no dependency. Routes are matched in App. A move between pages is a view transition where the browser has one and
+ *  motion is welcome (Malik, 2026-11-04: tokens.css "motion"): the page cross-fades, sliding on a phone the way the tabs run, the header and the tab bar
+ *  held still. `data-nav` on the root says which way. Back and forward in the browser stay instant. */
 export function navigate(path: string) {
   if (location.pathname + location.search + location.hash === path) return
-  history.pushState(null, '', path)
-  window.dispatchEvent(new PopStateEvent('popstate'))
+  const go = () => { history.pushState(null, '', path); window.dispatchEvent(new PopStateEvent('popstate')) }
+  const doc = document as ViewTransitions
+  if (!doc.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return go()
+  const from = sideOf(location.pathname), to = sideOf(path)
+  document.documentElement.dataset.nav = to > from ? 'forward' : to < from ? 'back' : 'same'
+  doc.startViewTransition(() => flushSync(go))
 }
 
 export function usePath(): string {
