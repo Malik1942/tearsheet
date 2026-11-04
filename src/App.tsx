@@ -18,8 +18,9 @@ import { lazy, Suspense } from 'react'
 
 /** Dev only (/dev/pixels). The lazy import sits in the DEV branch, so a production build folds this to null and neither the page nor its color math reaches the bundle. */
 const DevPixels = import.meta.env.DEV ? lazy(() => import('./screens/DevPixels').then(m => ({ default: m.DevPixels }))) : null
-/** Dev only (/dev/contract): one shell screen at the window's size for the layout contract test; folded away in a production build the same way. */
-const DevContract = import.meta.env.DEV ? lazy(() => import('./screens/DevContract').then(m => ({ default: m.DevContract }))) : null
+/** /dev/contract: one shell screen at the window's size for the layout contract test. It ships with production as a lazy chunk, loaded only on this path,
+ *  so `CONTRACT_URL=<site> npm run test:contract` measures the deployed build itself (a bare page: no data, no calls, no header). */
+const DevContract = lazy(() => import('./screens/DevContract').then(m => ({ default: m.DevContract })))
 
 function Routes() {
   const path = usePath()
@@ -33,7 +34,7 @@ function Routes() {
   if (make) return <MakeScreen id={make.id} share={make.share} />
   if (path === '/sync') return <SyncScreen />
   if (DevPixels && path === '/dev/pixels') return <Suspense fallback={null}><DevPixels /></Suspense>
-  if (DevContract && path === '/dev/contract') return <Suspense fallback={null}><DevContract /></Suspense>
+  if (path === '/dev/contract') return <Suspense fallback={null}><DevContract /></Suspense>
   if (path === '/open') return <OpenScreen />
   if (path === '/shared') return <SharedScreen />
   const instr = match('/project/:id/instructions', path)

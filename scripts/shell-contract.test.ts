@@ -18,6 +18,8 @@ const RUN = process.env.CONTRACT === '1'
 const READING = process.env.CONTRACT_CONTENT === 'reading'
 const CONTENT = READING ? toShellContent(JSON.parse(readFileSync(new URL('../src/fixtures/content/reading-tracker.json', import.meta.url), 'utf8')) as SampleContent) : CONCERT_CONTENT
 const OUT = process.env.CONTRACT_OUT ?? (READING ? 'docs/contract/reading' : 'docs/contract')
+/** CONTRACT_URL measures a running site instead of a local dev server, e.g. production: its /dev/contract page ships with the build. */
+const SITE = process.env.CONTRACT_URL?.replace(/\/$/, '')
 const VIEW = { width: 390, height: 844 }
 const SCREENS = ['list', 'review'] as const
 
@@ -36,9 +38,9 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
   it('no composition breaks a rule on either screen at 390 px', { timeout: 30 * 60_000 }, async () => {
     const { createServer } = await import('vite')
     const { chromium } = await import('playwright-core')
-    const server = await createServer({ logLevel: 'error', server: { port: 0, strictPort: false } })
-    await server.listen()
-    const base = (server.resolvedUrls?.local[0] ?? 'http://localhost:5173/').replace(/\/$/, '')
+    const server = SITE ? null : await createServer({ logLevel: 'error', server: { port: 0, strictPort: false } })
+    await server?.listen()
+    const base = SITE ?? (server?.resolvedUrls?.local[0] ?? 'http://localhost:5173/').replace(/\/$/, '')
     const browser = await chromium.launch()
     try {
       const page = await (await browser.newContext({ viewport: VIEW })).newPage()
@@ -103,7 +105,7 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
       assert.equal(failing, 0, `${failing} compositions break the layout contract; see ${OUT}/REPORT.md`)
     } finally {
       await browser.close()
-      await server.close()
+      await server?.close()
     }
   })
 })
