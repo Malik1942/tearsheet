@@ -2,7 +2,7 @@
 import { candidatesOf, resolveProject, type Project, type Resolved } from './mapRelations'
 import { labelsOf, labelsOfBrick } from './shortLabels'
 import { creditLine, savedLabel } from './brickLabels'
-import { originOf } from './starters'
+import { originOf, ownBricks } from './starters'
 import { PARAMETER_KEYS } from '../shell/params'
 import type { Brick } from './types'
 
@@ -71,9 +71,34 @@ export function makeRoute(path: string): { id: string | null; share: boolean } |
   return m ? { id: decodeURIComponent(m[1]), share: m[2] === 'share' || m[2] === 'export' } : null
 }
 
-/** E1 minimal: the link Share hands out. It opens the library under the code on the other device and lands on the project's Instructions page. */
-export const instructionsLink = (origin: string, code: string, projectId: string): string =>
-  `${origin}/open?code=${code}&project=${encodeURIComponent(projectId)}&to=instructions`
+/** E1, read-only (Malik, 2026-11-03): the link Share hands out. Its code holds this project and the photos it uses, never the library's own sync code,
+ *  and it opens /shared, which shows the screens and the reasons behind them and adopts nothing, merges nothing, saves nothing on the device that opens it. */
+export const sharedLink = (origin: string, code: string, projectId: string): string =>
+  `${origin}/shared?code=${code}&project=${encodeURIComponent(projectId)}`
+
+/** What a share uploads: the project, and the person's own photos it uses. The starters ship with the app, so the page that opens the link has them already. */
+export function shareContent(project: Project, bricks: Brick[]): Brick[] {
+  return ownBricks(bricks).filter(b => project.brickIds.includes(b.id) && b.status !== 'extracting')
+}
+
+/** One share code per project, kept on this device, so sharing the project again updates the same link. A new project gets a fresh code from `make`. */
+const SHARES_KEY = 'tearsheet.shares'
+export function shareCodeFor(projectId: string, make: () => string, storage: Pick<Storage, 'getItem' | 'setItem'> = localStorage): string {
+  let codes: Record<string, string> = {}
+  try { codes = JSON.parse(storage.getItem(SHARES_KEY) ?? '{}') ?? {} } catch { /* a damaged map starts over */ }
+  if (codes[projectId]) return codes[projectId]
+  const code = make()
+  try { storage.setItem(SHARES_KEY, JSON.stringify({ ...codes, [projectId]: code })) } catch { /* storage refused: the next share makes a new link */ }
+  return code
+}
+
+/** The read-only page's view of a shared code: the project and the bricks it names, the shared ones first, then the starters that ship with the app.
+ *  Null when the code does not hold that project. */
+export function sharedView(manifest: { bricks: Brick[]; projects?: Project[] }, projectId: string, starters: Brick[]): { project: Project; bricks: Brick[] } | null {
+  const project = (manifest.projects ?? []).find(p => p.id === projectId)
+  if (!project) return null
+  return { project, bricks: [...manifest.bricks, ...starters.filter(s => !manifest.bricks.some(b => b.id === s.id))] }
+}
 
 /** Where `/open` lands once the library is in: the project's Instructions page when the link asks for it (`to=instructions`), else the project's Make page, else the Projects list or the Library. */
 export function openDestination(projectId: string | null, known: boolean, to: string | null): string {

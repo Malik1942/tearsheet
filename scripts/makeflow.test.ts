@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, instructionsLink, makeRoute, oneLabel, openDestination, photoLine, photoRow, toggleMuted } from '../src/lib/makeFlow.ts'
+import { autoName, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
 
@@ -138,10 +138,35 @@ describe('Make routes', () => {
   })
 })
 
-describe('E1 minimal: the link and where /open lands', () => {
-  it('the link carries the code, the project and to=instructions', () => {
-    assert.equal(instructionsLink('https://tearsheet.app', 'ABC234', 'p_1 x'), 'https://tearsheet.app/open?code=ABC234&project=p_1%20x&to=instructions')
+describe('E1, read-only: a share link carries one project, never the library', () => {
+  it('the link opens /shared with the share code and the project', () => {
+    assert.equal(sharedLink('https://tearsheet.app', 'ABC234', 'p_1 x'), 'https://tearsheet.app/shared?code=ABC234&project=p_1%20x')
   })
+  it('a share uploads only the person\'s own photos this project uses: no starter, no other photo, nothing still being read', () => {
+    const own = (id: string, extra: Partial<Brick> = {}) => brick(id, [TITLE], { origin: 'own', ...extra })
+    const lib = [own('chicago'), own('elsewhere'), own('reading', { status: 'extracting' }), SAMPLES.find(b => b.id === 'g2')!]
+    assert.deepEqual(shareContent(project({ brickIds: ['chicago', 'g2', 'reading'] }), lib).map(b => b.id), ['chicago'])
+  })
+  it('each project keeps one share code on this device, so sharing again updates the same link', () => {
+    const mem = new Map<string, string>()
+    const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v) } }
+    let n = 0
+    const make = () => ['AAAAA2', 'BBBBB3'][n++]
+    assert.equal(shareCodeFor('p_1', make, storage), 'AAAAA2')
+    assert.equal(shareCodeFor('p_1', make, storage), 'AAAAA2')
+    assert.equal(shareCodeFor('p_2', make, storage), 'BBBBB3')
+    mem.set('tearsheet.shares', 'not json')
+    assert.equal(shareCodeFor('p_3', () => 'CCCCC4', storage), 'CCCCC4', 'a damaged map starts over')
+  })
+  it('the read-only page finds the project and fills in the starters from the app; an unknown project is nothing', () => {
+    const shared = { bricks: [chicago], projects: [project({ id: 'p_1', brickIds: ['chicago', 'g2'] })] }
+    const v = sharedView(shared, 'p_1', SAMPLES)
+    assert.deepEqual([v?.project.id, v?.bricks.some(b => b.id === 'chicago'), v?.bricks.some(b => b.id === 'g2')], ['p_1', true, true])
+    assert.equal(sharedView(shared, 'p_9', SAMPLES), null)
+  })
+})
+
+describe('/open (a library on another device of your own): where it lands', () => {
   it('to=instructions lands on the Instructions page; without it, on the project; an unknown project on the list', () => {
     assert.equal(openDestination('p_1', true, 'instructions'), '/project/p_1/instructions')
     assert.equal(openDestination('p_1', true, null), '/project/p_1')

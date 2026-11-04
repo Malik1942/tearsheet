@@ -11,6 +11,7 @@ import { ProjectsScreen } from './screens/Projects'
 import { MakeScreen } from './screens/Make'
 import { SyncScreen } from './screens/Sync'
 import { OpenScreen } from './screens/Open'
+import { SharedScreen } from './screens/Shared'
 import { InstructionsScreen } from './screens/Instructions'
 import { Solo } from './Solo'
 import { lazy, Suspense } from 'react'
@@ -34,6 +35,7 @@ function Routes() {
   if (DevPixels && path === '/dev/pixels') return <Suspense fallback={null}><DevPixels /></Suspense>
   if (DevContract && path === '/dev/contract') return <Suspense fallback={null}><DevContract /></Suspense>
   if (path === '/open') return <OpenScreen />
+  if (path === '/shared') return <SharedScreen />
   const instr = match('/project/:id/instructions', path)
   if (instr) return <InstructionsScreen id={instr.id} />
   // the step-2 comparison: still a route, no longer in any navigation (15_SIMPLIFY §1)
