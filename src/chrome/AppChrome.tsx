@@ -86,14 +86,14 @@ const SpreadIcon = () => (
 )
 
 /** Shoot is a camera (Malik, 2026-11-03: an icon, not plain text): the camera beside its word in the header; in the phone's tab bar (`bar`) the middle item,
- *  the camera in a graphite disc over its word, like the items beside it. The queue count rides on it as a small badge ("3"), never as a text line. */
+ *  a shutter with no word showing (2026-11-04), its word kept for a screen reader. The queue count rides on it as a small badge ("3"), never as a text line. */
 function ShootButton({ className = '', bar = false }: { className?: string; bar?: boolean }) {
   const store = useStore()
   const add = useAddPhotos()
   const n = readingCount(store.bricks, b => originOf(b) === 'own')
   if (bar) return (
     <button type="button" className={`bar-item bar-shoot ${className}`} onClick={add.shoot} aria-label={n ? COPY.reading(n) : undefined}>
-      <span className="shutter"><CameraIcon />{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}</span><span>{COPY.shoot}</span>
+      <span className="shutter"><CameraIcon />{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}</span><span className="sr-only">{COPY.shoot}</span>
     </button>
   )
   return (
@@ -106,11 +106,12 @@ function ShootButton({ className = '', bar = false }: { className?: string; bar?
 function AppHeader({ tab }: { tab: Tab }) {
   const page = usePageActionsValue()
   return (
+    // the front page's nameplate (Malik, 2026-11-04): the lockup centered, its tear ultramarine, the sections at the left, the page's actions at the right
     <header className="app-header gutter">
-      <Link href="/" className="wordmark" aria-label="Tearsheet"><Lockup /></Link>
-      <nav aria-label="Main" className="hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
+      <Link href="/" className="wordmark" aria-label="Tearsheet"><Lockup mark="var(--trace)" /></Link>
+      <nav aria-label="Main" className="header-sections hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
       {/* relative: on a phone the page's popover (Share) hangs from this group, so it ends at the gutter */}
-      <div className="relative ml-auto flex items-center gap-3">
+      <div className="header-actions relative flex items-center gap-3">
         <QueueStatus />
         {/* C+D, as a rule: the right side holds the page's single primary action, then ⋯. Shoot on the Library side (the phone's bottom bar keeps it
             everywhere); Share on Make, which also puts its menu items at the top of this ⋯ */}

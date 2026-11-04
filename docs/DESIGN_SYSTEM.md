@@ -1,21 +1,24 @@
 # Tearsheet design system: Measured drawing
 
-**Color rule.** Ultramarine marks what Tearsheet traced to a photo (the READING crosses and line, region boxes, the numbered callouts that tie a photo to the screens, the m and r ids), always on a white halo and never on graphite, plus one solid field, the Library's count block; everything else is graphite on white.
+**Color rule.** Ultramarine is Tearsheet's own mark: the tear in its nameplate and what it traced to a photo (the READING crosses and line, region boxes, the numbered callouts that tie a photo to the screens, the m and r ids), on a white halo wherever it sits on a photo and never on graphite; everything else is graphite on white.
 
 **Bleed rule.** A number bleeds off an edge only from a solid field; inside an outline it sits whole.
 
 Adopted on 2026-11-04 from Round 2, tile M, with Malik's changes: both counts are solid graphite blocks, Make has no dimension lines and no title block, and Details gains a plain reading. It replaces C+D's color and material; the warm paper and the brick red are retired. C+D's type, layouts and non-color rules stay (§12). All values live in `src/chrome/tokens.css`.
+
+The same day it took in the Data tear brand (`brand/data-tear`): the nameplate in the header, and the lockup's torn bottom on the Library's poster masthead from the tablet up. The phone stays simple (§4).
 
 ## 1. Palette
 
 | Token | Value | Role |
 |---|---|---|
 | `--paper` | `#FFFFFF` | Page, every zone, raised surfaces. Elevation is a 1 px rule, never a shadow. |
-| `--ink` | `#1B1E21` | Graphite: text, display type, buttons, tabs, Make's count block, toasts, focus rings. |
+| `--ink` | `#1B1E21` | Graphite: text, display type, the lockup's letters, buttons, tabs, the count block, toasts, focus rings. |
 | `--ink-2` | `#727475` | Muted graphite: captions, credits, the issue line, placeholders, an input's edge. |
 | `--line`, `--rule` | graphite at 12% (`#E4E4E4` on white) | 1 px rules. Decoration only. |
-| `--trace` | `#2338E8` | Ultramarine: traces, and the Library's count block (the color rule). |
+| `--trace` | `#2338E8` | Ultramarine: the tear in the header's lockup, and traces (the color rule). Never a solid field. |
 | `--halo` | `#FFFFFF` | Sits under every trace mark on a photo or a screen. |
+| `--rim` | `#D3CDC1` | The torn fibre under a tear on paper (the brand's rim). Decoration only. |
 | `--measured`, `--interpreted`, `--adapted` | `#1B1E21`, `#727475`, `#8A8C8E` | Provenance chips: filled, dotted, outlined. |
 | `--accent` | `var(--trace)` | Old name. `shell.css` reads it for the one-second change outline, and Fine-tune's row tint uses it. Both trace a photo's change. |
 
@@ -23,33 +26,51 @@ Removed: `--red-display`, `--red-ui` and the warm paper. The primary button (`.b
 
 ## 2. Volumes
 
-The Library is loud: display type, plus the masthead with its count block. Every other view is quiet. Both volumes use the same palette; the one difference is the loud Library's ultramarine count block.
+The Library is loud: display type, plus the masthead with its count. Every other view is quiet. Both volumes use the same palette.
 
 ## 3. Type
 
 Same as C+D:
 - **UI:** Archivo.
-- **Display:** Archivo at width 62, weight 900, uppercase, `clamp(56px, 11vw, 160px)`, line height 0.84. Only LIBRARY and its count use it.
+- **Display:** Archivo at width 62, weight 900, uppercase, line height 0.84: the lockup's letters, and LIBRARY and its count (`clamp(56px, 11vw, 160px)` from the tablet up, 44 px on a phone).
 - **Mono:** IBM Plex Mono, for frame ids, m and r ids, dates and credits.
 - **Sizes:** title 24, label 15, body 13, caption 12.
 
-## 4. Counts
+## 4. Header and the Library masthead
 
-The Library's loud count is a solid ultramarine block at the right of the masthead, the Library's one iconic color (Malik, 2026-11-04). It is the tally of what Tearsheet has measured. The count is white display type (7.49:1) and bleeds off the block's bottom edge, which crops it (as in C+D). A count has no dimension line.
+Malik's direction (2026-11-04): a newspaper front page on the desktop, clear and direct, no text that says nothing; a simpler version on the phone.
 
-LIBRARY sits on the count's baseline, so the masthead's rule crops both alike and the two read as one line of type.
+**Header.**
+- **From the tablet up**, the header is a nameplate. The lockup (the Data tear mark and TEARSHEET) is centered, the sections (Library, Make) sit at the left, and the page's actions sit at the right.
+- **On the Library**, the header has no line of its own.
+- **On a phone**, the lockup sits at the left and the actions at the right.
+- **Everywhere**, the lockup's tear is ultramarine and its letters graphite.
 
-On a phone the issue line under the masthead is dropped, because the block already says how many. Screen readers still hear it, since the block itself is hidden from them.
+**Masthead, from the tablet up: the front page's poster.**
+- LIBRARY is in display type, with the count in white on a graphite block at the right (16.74:1); the count bleeds off the block's bottom. LIBRARY sits on the count's baseline.
+- The masthead's bottom is torn like the lockup's letters, and the brand's fibre (`--rim`) shows under the bite. It is the board's rim under the name, stretched across the page in em (`src/brand/tornEdge.ts`), so it scales with LIBRARY.
+- There is no straight rule; the torn edge is the page's one edge.
 
-Make's count is meant to be the same block in graphite (Make is quiet), in the B2 masthead. B2 is not built yet, so Make shows no count for now.
+**Masthead, on a phone: simple.** LIBRARY and the count in display type at 44 px on one baseline, with no block, no rule and no tear.
+
+**No issue line.** There is no line under the masthead at any width. A screen reader still hears "12 starter photos" (or "14 photos" and since when), since the count is hidden from it.
+
+**Make's count.** It is meant to be the same block, in the B2 masthead. B2 is not built yet, so Make shows no count for now. A count has no dimension line.
 
 ## 4a. The phone's tab bar
 
-The tab bar follows Apple's HIG for an iPhone tab bar:
-- 49 px tall, above the home indicator.
-- Three items of equal width: Library, Shoot and Make. Each is a 24 px glyph over a 10 px label, and the whole item is the touch target.
+**Height.** The bar is 64 px tall, above the home indicator.
+- iOS draws its own tab bar at 49 pt, but a page in a browser sits beside the browser's toolbar and carries a shutter.
+- Android's navigation bar is 80 dp, with 48 px touch targets.
+- The 49 px bar with its 30 px Shoot was too tight (Malik, 2026-11-04).
+
+**Items.** Three items of equal width, each with its whole third as the touch target.
+- Library and Make are a 24 px glyph over an 11 px label.
 - Unselected items are muted graphite. The selected one is graphite, with the 2 px bar over its glyph.
-- Shoot sits in the middle: the camera in a 30 px graphite disc. On Make the disc becomes an outline, since shooting is the Library's job.
+
+**Shoot.**
+- **On the Library:** a 60 px graphite shutter riding the bar's top edge, with a white ring that separates it from the page and an inner ring. No word shows; a screen reader still hears "Shoot".
+- **On Make:** a 44 px outline inside the bar, since shooting is the Library's job.
 
 ## 5. The measured layer
 
@@ -65,7 +86,11 @@ The halo means a trace mark's adjacent color is always white: 7.49:1 against ult
 
 ## 6. Frame ids
 
-Every photo has a frame id, `TS-01-0013`, shown before its credit wherever a card shows one: the Library, the Pick, Adjust and Swap sheets, the Brick sheet and Details. Frames are numbered in saved order. Starters keep their built-in order on a tie. The id is computed (`src/lib/frames.ts`), not stored, so removing a photo renumbers every photo saved after it.
+Every photo has a frame id, `TS-01-0013`.
+- **Where it shows:** only on the photo's own record, before its credit: Details (the page and the Brick sheet), and the share card the brand draws.
+- **Where it doesn't:** the cards in the Library and the Pick, Adjust and Swap sheets. You know a photo by looking at it there, and the id was noise (Malik, 2026-11-04).
+- **Numbering:** frames are numbered in saved order, and starters keep their built-in order on a tie.
+- **Computed, not stored** (`src/lib/frames.ts`), so removing a photo renumbers every photo saved after it.
 
 ## 7. One left edge
 
@@ -100,7 +125,9 @@ WCAG 2.2, measured:
 | adapted on white | 3.37:1 | 3 | The adapted chip's outline |
 | graphite on white | 16.74:1 | 3 | Selected tab bar, focus ring |
 | ultramarine on white | 7.49:1 | 3 | Crosses, region boxes, leaders and circles on a light ground, a mark against its own halo |
-| white on ultramarine | 7.49:1 | 4.5 | READING, id tags, callout numbers, the Library's count |
+| white on ultramarine | 7.49:1 | 4.5 | READING, id tags, callout numbers |
+| ultramarine on white | 7.49:1 | 3 | The lockup's tear (a graphic, beside its graphite letters) |
+| `--rim` on white | 1.58:1 | none | The torn fibre; decoration, never the only edge of anything |
 | white halo on `#060605` (the Chicago field) | 20.27:1 | 3 | Every mark on the darkest photo |
 | ultramarine alone on `#060605` | 2.71:1 | fails | Never used without its halo |
 | ultramarine on graphite | 2.23:1 | fails | Never used |
@@ -135,7 +162,8 @@ Only color and material changed.
 
 - **Shell default accent:** see §11. It is the one place a shell can show the chrome's hue family.
 - **Shell flash below 3:1.** `shell.css` draws its one-second change outline from `--accent` with no halo. On the darkest shell that is ultramarine at 2.71:1 for one second. The flash is transient and not needed to read the screen. A halo would need a shell change, which is out of scope here.
-- **Not built:** Make's count block (B2), layouts A and C2, and exported sheets with their title block.
+- **Not built:** Make's count block (B2), layout C2, and exported sheets with their title block. Layout A's nameplate is built as the desktop header.
+- **The tear on smaller titles.** It stays at display size. On the 30 px Projects and Sync titles its bite would be under 2 px, so they keep the display face without it, as the brand's lockup drops its bite under 240 px.
 - **New copy:**
   - the plain names used when a rule has no short label ("Type sizes", "What leads", "Image size" and so on);
   - "On your screens:";
