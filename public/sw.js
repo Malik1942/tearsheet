@@ -1,6 +1,6 @@
 /* Tearsheet service worker: app shell only. Caches the HTML shell and hashed assets so the installed app opens offline;
    never touches /api (model calls) or /samples. Bricks live in localStorage, not here. */
-const SHELL = 'tearsheet-shell-v1'
+const SHELL = 'tearsheet-shell-v2'   // v2: the Data tear icons and manifest colors (icons and the manifest are cached first, so a new name replaces them)
 self.addEventListener('install', e => { e.waitUntil(caches.open(SHELL).then(c => c.add('/')).then(() => self.skipWaiting())) })
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== SHELL).map(k => caches.delete(k)))).then(() => self.clients.claim())) })
 self.addEventListener('fetch', e => {

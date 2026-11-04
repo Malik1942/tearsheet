@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { useStore } from '../lib/store'
+import { DISPLAY_TITLE } from '../brand/type'
 import { ownBricks } from '../lib/starters'
 import { readSync, writeSync, generateCode, normalizeCode, CODE_RE, forget, inlineBlobPhotos, runSync, openLink, shareLink, canShare, type SyncInfo } from '../lib/syncClient'
 
@@ -93,7 +94,7 @@ export function SyncScreen() {
   return (
     <div className="chrome min-h-full">
       <div className="gutter mx-auto w-full max-w-md py-8">
-        <h1 className="title mb-4">{COPY.title}</h1>
+        <h1 className="title mb-4" style={DISPLAY_TITLE}>{COPY.title}</h1>
         {notice && <div className="mb-3 rounded px-3 py-2 text-[12px]" role="status" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>{notice}</div>}
         {busy && <div className="mb-3 text-[12px]" style={{ color: 'var(--ink)' }} aria-live="polite">{busy}{progress && progress.total ? ` uploading ${progress.sent}/${progress.total}` : ''}</div>}
 
