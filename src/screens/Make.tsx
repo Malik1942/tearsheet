@@ -168,9 +168,11 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
             <h1 className="sr-only">{COPY.field}</h1>
             <HeadlineField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} autoFocus={finePointer()} />
             {anchorBrick && !busy && <AnchorThumb brick={anchorBrick} onClear={() => setAnchor(null)} />}
+            {/* phone: where the screens will land, still and faint, so the empty page is not three quarters blank; never a pulse (tokens.css) */}
+            {!busy && <div className="make-ghost crop-marks" aria-hidden="true"><div className="finding-frame" /></div>}
           </div>
         ) : (
-          <div className="make-head">
+          <div className="make-head make-head-result">
             {headline ? (
               // after Enter the intent stays as the page's h1; tapping it makes it editable again, Enter proposes again, Escape puts the headline back
               <h1 className="intent-headline"><button type="button" className="intent-edit" title={COPY.edit} onClick={() => setEditing(true)}>{project.intent}<span className="sr-only">{` (${COPY.edit.toLowerCase()})`}</span></button></h1>

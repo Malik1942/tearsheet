@@ -57,7 +57,12 @@ export function MoreMenu({ items, label = 'More' }: { items: { label: string; on
 }
 
 /** A dialog laid over the page: Escape or the close button closes it. `full` takes the whole screen (the Fine-tune drawer). */
-export function Overlay({ title, onClose, children, full = false, actions, closeLabel = 'Done' }: { title: string; onClose: () => void; children: ReactNode; full?: boolean; actions?: ReactNode; closeLabel?: string }) {
+/** On a phone (under 768 px) a dialog that is not `full` opens as a sheet from the bottom, as iPhone presents them and as the Brick sheet already does
+ *  (Malik, phone refine P0): full width, a 1 px ink top edge, 88% of the screen at most and scrolling inside, clear of the home indicator. `sheet={false}`
+ *  keeps the card at the top on a phone too, for a dialog with a text field the iOS keyboard could cover (Rename). */
+const PHONE_SHEET = 'max-md:m-0 max-md:max-w-none max-md:max-h-[88dvh] max-md:overflow-y-auto max-md:overscroll-contain max-md:rounded-none max-md:[border-width:1px_0_0] max-md:[border-color:var(--ink)] max-md:pb-[calc(20px+env(safe-area-inset-bottom))]'
+export function Overlay({ title, onClose, children, full = false, actions, closeLabel = 'Done', sheet = true }: { title: string; onClose: () => void; children: ReactNode; full?: boolean; actions?: ReactNode; closeLabel?: string; sheet?: boolean }) {
+  const asSheet = !full && sheet
   const dialog = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const esc = (e: globalThis.KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -76,9 +81,9 @@ export function Overlay({ title, onClose, children, full = false, actions, close
     return () => { opener?.focus?.() }
   }, [])
   return (
-    <div className="chrome fixed inset-0 z-40 flex items-start justify-center overflow-y-auto overscroll-contain" style={{ background: full ? 'var(--paper)' : 'color-mix(in oklab, var(--ink) 35%, transparent)' }}
+    <div className={`chrome fixed inset-0 z-40 flex items-start justify-center overflow-y-auto overscroll-contain ${asSheet ? 'max-md:items-end max-md:overflow-hidden' : ''}`} style={{ background: full ? 'var(--paper)' : 'color-mix(in oklab, var(--ink) 35%, transparent)' }}
       onMouseDown={e => { if (!full && e.target === e.currentTarget) onClose() }}>
-      <div ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} className={`outline-none ${full ? 'min-h-full w-full' : 'panel mx-4 my-12 w-full max-w-2xl p-5'}`} style={full ? undefined : { background: 'var(--panel)' }}>
+      <div ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} className={`outline-none ${full ? 'min-h-full w-full' : `panel mx-4 my-12 w-full max-w-2xl p-5 ${asSheet ? PHONE_SHEET : ''}`}`} style={full ? undefined : { background: 'var(--panel)' }}>
         <div className={`flex flex-wrap items-center gap-3 ${full ? 'sticky top-0 z-10 border-b px-5 py-3 hairline md:px-8' : 'mb-4'}`} style={full ? { background: 'var(--panel)' } : undefined}>
           <h2 style={{ fontSize: 15, lineHeight: '20px', fontWeight: 600, margin: 0 }}>{title}</h2>
           <div className="ml-auto flex flex-wrap items-center gap-2">{actions}<button type="button" className="btn" onClick={onClose}>{closeLabel}</button></div>

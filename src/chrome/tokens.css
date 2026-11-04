@@ -269,6 +269,25 @@
 .headline-go:hover { background: #2A2A2A; }
 .headline-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .headline-field .headline-progress { bottom: -12px; }
+.headline-wait { margin: var(--space-4) 0 0; font-size: var(--type-body); line-height: 18px; color: var(--ink-2); }   /* said under the line while proposing, both widths */
+/* touch: the empty field shows the reading line's track, still, as its underline; the caret takes over on focus */
+.headline-track { display: none; }
+@media (pointer: coarse) {
+  .headline-track { display: block; position: absolute; left: 0; right: 0; bottom: -12px; height: 2px; background: var(--line); }
+  .headline-field:focus-within .headline-track { display: none; }
+}
+/* phone: the empty page shows where the screens will land, one frame with the spread's crop marks, still at 6% ink (desktop shows nothing) */
+.make-ghost { display: none; }
+@media (max-width: 767.98px) {
+  .make-ghost { display: block; align-self: center; margin-top: var(--space-24); }
+  .make-ghost .finding-frame { width: 260px; height: 440px; }
+}
+/* phone, after Enter: the intent compacts to 17/22, two lines at most, 16 px under the header, so the screens get the room; tapping it opens the full field */
+@media (max-width: 767.98px) {
+  .make-head.make-head-result { margin-top: 0; }   /* outranks the phone's .make-head margin, below */
+  .chrome .make-head-result > h1.intent-headline { font-size: 17px; line-height: 22px; }
+  .make-head-result .intent-edit { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-align: left; }
+}
 .make-anchor { position: relative; width: 48px; height: 48px; }
 .make-anchor img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-brand); outline: 1px solid var(--line); }
 .make-anchor-clear { position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
