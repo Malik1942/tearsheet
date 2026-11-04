@@ -1,6 +1,6 @@
 # Demo notes: the forgotten photo and the rule it carries (12_SPEC_v3 §8)
 
-**Shot flow (Malik, Tue 2026-11-03):** the proposal surfaces the photo, then one checkbox shows what its rule does. The public version these notes describe is the one at `bricks-virid-nine.vercel.app` from 2026-11-03.
+**Shot flow (Malik, Tue 2026-11-03, one-page Make):** type the intent, press Enter, tap the Chicago photo off, tap it on, Share. These notes describe the public version at `bricks-virid-nine.vercel.app`: commit babdb5b, deployed 2026-11-03 16:36 PT. If a later deploy changes the proposal prompt or the layout contract, check step 1 and the table again before recording.
 
 ## The photo
 
@@ -8,69 +8,119 @@
 - **Taken:** 2025-12-27 16:50, from the EXIF DateTimeOriginal.
 - **What it shows:** a lit CHICAGO marquee sign centered over a stage, a near-black field around it, and the audience in the bottom quarter.
 - **Extraction behind these notes:** muse-spark-1.3, prompt v3, effort medium, run in the harness on 2026-11-03 (`meta-eval/out/IMG_6966`, $0.0172).
-  - **Before recording, check the app's own reading.** Saving the photo in the app runs a new extraction, which can word the rules differently. Open its Brick screen: r1 (or whichever relation names the title) should show `hierarchy_mode = type-led` with `adapted · by rule`. If nothing structural reads, use `Try again` once.
+  - **Before recording, check the app's own reading.** Saving the photo in the app runs a new extraction, which can word the rules differently. In Library, tap the photo, then open Details. r1 (or whichever relation names the title) should show `hierarchy_mode = type-led` with `adapted · by rule`.
+  - **There is no Try again on a photo that read.** To read it again, Remove it and add it again. That is one more extraction, about 1.7¢.
 
 ## Its relations and what they set
 
-| Relation | Filed under | What it sets | Label |
-|---|---|---|---|
-| r1 "keep one centered title in the upper-middle third that is an order of magnitude larger than any other mark and dominates the lit area" | image_text_dominance | `image_text_dominance` 0.2 (text-led), `hierarchy_mode` type-led, `alignment_edge` center | `adapted · by rule`, citing r1 |
-| r2 "restrict the single warm accent to under 10% of frame …" | accent_coverage | `accent_coverage` ≤15% | measured |
-| r3 "use a near-black field with exactly one saturated warm hue for emphasis …" | palette_hue_count | `palette_hue_count` 1; because r2 sets coverage, the accent stays | measured |
+| Relation | What it sets in the demo project | Reaches the screens? |
+|---|---|---|
+| r1 "keep one centered title in the upper-middle third that is an order of magnitude larger than any other mark and dominates the lit area" | `hierarchy_mode` type-led, `alignment_edge` center, `image_text_dominance` 0.2 (text-led), all `adapted · by rule`, citing r1 | Yes. The layout contract then hides the thumbnails (0.2 → 0, "one alignment axis") |
+| r2 "restrict the single warm accent to under 10% of frame …", the rule the model quoted | `accent_coverage` ≤15%, measured | No: switched off by the cap of three while r1 is on |
+| r3 "use a near-black field with exactly one saturated warm hue for emphasis …" | `palette_hue_count` 1, measured | No: the same cap |
 
 - **Why r1 reads at all:** r1 gives no number. The rule table (d4b0497) reads a dominant title said in words as type-led plus text-led, and takes the alignment from the same sentence.
-- **Cap of three:** r1's three readings fill the cap, so r2 and r3 sit under "Switched off: cap of three" while r1 is on.
+- **The layout contract:** a centered, type-led list has one alignment axis, so the thumbnails are hidden rather than set beside the names. Fine-tune shows the line "image share 0.2 by rule → thumbnails hidden by layout contract: one alignment axis".
 
 ## The shot
 
-**1. Proposal.** Intent "a concert log for someone who goes to a lot of shows", lean `dark` + `one accent`, library = the 12 starters plus the Chicago photo.
-- On the public site (2026-11-03, one live call, $0.0098) the model proposed:
-  1. **Chicago first**, quoting r2 ("restrict the single warm accent…"), with the reason "A dark log with a tiny warm title accent reads like a venue at night and makes each show title easy to scan."
-  2. Then g2 and secession.
-- **Takes:** the proposal is a fresh call each time. Record the proposal page up to three times and use a take where Chicago appears. If none of the three has it, use "More like this one" with Chicago as the starting point, and say what that shows: "I start from this one".
+**Setup, before recording.**
+- **Library:** the 12 starters (⋯ in the header → Include starters) plus the Chicago photo. The live call below saw exactly these 13.
+- **Window:** 1440 × 900. The screens, the photo row and the line under it fit without scrolling.
+- **Intent and lean:** on Make, type "a concert log for someone who goes to a lot of shows". Then use the ⋯ beside the field → Adjust style… → turn on `dark` and `one accent`, and close it.
+  - This is the lean of the live call below; without it, Chicago first is untested.
+  - The chips appear once the intent is typed. With the 12 starters and Chicago they are dark, one accent, airy, two colors, big titles and text-heavy.
+  - The lean holds while the page stays open. A reload clears it.
 
-**2. Accept all → Compose**, Neutral skin on, Both. Chicago sits on top. Its r1 readings lead: the name leads, centered, and the poster is a small square on the right. The year review has text rows with no thumbnails.
+**1. Enter.** Two empty frames pulse while the model looks (12.5 s in the live call). Then the project appears: the two screens, and under them the photos that set something.
+- **Expected picks:** the live call on the public site proposed Chicago, g2 and secession (2026-11-03, $0.0098, lean dark + one accent).
+  - Chicago comes first: "Mostly text", with "Dec 27, 2025" under it.
+  - g2, the car, has "One small accent".
+  - Secession is in the project but not in the row. With Chicago on, nothing it sets shows, so it is hidden.
+- **The screens:**
+  - Both: a near-black field, light names, and a red accent on the tags and the totals.
+  - The list: each name large and centered, the date and venue under it, no thumbnails.
+  - The year review: 2025, the totals in red, months as small labels, text rows, no thumbnails.
+- **Under the row:** "4 things couldn't carry over ▸".
+- **Takes:** every Enter is a fresh model call. Record up to three takes and use one with Chicago in the row; otherwise see Fallbacks.
 
-**3. Uncheck Chicago's r1, then check it again.** Each click is a version (v1 → v2 → v3), and the outline marks the regions that moved.
+**2. Tap Chicago off.** The project goes v1 → v2. An outline flashes on every region that changed, which is nearly all of both screens.
+- **The list:** a flat image block above each show, the names at body size under it, still centered.
+- **The year review:** a large image block for each show.
+- **The row:** Chicago dims and its switch turns off. g2's label becomes "Big images". Secession appears in the third slot, "Centered"; the slots are fixed, so nothing moves.
+- **The line:** "3 things couldn't carry over".
 
-![r1 on, r1 off](demo/toggle_contact.png)
+**3. Tap it on.** v2 → v3, the same flash, and the screens come back exactly as in step 1 (the capture is pixel-identical).
 
-| | r1 on (accepted) | r1 unchecked | Set by |
+**4. Share.** The popover holds Copy link, and Download with parameters.json, tokens.css and handoff.md.
+- **What goes up:** opening the popover uploads the project and the Chicago photo under the project's own share code.
+- **What the link opens:** a read-only page with the two screens and the reasons behind them. Anyone with the link sees the photo.
+- **What stays home:** the library's sync code never goes, and nothing else does.
+
+| | Chicago on (v1, v3) | Chicago off (v2) | Set by |
 |---|---|---|---|
-| List item | Name leads, centered; small square poster on the right | Poster beside the name, about half the item; name centered beside it | `hierarchy_mode` type-led → balanced (Chicago r1 → nobody); `image_text_dominance` 0.2 → 0.95 (Chicago r1 → g2) |
-| Year review rows | Text only | Thumbnails beside each show | `hierarchy_mode` |
-| Alignment | Centered | Centered | Chicago r1 → secession's caption measurement. **It does not move**, so don't credit the centering to r1 in the voiceover |
-| Accent and hue | ≤5%, 2 hues (g2) | ≤15%, 1 hue (Chicago r2 and r3 take the freed cap slots) | Not visible under Neutral skin |
+| List item | Name leads, large and centered; no thumbnail | Image block above, name at body size | On: `hierarchy_mode` type-led and image share 0.2 (Chicago r1); the layout contract turns 0.2 into 0. Off: `hierarchy_mode` balanced → image-led by the layout contract; image share 0.95 (g2, measured) |
+| Year review rows | Text only | An image block per show | The same values |
+| Alignment | Centered | Centered | On: Chicago r1. Off: secession's caption measurement. **It does not move**, so don't credit the centering to Chicago |
+| Colors and accent | Near-black, light text, red ≤5%, 2 hues | The same | g2 both times. Chicago's own color rules are capped (above) |
+| Photo row | Chicago "Mostly text", g2 "One small accent" | Chicago off, g2 "Big images", secession "Centered" | Each photo's first label for what it sets |
 
-Re-checking r1 gives exactly the frame it started from (pixel-identical capture).
+![Chicago on: steps 1 and 3](demo/onepage_1_on.png)
 
-**4. Second beat, only if time allows: `adapted · by you`.**
-1. Pick the composition with g2 on top. The image-share conflict then resolves to g2's 0.95, and the title stays type-led.
-2. In the conflict, choose Chicago's 0.2. The posters shrink to small squares, and the row shows `image_text_dominance 0.2 · adapted · by you`.
-3. Say: "they compete for image share; I chose Chicago's".
+![Chicago off: step 2](demo/onepage_2_off.png)
 
-Cut this beat first if time runs short.
+![The change highlight, 250 ms after the tap](demo/onepage_2_off_flash.png)
+
+## Fallbacks
+
+- **Chicago in none of three takes:** use the ⋯ beside the field → Adjust style… → More like this one → the Chicago photo. "Starting from" and its thumbnail show under the field; press Enter.
+  - Chicago comes first as the starting point, and the model adds up to three more.
+  - The same start works from Library: tap the photo → Use in Make.
+  - Say "I start from this one", not "it found it".
+  - The other picks may differ from g2 and secession, so check the frames against the table before recording.
+- **Still not usable:** use the ⋯ beside the field → Pick photos myself… → Chicago, g2, secession → Show the screens. The screens match the table in either order. Say "I picked these three".
 
 ## Narration facts
 
-- **Proposal card date.** Since this deploy, a photo whose JPEG carries an EXIF capture date shows both dates: "taken Dec 27, 2025 · saved Nov 3". A photo without one shows "saved …" alone. The narration matches the card: "a photo from last December's show". IMG_6966.jpeg reads 2025-12-27 in a dry import in the dev build. The iPhone path is untested: after importing on the phone, check that the card shows "taken …". If it shows "saved" alone, iOS did not pass the capture date. Then import that photo on desktop from the original file, or keep the narration to "a photo from last December's show" without pointing at the card.
+- **"Found it"** is fine in a take where the model proposed Chicago, not in a fallback take.
+- **The date.** The Library card and the Make row both show "Dec 27, 2025" under Chicago, the day it was taken. Details and Fine-tune show both dates: "taken Dec 27, 2025 · saved …". The narration matches: "a photo from last December's show". IMG_6966.jpeg reads 2025-12-27 in a dry import in the dev build.
+  - The iPhone path is untested: after importing on the phone, check that the card shows "Dec 27, 2025".
+  - If it shows "saved …" instead, iOS did not pass the capture date. Then either import that photo on desktop from the original file, or keep the narration without pointing at the date.
 - **Comparison line, verbatim:** "The chat picked it because it's a concert. Tearsheet picked it because of a rule, and it never saw the photo."
-- **What the proposal quoted.** The model picked Chicago for its accent rule (r2). The structural change comes from the same photo's title rule (r1), which the product reads by rule. Say "the photo it found also carries a rule about the title", not "the model proposed the title rule".
-- **What not to credit to Chicago:** the centering (secession sets it too) and the colors (Neutral skin hides them).
+- **What the proposal quoted.** The model picked Chicago for its accent rule (r2), and r2 does not reach the screens (the cap of three). What the photo changes comes from its title rule (r1), which the product reads by rule.
+  - Say "the photo it found also carries a rule about the title", not "the model proposed the title rule".
+  - The red on screen is g2's (its taillights), not Chicago's warm accent.
+- **What the tap shows.** The title rule makes the names lead. With everything centered, the layout contract then drops the thumbnails rather than set them beside the names.
+  - "Chicago's rule removes the pictures" is half true.
+  - "Its rule makes the names lead, and with everything centered the pictures go" is accurate.
+- **What not to credit to Chicago:** the centering (secession sets it when Chicago is off) and the colors (g2).
+
+## Second beat: cut
+
+The conflict beat from the step pages ("they compete for image share; I chose Chicago's") shows nothing now. Don't record it.
+- **What happens:** in Fine-tune, any of the three image-share values (Chicago 0.2, g2 0.95, secession 0.7) leaves both screens as they are. Only the sheet's line changes.
+- **Why:** Chicago's r1 keeps the list type-led and centered, and the layout contract hides the thumbnails of a centered, type-led list.
 
 ## Fixes found while recording
 
 - **Type-led poster column** (f7d153f): below an image share of about 0.28, the poster column was narrower than the poster's 48 px minimum, so the square was clipped at the right edge. The column now has a 48 px floor.
 - **Side-by-side text column:** with poster and text side by side and a high image share, the text was left about 60 px on a phone-width screen, so names broke mid-word and buttons were cut off. The text column now keeps at least 9em, and the poster shrinks instead. The sheet now says "Posters take up to P% … (less on a narrow screen, so names stay whole)".
 
-## The earlier take (hand-picked, superseded)
+## Earlier takes (superseded)
 
-Before the live proposal, the shot was a Swap. The project g2 + bauhaus + greencar was picked by hand, greencar was swapped for Chicago, and then Chicago's 0.2 was chosen in the image-share conflict (`demo/concert_swap_contact.png`, `concert_v{1,2,3}_*.png`). In that take, the "Show of the year" card disappeared because greencar left, not because of Chicago. The swap flips `hierarchy_mode` in 900 of the 1,320 ordered three-brick sets from the 12 samples.
+- **The step pages, r1 toggled in Compose (2026-11-03 afternoon).** Accept all → Compose with Neutral skin, then uncheck Chicago's r1 and check it again (v1 → v2 → v3). Before the layout contract, r1 off put the posters beside the names. Files: `demo/toggle_contact.png`, `demo/concert_t_{on,off}_{list,review,flash}.png`.
+- **The hand-picked swap.**
+  - g2 + bauhaus + greencar was picked by hand, greencar was swapped for Chicago, then Chicago's 0.2 was chosen in the image-share conflict.
+  - Files: `demo/concert_swap_contact.png`, `concert_v{1,2,3}_*.png`.
+  - In that take the "Show of the year" card disappeared because greencar left, not because of Chicago.
 
 ## Files
 
-- `demo/concert_t_{on,off}_{list,review}.png`: the toggle at 2×.
-- `demo/toggle_contact.png`: the four side by side.
-- `demo/concert_t_{off,on}_flash.png`: both shells 250 ms after each click.
-- Reproduce the captures with `.superpowers/demo/toggleshots.mjs` and `swapshots.mjs` (git-excluded): Playwright on the dev server at :5175, seeded with the harness extraction, so no API call.
-- The live proposal screenshot shows Malik's photo, so it stays local: `.superpowers/demo/live_propose_after.png` (git-excluded).
+- `demo/onepage_{1_on,2_off,2_off_flash}.png`: the two screens at 2×, shells only. Step 3's frame is step 1's.
+- **Reproducing them:** `.superpowers/demo/onepage-demo.mjs` (git-excluded) runs Playwright on the dev server at :5175.
+  - It answers `/api/propose` with the live response of 2026-11-03, so no model call is made.
+  - It answers the sync locally, so nothing reaches the Blob store.
+- **Kept local** because they show Malik's photo:
+  - the page captures with the photo row: `.superpowers/demo/onepage-1705/*_page.png`;
+  - the live proposal screenshot: `.superpowers/demo/live_propose_after.png`.
+- The step-page captures came from `toggleshots.mjs` and `swapshots.mjs` (git-excluded).
