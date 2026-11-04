@@ -16,6 +16,19 @@
 | 5 | No duplicated information | The year appears once, in the year review's head; the top bar says "Year review". |
 | 6 | No text inside thumbnails | Posters and thumbnails are flat surface blocks: no image, no initials. |
 
+## Device details (item 3, 2026-11-03)
+
+Each phone frame now carries a status bar, a large title on the List, a tab bar and a home indicator (`src/shell/Device.tsx`). They read `color_bg`, `color_fg` and `color_accent` and change no parameter, so the contract adds no new `adapted · by rule` value for them. About 127 px of the frame (44 + 49 + 34) is the same in every composition.
+
+| Element | Covered by |
+|---|---|
+| Status bar, 44 px (9:41, signal, battery) | 2: padding 0 / 16 and the icon gap 4 are measured. 3: its text is at caption size, which both screens already use. |
+| Large title on the List | 1: it follows the screen's edge and is measured with the headings. 2: padding 8 / 16. 3: it takes the screen's largest size, display under type-led and title otherwise, never a new one. 5: the List's bar keeps its control and drops its small title, so the title is said once. |
+| Tab bar, 49 px (list, chart, person) | 2: the gap inside a tab is 4. 3: labels at caption size. 4: every tab is a target of at least 44 × 44. 5: no tab label repeats a title on the screen (measured: `.tab-label` against `.bar-title`, `.large-title`, `.screen-title`). |
+| Home indicator, 34 px | 2: padding-bottom 8. |
+
+The active tab takes `color_accent` only when `accent_placement` is labels or actions; under none, dividers and one-hero (the first item's alone) it is `color_fg`. Inactive tabs are `color_fg` at half opacity. Under the neutral skin all of it is grey.
+
 ## Measured
 
 `npm run test:contract` renders every ordered three-brick composition of the 12 samples (1,320; 611 distinct parameter sets) on both screens at 390 × 844 in Chromium. It measures the DOM against the six rules and fails on any violation. Plain `npm test` skips it, because it needs a browser and a dev server.

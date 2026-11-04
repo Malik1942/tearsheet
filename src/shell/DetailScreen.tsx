@@ -1,4 +1,4 @@
-import { CONCERTS, groupBy, shortDate } from './content'
+import { CONCERTS, groupBy, shortDate, type ShellContent } from './content'
 import { TopBar } from './ListScreen'
 import type { Params } from './params'
 
@@ -6,7 +6,7 @@ const ShareIcon = () => <svg className="icon" viewBox="0 0 16 16" width="16" hei
 
 /** Screen 2: the year in review. Exercises grouping and rhythm on a second layout.
  *  `staticRender` is the same contract as on `ListScreen`: no interactive element. The top bar's share control is its only one, drawn as a span with the same class. */
-export function DetailScreen({ params, staticRender = false }: { params: Params; staticRender?: boolean }) {
+export function DetailScreen({ params, staticRender = false, content }: { params: Params; staticRender?: boolean; content: ShellContent }) {
   const grouping = String(params.grouping) === 'none' ? 'by-time' : String(params.grouping)
   const groups = groupBy(CONCERTS, grouping)
   const rhythm = String(params.rhythm)
@@ -15,7 +15,7 @@ export function DetailScreen({ params, staticRender = false }: { params: Params;
   const ordered = rhythm === 'featured-first' ? [...groups].sort((a, b) => b.items.length - a.items.length) : groups
   return (
     <div>
-      <TopBar title="Year review">
+      <TopBar title={content.screenTitles.review}>
         {staticRender ? <span className="bar-icon"><ShareIcon /></span> : <button className="bar-icon" type="button" aria-label="Share"><ShareIcon /></button>}
       </TopBar>
       <header className="review-head">
