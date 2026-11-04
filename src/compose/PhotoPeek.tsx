@@ -23,9 +23,9 @@ export function PhotoPeek({ id, brick, measurement, label, anchor }: { id: strin
         {measurement && regions.map(r => {
           const [x1, y1, x2, y2] = r.box_1000
           return (
-            <div key={r.label} className="absolute"
-              style={{ left: `${x1 / 10}%`, top: `${y1 / 10}%`, width: `${(x2 - x1) / 10}%`, height: `${(y2 - y1) / 10}%`, border: '2px solid var(--accent)', background: 'color-mix(in oklab, var(--accent) 18%, transparent)' }}>
-              <span className="absolute left-0 top-0 px-1" style={{ background: 'var(--accent)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 10, lineHeight: '14px' }}>{measurement.id}</span>
+            <div key={r.label} className="region"
+              style={{ left: `${x1 / 10}%`, top: `${y1 / 10}%`, width: `${(x2 - x1) / 10}%`, height: `${(y2 - y1) / 10}%` }}>
+              <span className="idtag" style={{ fontSize: 10, padding: '2px 4px' }}>{measurement.id}</span>
             </div>
           )
         })}

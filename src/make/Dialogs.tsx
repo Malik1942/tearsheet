@@ -6,6 +6,8 @@ import { shortLabel } from '../lib/shortLabels'
 import { photoLine } from '../lib/makeFlow'
 import { originOf } from '../lib/starters'
 import { tileCaption, type SwapGroup } from '../lib/swapSheet'
+import { withFrame } from '../lib/frames'
+import { useFrameIds } from '../lib/useFrameIds'
 import type { ChipId } from '../lib/leanFamilies'
 import type { Brick } from '../lib/types'
 import { MiniPreview } from '../shell/MiniPreview'
@@ -90,6 +92,7 @@ export function AdjustStyle({ offered, active, onChip, anchor, anchorable, onAnc
   offered: { id: ChipId; note: string }[]; active: ChipId[]; onChip: (id: ChipId) => void
   anchor: Brick | undefined; anchorable: Brick[]; onAnchor: (id: string | null) => void; onClose: () => void
 }) {
+  const frames = useFrameIds()
   const [picking, setPicking] = useState(false)
   return (
     <Overlay title={COPY.style} onClose={onClose}>
@@ -115,7 +118,7 @@ export function AdjustStyle({ offered, active, onChip, anchor, anchorable, onAnc
             return (
               <button key={b.id} type="button" onClick={() => { onAnchor(b.id); setPicking(false) }} aria-pressed={b.id === anchor?.id} className="cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: `2px solid ${b.id === anchor?.id ? 'var(--ink)' : 'var(--line)'}`, background: 'var(--panel)' }} title={`Start from ${cap.title}`}>
                 <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" style={tileFit(b.photo, 16 / 10)} /></div>
-                <div className="flex flex-col px-1.5 py-1"><span className="cap-title">{cap.title}</span><span className="cap-line tnum">{cap.line}</span></div>
+                <div className="flex flex-col px-1.5 py-1"><span className="cap-title">{cap.title}</span><span className="cap-line tnum">{withFrame(frames.get(b.id), cap.line)}</span></div>
               </button>
             )
           })}
@@ -128,6 +131,7 @@ export function AdjustStyle({ offered, active, onChip, anchor, anchorable, onAnc
 
 /** Picking by hand: a grid of the photos on offer, up to `max`; Show the screens makes (or updates) the project. `note` is the one short line when the proposal was off or failed. */
 export function PickMyself({ pool, initial, max, note, canCreate, onClose, onDone }: { pool: Brick[]; initial: string[]; max: number; note?: { line: string; detail?: string } | null; canCreate: boolean; onClose: () => void; onDone: (ids: string[]) => void }) {
+  const frames = useFrameIds()
   const [picked, setPicked] = useState(() => initial.filter(id => pool.some(b => b.id === id)).slice(0, max))
   const toggle = (id: string) => setPicked(p => p.includes(id) ? p.filter(x => x !== id) : p.length < max ? [...p, id] : p)
   return (
@@ -143,7 +147,7 @@ export function PickMyself({ pool, initial, max, note, canCreate, onClose, onDon
               {originOf(b) === 'starter' && <span className="chip chip-adapted absolute left-1.5 top-1.5 px-1.5 text-[10px]" style={{ background: 'var(--panel)' }}>{COPY.starter}</span>}
               <div className="flex flex-col px-2 py-1.5">
                 <span className="cap-title">{cap.title}</span>
-                <span className="cap-line tnum">{cap.line}</span>
+                <span className="cap-line tnum">{withFrame(frames.get(b.id), cap.line)}</span>
               </div>
               {on && <span aria-hidden="true" className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[12px]" style={{ background: 'var(--ink)', color: '#fff' }}>✓</span>}
             </button>
@@ -171,7 +175,7 @@ export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; o
           <section key={g.id} aria-label={g.title}>
             <h3 className="caption ink-2 m-0 mb-2 font-normal uppercase tracking-wide">{g.title}</h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {g.tiles.map(({ brick, inProject }) => {
+              {g.tiles.map(({ brick, inProject, frame }) => {
                 const { title, line } = tileCaption(brick)
                 const name = `${title}, ${line}`
                 return (
@@ -182,7 +186,7 @@ export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; o
                     <div className="overflow-hidden" style={{ aspectRatio: '16 / 10' }}><Photo src={brick.photo.url} title={brick.credit ?? ''} className="h-full w-full object-cover" style={tileFit(brick.photo, 16 / 10)} /></div>
                     <div className="flex flex-col px-2 py-1.5">
                       <span className="cap-title">{title}</span>
-                      <span className="cap-line tnum">{line}</span>
+                      <span className="cap-line tnum">{withFrame(frame, line)}</span>
                     </div>
                     {inProject && <span aria-hidden="true" className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] leading-none" style={{ background: 'var(--ink)', color: '#fff' }}>✓</span>}
                   </button>

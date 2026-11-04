@@ -35,7 +35,7 @@ export function Row({ k, pv, params, bricks, swatch, thumb, flash = false }: { k
           <span className="mono w-28 shrink-0 truncate sm:w-36" title={k}>{k}</span>
           {brick
             ? <button type="button" aria-expanded={peek.open} aria-controls={peek.open ? peekId : undefined} aria-label={`Show where ${k} was read on ${brick.id}'s photo`}
-                className="flex h-4 w-4 shrink-0 cursor-pointer rounded-sm p-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">{source}</button>
+                className="flex h-4 w-4 shrink-0 cursor-pointer rounded-sm p-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]">{source}</button>
             : source}
           {swatch && <span className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: String(pv.value), border: '1px solid var(--line)' }} />}
           {isShellDefault(pv)

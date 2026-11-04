@@ -95,7 +95,7 @@ export function SyncScreen() {
       <div className="gutter mx-auto w-full max-w-md py-8">
         <h1 className="title mb-4">{COPY.title}</h1>
         {notice && <div className="mb-3 rounded px-3 py-2 text-[12px]" role="status" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>{notice}</div>}
-        {busy && <div className="mb-3 text-[12px]" style={{ color: 'var(--accent)' }} aria-live="polite">{busy}{progress && progress.total ? ` uploading ${progress.sent}/${progress.total}` : ''}</div>}
+        {busy && <div className="mb-3 text-[12px]" style={{ color: 'var(--ink)' }} aria-live="polite">{busy}{progress && progress.total ? ` uploading ${progress.sent}/${progress.total}` : ''}</div>}
 
         {info?.code ? (
           <section className="panel p-4">

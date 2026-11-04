@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, carryOver, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
+import { autoName, carryOver, leadKey, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
 
@@ -119,6 +119,12 @@ describe('the photo row: which photos show, and the one label', () => {
   it('with nothing set that has a label, the photo\'s first label overall', () => {
     const r = resolveProject(project({ brickIds: ['chicago'] }), [chicago])
     assert.equal(oneLabel(echo, r), 'Big images')
+  })
+  it('a callout points at the parameter behind the photo\'s label, and at nothing for a photo that sets nothing', () => {
+    const r = resolveProject(project({ brickIds: ['chicago', 'g2'] }), [chicago, g2])
+    assert.equal(leadKey(chicago, r), 'image_text_dominance')   // its label, Mostly text
+    assert.equal(leadKey(g2, r), 'accent_coverage')            // its label, One small accent
+    assert.equal(leadKey(echo, resolveProject(project({ brickIds: ['chicago'] }), [chicago])), null)
   })
 })
 

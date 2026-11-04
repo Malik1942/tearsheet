@@ -1,7 +1,7 @@
-/* App chrome: C+D. Loud at the edges, quiet in the middle; the shell is always the most important thing on the page.
-   Drop-in for src/chrome/tokens.css (based on 0de3a09, where tokens.css last changed in 7930991). The shell never inherits any of this, and the chrome never
-   inherits a shell color: no variable here shares a name with the shell's own (--font-display, --font-family, --color-*).
-   Rules: DESIGN_SYSTEM.md. */
+/* App chrome: M, Measured drawing (Round 2, adopted 2026-11-04). White paper, graphite, and ultramarine for one thing only: what Tearsheet traced to a photo
+   (the READING crosses and their line, region boxes, the numbered callouts that tie a photo to the screens, the m and r ids). Everything else is graphite.
+   A number bleeds off an edge only from a solid field; inside an outline it sits whole. The shell never inherits any of this, and the chrome never
+   inherits a shell color: no variable here shares a name with the shell's own (--font-display, --font-family, --color-*). Rules: docs/DESIGN_SYSTEM.md. */
 
 /* Fonts: the Google Fonts <link> in index.html loads Archivo and IBM Plex Mono (display=swap). An @import here, inside the layered
    import of this file, is an unknown at-rule to the CSS optimizer, so the link does it. */
@@ -13,30 +13,29 @@
 @font-face { font-family: "IBM Plex Mono Self"; src: local("IBM Plex Mono Medium"), url("/fonts/IBMPlexMono-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
 
 :root {
-  --paper: #F2EFE8;        /* app background, every zone */
-  --ink: #141414;          /* primary text, display type, rules at full strength */
-  --ink-2: #6D6C69;        /* muted: ink at 60% on paper, 4.55:1 */
-  --line: rgba(20, 20, 20, 0.12);   /* rules: ink at 12%, 1 px */
-  --panel: #F2EFE8;        /* raised surfaces are paper too; elevation is a 1 px rule, never a shadow */
-  --accent: #C8331F;       /* the working red: primary button, selected tab, photo ring, change highlight (and any red under 24 px) */
-  --measured: #141414;     /* provenance: measured chip, filled */
-  --interpreted: #6D6C69;  /* provenance: dotted outline */
-  --adapted: #888682;      /* provenance: outline + "by you" (3.16:1 on paper, a UI boundary) */
+  --paper: #FFFFFF;        /* app background, every zone */
+  --ink: #1B1E21;          /* graphite: text, display type, buttons, tabs, counts, rules at full strength (16.74:1 on paper) */
+  --ink-2: #727475;        /* muted graphite: the lightest mix that keeps 4.5:1 on paper (4.70:1) */
+  --line: rgba(27, 30, 33, 0.12);   /* rules: graphite at 12%, 1 px */
+  --panel: #FFFFFF;        /* raised surfaces are paper too; elevation is a 1 px rule, never a shadow */
+  --trace: #2338E8;        /* ultramarine: only what Tearsheet traced to a photo (7.49:1 on paper; white on it 7.49:1). Never on graphite */
+  --halo: #FFFFFF;         /* under every trace mark that sits on a photo or a screen, so it reads on dark and light grounds alike (20:1 on the darkest photo) */
+  --accent: var(--trace);  /* the old name, kept for the shell's one-second change outline (shell.css reads var(--accent)) and Fine-tune's row tint: both trace a photo's change */
+  --measured: #1B1E21;     /* provenance: measured chip, filled graphite */
+  --interpreted: #727475;  /* provenance: dotted outline */
+  --adapted: #8A8C8E;      /* provenance: outline + "by you" (3.37:1 on paper, a UI boundary) */
   --font-ui: "Archivo", "Archivo Self", "Helvetica Neue", Arial, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "IBM Plex Mono Self", ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius: 6px;           /* controls only */
   --space: 8px;
 
-  /* new in C+D */
-  --red-display: #E03C31;  /* NEW: display type and large fills in loud zones only (3.76:1 on paper: large text and fills only) */
-  --red-ui: #C8331F;       /* NEW: same as --accent, by name: button fills and red under 24 px (white on it 5.32:1, on paper 4.63:1) */
-  --rule: rgba(20, 20, 20, 0.12);   /* NEW: alias of --line for new markup */
-  --focus: #141414;        /* NEW: focus rings are ink, so red stays on its four uses */
-  --font-poster: "Archivo", "Archivo Self", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;   /* NEW: display family (Archivo at width 62, weight 900) */
-  --radius-brand: 0px;     /* NEW: masthead, red blocks, photos, cards in loud zones */
-  --type-display: clamp(56px, 11vw, 160px);   /* NEW: the fifth size, display only */
-  --space-4: 4px; --space-8: 8px; --space-12: 12px; --space-16: 16px; --space-24: 24px; --space-32: 32px; --space-48: 48px; --space-64: 64px;   /* NEW: the spacing scale */
-  --crop: 8px;             /* NEW: crop-mark arm length */
+  --rule: rgba(27, 30, 33, 0.12);   /* alias of --line for newer markup */
+  --focus: #1B1E21;        /* focus rings are graphite */
+  --font-poster: "Archivo", "Archivo Self", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;   /* display family (Archivo at width 62, weight 900) */
+  --radius-brand: 0px;     /* masthead, count blocks, photos, cards */
+  --type-display: clamp(56px, 11vw, 160px);   /* the fifth size, display only */
+  --space-4: 4px; --space-8: 8px; --space-12: 12px; --space-16: 16px; --space-24: 24px; --space-32: 32px; --space-48: 48px; --space-64: 64px;   /* the spacing scale */
+  --crop: 8px;             /* crop-mark arm length */
 }
 
 .chrome { background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: 13px; line-height: 1.45; min-height: 100%; font-variant-numeric: tabular-nums; }
@@ -49,8 +48,8 @@
 .btn { font: inherit; font-weight: 600; border-radius: var(--radius); padding: 6px 12px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; line-height: 1.2; }
 .btn:hover { border-color: var(--ink-2); }
 .btn:focus-visible, .chrome a:focus-visible, .chrome input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.btn-accent { background: var(--red-ui); border-color: var(--red-ui); color: #fff; }   /* the one primary per view */
-.btn-accent:hover { filter: brightness(0.94); }
+.btn-accent { background: var(--ink); border-color: var(--ink); color: var(--paper); }   /* the one primary per view: graphite, in both volumes */
+.btn-accent:hover { background: #33373B; border-color: #33373B; }
 .btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
 .btn-quiet:hover { color: var(--ink); border-color: transparent; }
 .btn:disabled { opacity: 0.5; cursor: default; }
@@ -94,8 +93,8 @@
 .wordmark { font-size: var(--type-em); font-weight: 600; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
 .tab { position: relative; display: inline-flex; align-items: center; height: 56px; padding: 0 2px; font-weight: 600; color: var(--ink-2); text-decoration: none; }
 .tab:hover { color: var(--ink); }
-.tab[aria-current="page"] { color: var(--ink); }   /* the text stays ink; the red is the 2 px bar */
-.tab[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--red-ui); }
+.tab[aria-current="page"] { color: var(--ink); }   /* selected: graphite text and a graphite 2 px bar */
+.tab[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--ink); }
 .shoot { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-8); }
 .shoot-icon { display: block; flex: none; }
 .count-badge { position: absolute; top: -8px; right: -8px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--radius); background: var(--ink); color: var(--paper); border: 0; font-size: 11px; line-height: 18px; font-weight: 600; text-align: center; }
@@ -116,10 +115,10 @@
 .bottom-bar .shoot .shoot-label { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (min-width: 768px) { .bottom-bar { display: none; } }
 
-/* a toggle switch (Fine-tune): red only when on; a rounded rectangle, not a pill */
-.switch { position: relative; flex-shrink: 0; width: 30px; height: 18px; border-radius: 4px; background: var(--ink-2); transition: background 0.15s; }
+/* a toggle switch (Fine-tune, ⋯): muted graphite off, graphite on, the knob moves too; a rounded rectangle, not a pill */
+.switch { position: relative; flex-shrink: 0; width: 30px; height: 18px; border-radius: 4px; background: var(--adapted); transition: background 0.15s; }
 .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 3px; background: var(--paper); transition: transform 0.15s; }
-.switch[data-on] { background: var(--red-ui); }
+.switch[data-on] { background: var(--ink); }
 .switch[data-on]::after { transform: translateX(12px); }
 @media (max-width: 767.98px) { .with-bar { padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); } }
 
@@ -141,8 +140,8 @@
 .alert-pop { position: absolute; top: 40px; right: 8px; left: 8px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 8px 10px; background: var(--paper); border: 1px solid var(--ink); border-radius: var(--radius); font-size: var(--type-caption); }
 
 /* ---------- Library and Make (spec-v2 f005279), re-skinned ---------- */
-.chrome input::placeholder, .chrome textarea::placeholder { color: var(--ink-2); opacity: 1; }   /* 4.57:1 on paper */
-.chrome :is(input, textarea, select).hairline { border-color: var(--ink-2); }   /* a field's edge is a UI boundary: 4.57:1, where the 12% rule is 1.28:1 */
+.chrome input::placeholder, .chrome textarea::placeholder { color: var(--ink-2); opacity: 1; }   /* 4.70:1 on paper */
+.chrome :is(input, textarea, select).hairline { border-color: var(--ink-2); }   /* a field's edge is a UI boundary: 4.70:1, where the 12% rule is 1.27:1 */
 .chrome input:disabled { color: var(--ink); cursor: progress; }   /* the typed intent stays legible while the photos are found */
 @media (max-width: 767.98px) { .chrome input, .chrome textarea, .chrome select { font-size: 16px; } }   /* under 16 px iOS Safari zooms the page on focus */
 .chrome :is(h1, h2, .title, .em):not(.shell *) { text-wrap: balance; }   /* not inside the shell: its titles wrap as they do everywhere it renders */
@@ -153,7 +152,7 @@
 @media (pointer: coarse) { .icon-btn { min-width: 44px; min-height: 44px; } }
 
 /* Make: the photo row. Each photo is a switch (the thumbnail and its title in one target), its credit or date under it, Swap a quiet icon.
-   On = a 2 px red ring; off = dimmed with a 1 px rule. The slots are fixed, so a photo never moves when another one appears or goes */
+   On = the photo as it is, with its callout number in the corner; off = faded and grey, no number. The slots are fixed, so a photo never moves when another one appears or goes */
 .photo-row { display: grid; grid-template-columns: repeat(var(--slots, 3), 88px); justify-content: center; gap: var(--space-16); margin: 0; padding: var(--space-12) 0 0; list-style: none; }
 .photo-cell { --thumb: 64px; position: relative; display: flex; justify-content: center; }
 .photo-switch { display: block; padding: 0; border: 0; background: transparent; cursor: pointer; }
@@ -200,33 +199,31 @@
 .skip-link { position: absolute; left: 8px; top: -48px; z-index: 50; padding: 8px 12px; background: var(--paper); color: var(--ink); border: 1px solid var(--ink); border-radius: var(--radius); text-decoration: none; }
 .skip-link:focus-visible { top: 8px; outline: 2px solid var(--focus); outline-offset: 2px; }
 
-/* ---------- NEW in C+D: volumes, display type, masthead, blocks, crop marks, issue line ---------- */
-/* data-volume sits on the app root for the whole view, header included. "loud" (C): Library, empty Library, Share complete.
-   "quiet" (D): Make and everything else. One red block per view: on a loud view it is the masthead (or SHARED) block, so the
-   primary button turns ink; on a quiet view it is the primary button. Thin red (tab bar, photo ring, change highlight) is not a block. */
-[data-volume="quiet"] { --red-display: var(--red-ui); }   /* a quiet zone never shows the display red, even by mistake */
-[data-volume="loud"] .btn-accent { background: var(--ink); border-color: var(--ink); color: var(--paper); }   /* Shoot, Copy: ink on a loud view */
-[data-volume="loud"] .btn-accent:hover { filter: none; background: #2A2A2A; border-color: #2A2A2A; }
-[data-volume="loud"] .count-badge { background: var(--paper); color: var(--ink); border: 1px solid var(--ink); line-height: 16px; }
+/* ---------- volumes, display type, masthead, blocks, crop marks, issue line ---------- */
+/* data-volume sits on the app root for the whole view, header included. "loud": Library, empty Library. "quiet": Make and everything else.
+   The volume decides whether display type is shown; the colors are the same in both: graphite chrome, ultramarine only on traces. */
+[data-volume="loud"] .count-badge { background: var(--paper); color: var(--ink); border: 1px solid var(--ink); line-height: 16px; }   /* beside the graphite Shoot, the badge is outlined */
 
 .display, .chrome .display { font-family: var(--font-poster); font-weight: 900; font-stretch: 62%; text-transform: uppercase; line-height: 0.84; letter-spacing: -0.005em; font-size: var(--type-display); color: var(--ink); margin: 0; }
 [data-volume="quiet"] .display, .chrome[data-volume="quiet"] .display { font-size: var(--type-title); font-weight: 600; font-stretch: 100%; text-transform: none; line-height: 30px; }   /* display type is loud-zone only */
 
-/* the Library masthead: LIBRARY in display ink, the count in display on a red block, full bleed, cropped at the right edge.
+/* the Library masthead: LIBRARY in display graphite, the count in white display type on a solid graphite block, full bleed, cropped at the right edge.
+   The count bleeds off the block's bottom edge as in C+D: a number bleeds only off a solid field (inside an outline it would sit whole). No dimension line on a count.
    It sits in the same .gutter container as the grid. The word starts at the gutter, then moves left by the L's side bearing
    (0.0405 em in Archivo 900 at width 62), so its ink and the grid's first column share one left edge at every width */
 .masthead { display: flex; align-items: stretch; height: calc(var(--type-display) * 1.08); margin: 0 calc(-1 * var(--gutter)); overflow: hidden; border-bottom: 1px solid var(--ink); border-radius: var(--radius-brand); }
 .masthead .display { align-self: flex-end; padding: 0; margin-left: calc(var(--gutter) - 0.0405em); white-space: nowrap; }
-.masthead .count-block { position: relative; margin-left: auto; flex: 0 0 min(28%, 360px); background: var(--red-display); overflow: hidden; }
-.masthead .count-block .display { position: absolute; left: var(--space-24); bottom: -0.12em; padding: 0; }@media (max-width: 767.98px) { .masthead .count-block { flex-basis: 36%; } }
+.masthead .count-block { position: relative; margin-left: auto; flex: 0 0 min(28%, 360px); background: var(--ink); overflow: hidden; }
+.masthead .count-block .display { position: absolute; left: var(--space-24); bottom: -0.12em; padding: 0; color: var(--paper); }   /* white on graphite, 16.74:1 */
+@media (max-width: 767.98px) { .masthead .count-block { flex-basis: 36%; } }
 
-/* a red block in a loud zone (Share complete): display type in ink on #E03C31 (4.25:1, large) */
-.red-block { position: relative; background: var(--red-display); color: var(--ink); padding: var(--space-16) var(--space-24) 0; border-radius: var(--radius-brand); }   /* only display type sits on it; links and buttons go on paper below */
+/* a solid block (was C+D's red block): white display type on graphite; links and buttons go on paper below it */
+.red-block { position: relative; background: var(--ink); color: var(--paper); padding: var(--space-16) var(--space-24) 0; border-radius: var(--radius-brand); }
 
 /* the empty Library's line under the masthead: 24 / 400, not display */
 .empty-line { font: 400 var(--type-title)/30px var(--font-ui); color: var(--ink); margin: var(--space-24) 0 var(--space-16); }
 
-/* the line under the masthead says what the red number is, nothing more (Malik, 2026-11-03: no filler, readable on a phone): "12 starter photos",
+/* the line under the masthead says what the number is, nothing more (Malik, 2026-11-03: no filler, readable on a phone): "12 starter photos",
    or "14 photos" with, quieter and at the far edge, "since Dec 27, 2025". The UI face at the label size, the count in ink and semibold */
 .issue-line { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-16); padding: var(--space-12) 0 var(--space-24); margin: 0; font: 400 var(--type-em)/20px var(--font-ui); color: var(--ink-2); }
 .issue-line .issue-count { color: var(--ink); font-weight: 600; }
@@ -305,8 +302,55 @@
 @media (max-width: 767.98px) { .make-spread { display: block; width: auto; margin: var(--space-16) 0 0; padding: 0; } .make-spread.crop-marks::before { display: none; } }   /* phone: a full-width block (auto side margins would shrink it to both screens side by side), so the swipe pager takes the width */
 .carry-line { display: block; margin: var(--space-16) auto 0; text-align: center; font-size: var(--type-body); color: var(--ink-2); background: none; border: 0; cursor: pointer; }
 
-/* the change highlight: the one moving red in a quiet zone */
-.change-highlight { outline: 2px solid var(--red-ui); outline-offset: -2px; }
+/* the change highlight: a photo's change traced on the chrome, ultramarine on its halo (the shell draws its own, from --accent) */
+.change-highlight { outline: 2px solid var(--trace); outline-offset: -2px; box-shadow: 0 0 0 2px var(--halo); }
 
 /* toast: ink on paper inverted, square to the system */
 .toast { display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-16); border-radius: var(--radius); background: var(--ink); color: var(--paper); font-weight: 600; }
+
+/* ---------- the measured layer (Measured drawing): ultramarine, only what Tearsheet traced to a photo ---------- */
+/* Every trace mark on a photo or a screen sits on a white halo, so it reads at 20:1 on the darkest ground and 7.49:1 on white; ultramarine never sits on graphite. */
+
+/* the réseau: 5 × 5 crosses at 100…900 on the 0–1000 grid the regions are measured on, the center one double, as a metric camera records on every frame.
+   On a card only while Spark reads the photo; in Details while its regions show. Decoration: never the only sign of anything */
+.reseau { position: absolute; inset: 0; pointer-events: none; }
+.reseau i { position: absolute; width: 12px; height: 12px; translate: -50% -50%; filter: drop-shadow(0 0 0.75px var(--halo)) drop-shadow(0 0 0.75px var(--halo)) drop-shadow(0 0 0.5px var(--halo)); }
+.reseau i::before, .reseau i::after { content: ''; position: absolute; background: var(--trace); }
+.reseau i::before { left: 0; right: 0; top: calc(50% - 0.75px); height: 1.5px; }
+.reseau i::after { top: 0; bottom: 0; left: calc(50% - 0.75px); width: 1.5px; }
+.reseau i.c { width: 24px; height: 24px; }
+.reseau.sm i { width: 9px; height: 9px; }
+.reseau.sm i.c { width: 18px; height: 18px; }
+
+/* READING: while Spark reads a photo its card says so, in the tag and in the line under it; a queued or held photo keeps the plain line */
+.reading-tag { position: absolute; left: 6px; top: 6px; z-index: 1; padding: 3px 5px; background: var(--trace); color: #FFFFFF; font: 600 10px/1 var(--font-mono); letter-spacing: 0.08em; box-shadow: 0 0 0 1.5px var(--halo); }
+.card-tile[data-reading] .card-progress { height: 3px; background: var(--halo); }   /* the line's halo: ultramarine on white, 7.49:1 on any photo */
+.card-tile[data-reading] .card-progress::after { background: var(--trace); }
+
+/* region boxes: what was measured, boxed on the photo and tagged with its measurement ids. .is-on: the one a measurement or a rule points at */
+.region { position: absolute; border: 2px solid var(--trace); box-shadow: 0 0 0 1.5px var(--halo), inset 0 0 0 1.5px var(--halo); pointer-events: none; }
+.region.is-on { border-width: 3px; }
+.region > .idtag { position: absolute; left: 0; top: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 0 0 1.5px var(--halo); }
+/* an m or r id, wherever it is shown: white mono on ultramarine (7.49:1) */
+.idtag { display: inline-block; padding: 3px 5px; background: var(--trace); color: #FFFFFF; font: 600 11px/1 var(--font-mono); letter-spacing: 0.02em; white-space: nowrap; }
+a.idtag { text-decoration: none; }
+a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* the numbered callouts: a photo's slot number, on its thumbnail in the photo row and, from the tablet up, at the end of a leader to the first thing it changes on the List screen */
+.callout { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--trace); color: #FFFFFF; font: 600 11px/1 var(--font-mono); box-shadow: 0 0 0 1.5px var(--halo); }
+.photo-callout { position: absolute; left: calc(50% - var(--thumb) / 2 - 8px); top: calc(var(--thumb) - 12px); z-index: 2; pointer-events: none; }
+.callouts { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 3; }
+.callouts .halo { fill: none; stroke: var(--halo); stroke-width: 4; stroke-linecap: round; }
+.callouts .leader { fill: none; stroke: var(--trace); stroke-width: 1.5; }
+.callouts .end { fill: var(--trace); stroke: var(--halo); stroke-width: 1.5; }
+.callouts .num { fill: var(--trace); stroke: var(--halo); stroke-width: 1.5; }
+.callouts text { fill: #FFFFFF; font: 600 11px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+@media (max-width: 767.98px) { .callouts { display: none; } }
+
+/* Details: the plain reading under the measured photo, one line per tag: what the photo has, then where it lands on your screens. The exact rules fold below it */
+.reading-lines { display: flex; flex-direction: column; gap: var(--space-12); margin: 0; padding: 0; list-style: none; }
+.reading-line { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-12); align-items: start; }
+.reading-line > .idtag { margin-top: 2px; }
+.reading-line b { display: block; font: 600 var(--type-em)/20px var(--font-ui); color: var(--ink); }
+.reading-line .to { display: block; font: 400 var(--type-body)/18px var(--font-ui); color: var(--ink-2); }
+.exact-toggle { align-self: flex-start; padding-left: 0; }

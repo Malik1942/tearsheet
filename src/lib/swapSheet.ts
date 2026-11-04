@@ -5,10 +5,12 @@ import { CAP_PER_BRICK, candidatesOf, resolveProject, type Project } from './map
 import { isShellDefault } from './landing'
 import { labelsOfBrick } from './shortLabels'
 import { cardCaption } from './brickLabels'
+import { frameIds } from './frames'
 import { RELATIONSHIP_KEYS, type ParameterKey, type RelationshipKey } from '../shell/params'
 import type { Brick } from './types'
 
-export type SwapTile = { brick: Brick; inProject: boolean }
+/** `frame` is the photo's frame id (frames.ts), counted over every brick as the Library's cards count it. */
+export type SwapTile = { brick: Brick; inProject: boolean; frame?: string }
 export type SwapGroup = { id: 'same' | 'adds' | 'rest'; title: string; tiles: SwapTile[] }
 
 const TITLES = { same: 'Same job', adds: 'Adds something', rest: 'Everything else' } as const
@@ -42,12 +44,13 @@ export function swapGroups(project: Project, pool: Brick[], replacing: string, b
   const now = resolveProject(project, bricks).values
   // judged before the layout contract: a value it filled in is set by a rule, not by a photo, so a photo that sets it still adds something
   const taken = new Set(RELATIONSHIP_KEYS.filter(k => !isShellDefault(now[k].before ?? now[k])))
+  const frames = frameIds(bricks)
   const tiles: Record<SwapGroup['id'], SwapTile[]> = { same: [], adds: [], rest: [] }
   for (const brick of [...pool].sort(byRanking(project.proposal?.ranking))) {
     if (brick.id === replacing) continue
     const sets = ownSets(brick)
     const id = sets.some(k => job.has(k)) ? 'same' : sets.some(k => !taken.has(k)) ? 'adds' : 'rest'
-    tiles[id].push({ brick, inProject: project.brickIds.includes(brick.id) })
+    tiles[id].push({ brick, inProject: project.brickIds.includes(brick.id), frame: frames.get(brick.id) })
   }
   return (['same', 'adds', 'rest'] as const).filter(id => tiles[id].length > 0).map(id => ({ id, title: TITLES[id], tiles: tiles[id] }))
 }
