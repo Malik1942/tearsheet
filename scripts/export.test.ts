@@ -25,6 +25,11 @@ describe('exportHandoff: photo links', () => {
     assert.ok(usedLine(exportHandoff('x', [withUrl(data)], r)).includes(`![${base.id}]((embedded photo))`))
     assert.ok(usedLine(exportHandoff('x', [withUrl(data)], r, undefined, { photos: 'inline' })).includes(`![${base.id}](${data})`))
   })
+  it('the page can name a photo by something other than its id: the alt text, brackets dropped; the download keeps the id', () => {
+    const md = exportHandoff('x', [withUrl('/samples/g1.jpg')], r, undefined, { photos: 'inline', alt: () => 'Chicago [sign]' })
+    assert.ok(usedLine(md).includes('![Chicago sign](/samples/g1.jpg)'))
+    assert.ok(usedLine(exportHandoff('x', [withUrl('/samples/g1.jpg')], r, undefined, { photos: 'inline' })).includes(`![${base.id}](/samples/g1.jpg)`))
+  })
   it('any other link is printed as it is', () => {
     assert.ok(usedLine(exportHandoff('x', [withUrl('/samples/g1.jpg')], r)).includes(`![${base.id}](/samples/g1.jpg)`))
   })
