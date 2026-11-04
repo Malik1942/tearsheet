@@ -6,13 +6,19 @@ import { LOCKUP_NAME_RIM } from './board'
 
 type Edge = { x: number; y: number }[]
 
-/** The band as two edges from left to right, x in 0..1 across the name, y in the lockup's units (down is larger). */
-function nameRim(): { bite: Edge; fibre: Edge } {
+/** The band as two edges from left to right, in the lockup's units (down is larger): the path runs out along the fibre and back along the bite. */
+function nameRimUnits(): { bite: Edge; fibre: Edge } {
   const pts = [...LOCKUP_NAME_RIM.matchAll(/[ML](-?[\d.]+),(-?[\d.]+)/g)].map(m => ({ x: Number(m[1]), y: Number(m[2]) }))
-  const turn = pts.findIndex((p, i) => i > 0 && p.x < pts[i - 1].x)   // the path runs out along the fibre and back along the bite
-  const x0 = pts[0].x, x1 = pts[turn - 1].x
+  const turn = pts.findIndex((p, i) => i > 0 && p.x < pts[i - 1].x)
+  return { fibre: pts.slice(0, turn), bite: pts.slice(turn).reverse() }
+}
+
+/** The same edges with x in 0..1 across the name. */
+function nameRim(): { bite: Edge; fibre: Edge } {
+  const { bite, fibre } = nameRimUnits()
+  const x0 = fibre[0].x, x1 = fibre[fibre.length - 1].x
   const norm = (e: Edge) => e.map(p => ({ x: (p.x - x0) / (x1 - x0), y: p.y }))
-  return { fibre: norm(pts.slice(0, turn)), bite: norm(pts.slice(turn).reverse()) }
+  return { fibre: norm(fibre), bite: norm(bite) }
 }
 
 const pct = (x: number) => `${(Math.min(1, Math.max(0, x)) * 100).toFixed(2)}%`
