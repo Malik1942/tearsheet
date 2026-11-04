@@ -81,7 +81,7 @@ Malik's direction (2026-11-04): a newspaper front page on the desktop, clear and
 | READING | A white mono tag on ultramarine at the card's top left, plus an ultramarine line on a white track under the photo. A queued or held photo keeps the plain graphite line. |
 | Region box | 2 px ultramarine with a 1.5 px white halo inside and out, tagged with its measurement ids. Only the regions the plain reading's lines rest on are drawn, so the photo and the lines carry the same ids, plus the one pointed at. Boxes that coincide (each side within 1% of the frame) are drawn as one box with all their ids. |
 | Id tag | An m or r id in white mono 600 at 11 px on ultramarine. On a photo it also gets a halo. |
-| Callout | A number always means a photo in the project, in slot order. It shows on the photo's thumbnail in Make's photo row, and only while that photo is on. From 768 px up, the same number is a pin on the List screen, at the first element the photo's lead parameter changes: inside a wide element's left edge, or just left of a narrow one. There are no leader lines (Malik, 2026-11-04). The pin's thin white ring and its white number keep it visible on any screen, a blue one included. Rules and measurements keep their ids (r1, m4), so no number means two things. |
+| Callout | A number always means a photo in the project, in slot order. It shows on the photo's thumbnail in Make's photo row, and only while that photo is on. From 768 px up, the number also stands in a column at the spread's left edge, and a leader runs from it to the first element the photo's lead parameter changes on the List screen, ending on a dot just before it (for text, just before its first word, not its box). Leaders were briefly replaced by pins and brought back: they are orderly and reach small elements exactly (Malik, 2026-11-04). The leader is ultramarine with a hairline of white either side (a 3 px casing under a 1.5 px line), so it reads over the dark bezel and any screen, a blue one included. Rules and measurements keep their ids (r1, m4), so no number means two things. |
 
 The halo means a trace mark's adjacent color is always white: 7.49:1 against ultramarine. The halo itself meets the darkest photo ground at 20.27:1.
 
@@ -100,7 +100,7 @@ Kept from C+D. The masthead sits in the same `.gutter` as the grid. LIBRARY move
 ## 8. Make
 
 - **No dimension lines and no title block.** There is no 390 × 844. On Make, PROJECT would repeat the h1 and FRAMES would repeat the photo row. The title block is for exported sheets only, which are not built.
-- **Callouts 1 and 2 stay.** They are the numbers on the photos that are on, with matching pins on the List screen.
+- **Callouts 1 and 2 stay.** They are the numbers on the photos that are on, with their leaders to the List screen.
 - **Paper, not a block.** The two screens are a spread on paper with crop marks, never on a block.
 
 ## 9. Details

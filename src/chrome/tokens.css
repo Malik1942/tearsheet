@@ -373,13 +373,18 @@
 a.idtag { text-decoration: none; }
 a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-/* the numbered callouts: a photo's slot number, on its thumbnail in the photo row and, from the tablet up, as a pin on the List screen at the first thing
-   it changes (Make/Callouts.tsx). No leader lines (Malik, 2026-11-04: the white-cased lines were clumsy): the pin is the mark. Its thin white ring keeps
-   it visible on any screen, a dark one or a blue one; the white number in it is 7.49:1 */
+/* the numbered callouts: a photo's slot number, on its thumbnail in the photo row and, from the tablet up, in a column at the spread's left edge with a
+   leader to the first thing it changes on the List screen (Make/Callouts.tsx; Malik, 2026-11-04: orderly, and exact on small elements). The leader is
+   ultramarine cased by a hairline of white either side (a 3 px casing under a 1.5 px line, as a subway map separates its lines), so it reads over the dark
+   bezel and any screen, a blue one included, without the thick white outline it had before. The white number in its circle is 7.49:1 */
 .callout { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--trace); color: #FFFFFF; font: 600 11px/1 var(--font-mono); box-shadow: 0 0 0 1.5px var(--halo); }
 .photo-callout { position: absolute; left: calc(50% - var(--thumb) / 2 - 8px); top: calc(var(--thumb) - 12px); z-index: 2; pointer-events: none; }
-.callouts { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
-.callouts .callout { position: absolute; translate: -50% -50%; }
+.callouts { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 3; }
+.callouts .casing { fill: none; stroke: var(--halo); stroke-width: 3; stroke-linejoin: round; }
+.callouts .leader { fill: none; stroke: var(--trace); stroke-width: 1.5; stroke-linejoin: round; }
+.callouts .end { fill: var(--trace); stroke: var(--halo); stroke-width: 1; }
+.callouts .num { fill: var(--trace); stroke: var(--halo); stroke-width: 1.5; }
+.callouts text { fill: #FFFFFF; font: 600 11px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
 @media (max-width: 767.98px) { .callouts { display: none; } }
 
 /* Details: the plain reading under the measured photo, one line per tag: what the photo has, then where it lands on your screens. The exact rules fold below it */

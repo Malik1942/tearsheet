@@ -45,5 +45,5 @@ Date: 2026-11-04. Decided with Malik in review, on mocks rendered against the ru
 
 ## Later the same day
 - **Header lockup.** It is the Claude Design board's primary lockup: the board's mark tear, and the letters clipped by the board's own bite set 35 units lower ("cut the letters a little less"), without the rim. Two attempts to thin the tear for small sizes were rejected as too regular and artificial: a resampled bite, and a mark with fibres added along its edges.
-- **Make's callouts.** They became pins on the List screen, with no leader lines. The white-cased leaders were clumsy. A thin white ring keeps a pin visible on a blue screen.
+- **Make's callouts.** For a while they were pins on the List screen, because the thick white casing on the leaders was clumsy. The leaders came back (orderly, and exact on small elements) with a hairline casing instead: a 3 px white casing under the 1.5 px line, which still reads on a blue screen. A text target's leader now ends at its first word, not at its box.
 
