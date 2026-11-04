@@ -224,8 +224,10 @@
 /* the empty Library's line under the masthead: 24 / 400, not display */
 .empty-line { font: 400 var(--type-title)/30px var(--font-ui); color: var(--ink); margin: var(--space-24) 0 var(--space-16); }
 
-/* the mono issue line: "14 photos · since Dec 27, 2025" (only real counts; no issue number) */
-.issue-line { display: flex; justify-content: space-between; gap: var(--space-16); padding: var(--space-8) 0 var(--space-24); font: 400 var(--type-caption)/16px var(--font-mono); color: var(--ink-2); }
+/* the line under the masthead says what the red number is, nothing more (Malik, 2026-11-03: no filler, readable on a phone): "12 starter photos",
+   or "14 photos" with, quieter and at the far edge, "since Dec 27, 2025". The UI face at the label size, the count in ink and semibold */
+.issue-line { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-16); padding: var(--space-12) 0 var(--space-24); margin: 0; font: 400 var(--type-em)/20px var(--font-ui); color: var(--ink-2); }
+.issue-line .issue-count { color: var(--ink); font-weight: 600; }
 
 /* crop marks: 8 px, 1 px ink, outside the four corners of the Make spread and of every card in a loud zone */
 .crop-marks { position: relative; }

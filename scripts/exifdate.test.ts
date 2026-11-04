@@ -3,7 +3,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { exifTakenAt } from '../src/lib/exifDate.ts'
-import { dateLine, datesLabel, issueLine, originLabel } from '../src/lib/brickLabels.ts'
+import { dateLine, datesLabel, issueLine, issueParts, originLabel } from '../src/lib/brickLabels.ts'
 
 /** SOI, an optional APP0, APP1 "Exif" with IFD0 → Exif IFD → DateTimeOriginal (ASCII, 20 bytes), then SOS and EOI. */
 function jpeg(date: string | null, le: boolean, { app0 = false, tag = 0x9003 } = {}): ArrayBuffer {
@@ -84,5 +84,9 @@ describe('the loud Library issue line (C+D §8): real counts only', () => {
   })
   it('an empty library is 0 photos, with no date', () => {
     assert.equal(issueLine(0, undefined, today), '0 photos')
+  })
+  it('splits into the count and the note for the rail under the masthead', () => {
+    assert.deepEqual(issueParts(14, '2025-12-27', today), { count: '14 photos', since: 'since Dec 27, 2025' })
+    assert.deepEqual(issueParts(0, undefined, today), { count: '0 photos', since: '' })
   })
 })

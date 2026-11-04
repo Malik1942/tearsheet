@@ -96,7 +96,7 @@ function AppHeader({ tab }: { tab: Tab }) {
         <QueueStatus />
         {/* C+D, as a rule: the right side holds the page's single primary action, then ⋯. Shoot on the Library side (the phone's bottom bar keeps it
             everywhere); Share on Make, which also puts its menu items at the top of this ⋯ */}
-        {tab === 'library' && <ShootButton className="hidden md:inline-block" />}
+        {tab === 'library' && <ShootButton className="hidden md:inline-flex" />}
         {page.primary}
         <MoreMenu pageItems={page.items ?? []} />
       </div>

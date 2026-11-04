@@ -4,7 +4,7 @@ import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
 import { BrickSheet } from './bricks/BrickSheet'
 import { RETRY_TITLE } from './bricks/retryCopy'
-import { dateLine, issueLine, shortOriginLine } from './lib/brickLabels'
+import { dateLine, issueParts, shortOriginLine } from './lib/brickLabels'
 import { originOf } from './lib/starters'
 import type { Brick } from './lib/types'
 
@@ -21,7 +21,7 @@ const COPY = {
   retry: 'Try again',
   open: (date: string) => `Open photo, ${date}`,
   /** L7 and SB4: the starters are built in and persistent, and they step aside as the library fills. Said once, in the issue line, with their count. */
-  starterLine: (n: number) => `${n} ${n === 1 ? 'starter' : 'starters'} · yours replace them as you save`,
+  starterCount: (n: number) => `${n} starter ${n === 1 ? 'photo' : 'photos'}`,
   startersHidden: 'Starters are hidden.',
   showStarters: 'Show starters',
 }
@@ -70,13 +70,18 @@ export function Library() {
 function Masthead({ bricks, starters }: { bricks: Brick[]; starters: number }) {
   const first = bricks.map(b => b.taken_at ?? b.saved_at).sort()[0]
   const own = bricks.length, startersShown = own === 0 && starters > 0
+  const parts = startersShown ? { count: COPY.starterCount(starters), since: '' } : issueParts(own, first)
   return (
     <section aria-label={COPY.title}>
       <div className="masthead">
         <h1 className="display">{COPY.title}</h1>
         <div className="count-block" aria-hidden="true"><span className="display tnum">{startersShown ? starters : own}</span></div>
       </div>
-      <p className="issue-line"><span>{startersShown ? COPY.starterLine(starters) : issueLine(own, first)}</span></p>
+      {/* says what the red number is, nothing more (Malik, 2026-11-03): "12 starter photos", or "14 photos" and, quieter, since when */}
+      <p className="issue-line" id="library-count">
+        <span className="issue-count">{parts.count}</span>
+        {parts.since && <span className="issue-since">{parts.since}</span>}
+      </p>
     </section>
   )
 }
