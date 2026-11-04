@@ -152,7 +152,7 @@
 .sheet { position: fixed; margin: 0; padding: 0; border: 0; background: var(--paper); color: var(--ink); max-width: none; max-height: none; overflow: auto; overscroll-behavior: contain; }
 .sheet::backdrop { background: rgba(20, 20, 20, 0.28); }
 .sheet-side { inset: 0 0 0 auto; width: min(480px, 100vw); height: 100dvh; border-left: 1px solid var(--ink); }
-@media (max-width: 767.98px) { .sheet-side { inset: auto 0 0 0; width: 100vw; height: auto; max-height: 88dvh; border-left: 0; border-top: 1px solid var(--ink); border-radius: 0; } }
+@media (max-width: 767.98px) { .sheet-side { inset: auto 0 0 0; width: 100vw; height: auto; max-height: 92dvh; border-left: 0; border-top: 0; box-shadow: 0 -1px 0 var(--line); border-radius: 0; } }
 .sheet-center { inset: 0; margin: auto; width: min(400px, calc(100vw - 40px)); height: fit-content; border-radius: var(--radius); border: 1px solid var(--ink); }
 
 /* Library cards: the photo, one date line, and the state on the photo itself. Photos are square-cornered */
@@ -435,3 +435,85 @@ a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .make-page.is-result .photo-text span { font: 400 var(--type-body)/18px var(--font-ui); color: var(--ink-2); }
   .make-page.is-result .photo-cell:has(.photo-switch[aria-pressed="false"]) .photo-text { opacity: 0.55; }
 }
+
+/* ---------- the photo sheet's frame (Malik, 2026-11-04) ---------- */
+/* its top row on paper: a handle to swipe it away on a phone (BrickSheet.tsx), the × never on the photo; `Use in Make` pinned at the bottom, in reach of a thumb */
+.sheet-top { position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end; align-items: center; height: 44px; padding: 0 var(--space-8); background: var(--paper); }
+.sheet-close { font-size: 22px; line-height: 1; }
+.sheet-grabber { display: none; }
+@media (max-width: 767.98px) {
+  .sheet-top { touch-action: none; }
+  .sheet-grabber { display: block; position: absolute; left: calc(50% - 18px); top: 8px; width: 36px; height: 4px; border-radius: 2px; background: color-mix(in oklab, var(--ink) 22%, transparent); }
+}
+.sheet-actions { position: sticky; bottom: 0; z-index: 4; padding: var(--space-12) var(--space-24) calc(var(--space-16) + env(safe-area-inset-bottom)); background: var(--paper); border-top: 1px solid var(--line); }
+.sheet-side .reseau { opacity: 0.5; }   /* half strength in the sheet, so the boxes are what reads at this size */
+.sheet-side .region { border-width: 1.5px; }
+.region > .idtag.below { top: auto; bottom: 0; }
+.sheet-side .exact-toggle { width: 100%; display: flex; justify-content: space-between; padding: var(--space-12) 0; border-radius: 0; border-top: 1px solid var(--line); }
+
+/* ---------- motion (Malik, 2026-11-04: "mobile motion is good, desktop smoother") ----------
+   One curve, quick to start and soft to stop, and three lengths: a press, a reveal, a sheet or a page. All of it only where motion is welcome;
+   with reduced motion, pages and sheets change at once (router.tsx and useModal.ts skip their transitions too) */
+:root { --ease: cubic-bezier(0.2, 0.8, 0.2, 1); --t-press: 90ms; --t-reveal: 240ms; --t-sheet: 320ms; --t-exit: 220ms; }
+@media (prefers-reduced-motion: no-preference) {
+  /* a page transfer (router.tsx navigate): the header and the tab bar held still; the page cross-fades, and on a phone slides 28 px the way the tabs run */
+  .app-header { view-transition-name: app-header; }
+  .bottom-bar { view-transition-name: tab-bar; }
+  ::view-transition-group(app-header), ::view-transition-group(tab-bar) { animation: none; }
+  ::view-transition-old(root) { animation: 200ms var(--ease) both page-out; }
+  ::view-transition-new(root) { animation: 280ms var(--ease) both page-in; }
+  @media (max-width: 767.98px) {
+    :root[data-nav="forward"]::view-transition-old(root) { animation: 220ms var(--ease) both page-out-left; }
+    :root[data-nav="forward"]::view-transition-new(root) { animation: 300ms var(--ease) both page-in-right; }
+    :root[data-nav="back"]::view-transition-old(root) { animation: 220ms var(--ease) both page-out-right; }
+    :root[data-nav="back"]::view-transition-new(root) { animation: 300ms var(--ease) both page-in-left; }
+  }
+  /* sheets in and out (useModal.ts plays the exit before closing): the side panel from the right as the page dims, in one motion (a photo flown into it from its card
+     was tried and dropped: the sheet is a modal in the browser's top layer, and the flight measured its landing wrong), the phone's sheet from the bottom, the small ones a fade */
+  .sheet[open] { animation: var(--t-reveal) var(--ease) both sheet-fade; }
+  .sheet-side[open] { animation: var(--t-sheet) var(--ease) both sheet-in; }
+  .sheet[open]::backdrop { animation: 260ms ease-out both veil; }
+  .sheet[data-closing] { animation: var(--t-exit) var(--ease) both sheet-fade-out; }
+  .sheet-side[data-closing] { animation: var(--t-exit) var(--ease) both sheet-out; }
+  .sheet[data-closing]::backdrop { animation: var(--t-exit) ease-in both veil-out; }
+  @media (max-width: 767.98px) {
+    .sheet-side[open] { animation-name: sheet-up; }
+    .sheet-side[data-closing] { animation-name: sheet-down; }
+  }
+  /* the exact rules unfold */
+  [id^="details-"] > * { animation: var(--t-reveal) var(--ease) both unfold; }
+
+  /* Make's result arrives: the screens rise, the photos follow 60 ms apart, and the leaders draw once the screens have landed */
+  .make-spread { animation: 360ms var(--ease) both rise; }
+  .make-page .photo-cell { animation: 300ms var(--ease) both rise; }
+  .make-page .photo-cell:nth-child(1) { animation-delay: 140ms; }
+  .make-page .photo-cell:nth-child(2) { animation-delay: 200ms; }
+  .make-page .photo-cell:nth-child(3) { animation-delay: 260ms; }
+  .make-page .photo-cell:nth-child(n+4) { animation-delay: 320ms; }
+  .callouts .leader, .callouts .casing { stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: 480ms 360ms var(--ease) forwards draw; }
+  .callouts .num, .callouts .end, .callouts text { animation: 240ms 340ms var(--ease) both rise; }
+
+  /* a press gives a little; a card's photo leans in under the pointer */
+  .btn, .bar-item > svg, .bar-shoot .shutter, .photo-switch img { transition: scale var(--t-press) var(--ease); }
+  .btn:active:not(:disabled), .bar-item:active > svg, .photo-switch:active img { scale: 0.96; }
+  .bar-shoot:active .shutter { scale: 0.94; }
+  .card-tile img { transition: scale var(--t-reveal) var(--ease); }
+  @media (hover: hover) and (pointer: fine) { a.card-tile:hover img { scale: 1.02; } }
+}
+@keyframes page-out { to { opacity: 0; } }
+@keyframes page-in { from { opacity: 0; } }
+@keyframes page-out-left { to { opacity: 0; transform: translateX(-28px); } }
+@keyframes page-in-right { from { opacity: 0; transform: translateX(28px); } }
+@keyframes page-out-right { to { opacity: 0; transform: translateX(28px); } }
+@keyframes page-in-left { from { opacity: 0; transform: translateX(-28px); } }
+@keyframes sheet-in { from { opacity: 0; transform: translateX(40px); } }
+@keyframes sheet-out { to { opacity: 0; transform: translateX(40px); } }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes sheet-down { to { transform: translateY(100%); } }
+@keyframes sheet-fade { from { opacity: 0; transform: scale(0.98); } }
+@keyframes sheet-fade-out { to { opacity: 0; transform: scale(0.98); } }
+@keyframes veil { from { opacity: 0; } }
+@keyframes veil-out { to { opacity: 0; } }
+@keyframes unfold { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }

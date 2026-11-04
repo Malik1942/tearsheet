@@ -138,16 +138,18 @@ export function BrickDetails({ brick, variant = 'page', open = true, summary, on
     </div>
   )
   const photo = (
-    <div className={`relative overflow-hidden ${page ? 'rounded-[6px]' : 'mx-auto'}`} style={{ background: '#1f1e1c', aspectRatio: `${brick.photo.width} / ${brick.photo.height}`, ...(page ? {} : { width: `min(100%, calc(52dvh * ${ratio}))` }) }}>
+    <div className={`relative overflow-hidden ${page ? 'rounded-[6px]' : 'sheet-photo mx-auto'}`} style={{ background: page ? '#1f1e1c' : 'var(--paper)', aspectRatio: `${brick.photo.width} / ${brick.photo.height}`, ...(page ? {} : { width: `min(calc(100% - 32px), calc(46dvh * ${ratio}))` }) }}>
       <Photo src={brick.photo.url} className="h-full w-full object-cover" />
       {read && regions && <Reseau small={!page} />}
-      {drawn.map(r => {
+      {drawn.map((r, i) => {
         const on = hl !== null && (r.measurement_ids.includes(hl) || r.label === hl)
         const [x1, y1, x2, y2] = r.box_1000
+        // a tag whose corner lands on an earlier box's tag (within 6% of the photo either way) moves to its box's bottom corner, so no tag hides another
+        const below = drawn.slice(0, i).some(o => Math.abs(o.box_1000[0] - x1) < 60 && Math.abs(o.box_1000[1] - y1) < 60)
         return (
           <div key={r.label} className={`region ${on ? 'is-on' : ''}`} title={`${r.label} · ${r.measurement_ids.join(', ')}`}
             style={{ left: `${x1 / 10}%`, top: `${y1 / 10}%`, width: `${(x2 - x1) / 10}%`, height: `${(y2 - y1) / 10}%` }}>
-            <span className="idtag">{r.measurement_ids.join(' ')}</span>
+            <span className={`idtag ${below ? 'below' : ''}`}>{r.measurement_ids.join(' ')}</span>
           </div>
         )
       })}
