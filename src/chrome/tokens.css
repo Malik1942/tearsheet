@@ -140,7 +140,7 @@
 .chrome :is(input, textarea, select).hairline { border-color: var(--ink-2); }   /* a field's edge is a UI boundary: 4.57:1, where the 12% rule is 1.28:1 */
 .chrome input:disabled { color: var(--ink); cursor: progress; }   /* the typed intent stays legible while the photos are found */
 @media (max-width: 767.98px) { .chrome input, .chrome textarea, .chrome select { font-size: 16px; } }   /* under 16 px iOS Safari zooms the page on focus */
-.chrome :is(h1, h2, .title, .em) { text-wrap: balance; }
+.chrome :is(h1, h2, .title, .em):not(.shell *) { text-wrap: balance; }   /* not inside the shell: its titles wrap as they do everywhere it renders */
 .chrome :is(button, a, summary) { touch-action: manipulation; }
 .chrome .tnum { font-variant-numeric: tabular-nums; }
 /* an icon-only control keeps a 44 px target on touch; the drawn glyph stays small */
