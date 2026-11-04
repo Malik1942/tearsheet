@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Photo } from '../bricks/Photo'
-import { photoLine } from '../lib/makeFlow'
+import { cardCaption } from '../lib/brickLabels'
 import { labelsOfBrick } from '../lib/shortLabels'
 import { originOf } from '../lib/starters'
 import type { Brick } from '../lib/types'
@@ -57,13 +57,14 @@ export function StartPhotos({ bricks, anchorId, onAnchor, onAll }: { bricks: Bri
       <ul className="start-grid">
         {shown.map(b => {
           const on = b.id === anchorId
-          const label = labelsOfBrick(b, 1)[0]?.label
+          // the card's two lines, as on every card (Malik, 2026-11-03): its title, else its first short label; then its short credit or its date
+          const cap = cardCaption(b, labelsOfBrick(b, 1)[0]?.label ?? null)
           return (
             <li key={b.id}>
               <button type="button" className="start-photo" aria-pressed={on} onClick={() => onAnchor(on ? null : b.id)}>
                 <Photo src={b.photo.url} alt="" />
-                {label && <span className="start-label">{label}</span>}
-                <span className="start-meta tnum">{photoLine(b)}</span>
+                <span className="cap-title">{cap.title}</span>
+                <span className="cap-line tnum">{cap.line}</span>
               </button>
             </li>
           )

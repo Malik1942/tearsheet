@@ -271,8 +271,6 @@
 .start-photo:hover img { outline-color: var(--ink-2); }
 .start-photo[aria-pressed="true"] img { outline: 2px solid var(--red-ui); outline-offset: 3px; }   /* the same ring as a photo that is on under the screens */
 .start-photo:focus-visible { outline: 2px solid var(--focus); outline-offset: 6px; border-radius: var(--radius); }
-.start-label { font-size: var(--type-body); line-height: 18px; font-weight: 600; }
-.start-meta { font: 400 var(--type-caption)/16px var(--font-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .start-all { align-self: flex-start; }
 @media (max-width: 767.98px) {
   .make-start { margin-top: var(--space-16); }
