@@ -73,12 +73,29 @@ const CameraIcon = () => (
   </svg>
 )
 
-/** Shoot is a camera (Malik, 2026-11-03: an icon, not plain text): a round shutter in the phone's bottom bar, the camera beside its word in the header.
- *  The word stays the button's name for a screen reader. The queue count rides on it as a small badge ("3"), never as a text line. */
-function ShootButton({ className = '' }: { className?: string }) {
+/** The phone's tab bar glyphs, drawn like the camera: the Library a grid of photos (lucide `layout-grid`, ISC), Make the spread of two screens. */
+const GridIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />
+  </svg>
+)
+const SpreadIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="8" height="18" x="2.5" y="3" rx="2" /><rect width="8" height="18" x="13.5" y="3" rx="2" />
+  </svg>
+)
+
+/** Shoot is a camera (Malik, 2026-11-03: an icon, not plain text): the camera beside its word in the header; in the phone's tab bar (`bar`) the middle item,
+ *  a shutter with no word showing (2026-11-04), its word kept for a screen reader. The queue count rides on it as a small badge ("3"), never as a text line. */
+function ShootButton({ className = '', bar = false }: { className?: string; bar?: boolean }) {
   const store = useStore()
   const add = useAddPhotos()
   const n = readingCount(store.bricks, b => originOf(b) === 'own')
+  if (bar) return (
+    <button type="button" className={`bar-item bar-shoot ${className}`} onClick={add.shoot} aria-label={n ? COPY.reading(n) : undefined}>
+      <span className="shutter"><CameraIcon />{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}</span><span className="sr-only">{COPY.shoot}</span>
+    </button>
+  )
   return (
     <button type="button" className={`btn btn-accent shoot whitespace-nowrap ${className}`} onClick={add.shoot} aria-label={n ? COPY.reading(n) : undefined} title={COPY.shoot}>
       <CameraIcon /><span className="shoot-label">{COPY.shoot}</span>{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}
@@ -89,11 +106,12 @@ function ShootButton({ className = '' }: { className?: string }) {
 function AppHeader({ tab }: { tab: Tab }) {
   const page = usePageActionsValue()
   return (
+    // the front page's nameplate (Malik, 2026-11-04): the lockup centered, its tear ultramarine, the sections at the left, the page's actions at the right
     <header className="app-header gutter">
-      <Link href="/" className="wordmark" aria-label="Tearsheet"><Lockup /></Link>
-      <nav aria-label="Main" className="hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
+      <Link href="/" className="wordmark" aria-label="Tearsheet"><Lockup mark="var(--trace)" /></Link>
+      <nav aria-label="Main" className="header-sections hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
       {/* relative: on a phone the page's popover (Share) hangs from this group, so it ends at the gutter */}
-      <div className="relative ml-auto flex items-center gap-3">
+      <div className="header-actions relative flex items-center gap-3">
         <QueueStatus />
         {/* C+D, as a rule: the right side holds the page's single primary action, then ⋯. Shoot on the Library side (the phone's bottom bar keeps it
             everywhere); Share on Make, which also puts its menu items at the top of this ⋯ */}
@@ -208,9 +226,9 @@ function AddNotice() {
 function BottomBar({ tab }: { tab: Tab }) {
   return (
     <nav aria-label="Main" className="bottom-bar">
-      <Link href="/" className="tab justify-self-center" aria-current={tab === 'library' ? 'page' : undefined}>{COPY.library}</Link>
-      <ShootButton className={tab === 'library' ? '' : 'shoot-quiet'} />
-      <Link href="/make" className="tab justify-self-center" aria-current={tab === 'make' ? 'page' : undefined}>{COPY.make}</Link>
+      <Link href="/" className="bar-item" aria-current={tab === 'library' ? 'page' : undefined}><GridIcon /><span>{COPY.library}</span></Link>
+      <ShootButton bar className={tab === 'library' ? '' : 'shoot-quiet'} />
+      <Link href="/make" className="bar-item" aria-current={tab === 'make' ? 'page' : undefined}><SpreadIcon /><span>{COPY.make}</span></Link>
     </nav>
   )
 }

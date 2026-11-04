@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useStore } from './lib/store'
 import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
@@ -8,6 +8,8 @@ import { RETRY_TITLE } from './bricks/retryCopy'
 import { cardCaption, dateLine, issueParts } from './lib/brickLabels'
 import { labelsOfBrick } from './lib/shortLabels'
 import { originOf } from './lib/starters'
+import { Reseau } from './bricks/Reseau'
+import { TITLE_TEAR } from './brand/tornEdge'
 import type { Brick } from './lib/types'
 
 const COPY = {
@@ -21,6 +23,8 @@ const COPY = {
   offline: 'Offline. Your photo is saved and will be read when you are back online.',
   unparsed: "Couldn't read this one",
   retry: 'Try again',
+  /** Measured drawing: the tag on a photo while Spark reads it, with the réseau over the photo and the line under it in ultramarine */
+  reading: 'READING',
   open: (title: string, date: string) => `Open ${title}, ${date}`,
   /** L7 and SB4: the starters are built in and persistent, and they step aside as the library fills. Said once, in the issue line, with their count. */
   starterCount: (n: number) => `${n} starter ${n === 1 ? 'photo' : 'photos'}`,
@@ -66,7 +70,11 @@ export function Library() {
   )
 }
 
-/** The loud Library's masthead (C+D §12.3): LIBRARY in display type, the count on the one red block, and the issue line under it with real counts only.
+/** The tear under the masthead (tokens.css .masthead): the clip and the fibre, in the masthead's em, so they scale with LIBRARY. */
+const TEAR_VARS = { '--tear': TITLE_TEAR.clip, '--rim-clip': TITLE_TEAR.rim, '--tear-above': TITLE_TEAR.above, '--tear-height': TITLE_TEAR.height } as CSSProperties
+
+/** The loud Library's masthead (C+D §12.3): LIBRARY in display type and the count, on a phone simply on one baseline, from the tablet up as the front
+ *  page's poster with the count in white on a graphite block and a torn bottom (Malik, 2026-11-04). The issue line is for a screen reader only.
  *  The block counts what the grid shows and names it (Malik, 2026-11-03: a bare "0" beside twelve photos said nothing): the person's own photos and since
  *  when (the earliest date a card shows, so a photo's EXIF date counts), or, before there are any, the starters standing in for them. */
 function Masthead({ bricks, starters }: { bricks: Brick[]; starters: number }) {
@@ -75,11 +83,14 @@ function Masthead({ bricks, starters }: { bricks: Brick[]; starters: number }) {
   const parts = startersShown ? { count: COPY.starterCount(starters), since: '' } : issueParts(own, first)
   return (
     <section aria-label={COPY.title}>
-      <div className="masthead">
-        <h1 className="display">{COPY.title}</h1>
-        <div className="count-block" aria-hidden="true"><span className="display tnum">{startersShown ? starters : own}</span></div>
+      <div className="masthead-wrap" style={TEAR_VARS}>
+        <div className="masthead">
+          <h1 className="display">{COPY.title}</h1>
+          <div className="count-block" aria-hidden="true"><span className="display tnum">{startersShown ? starters : own}</span></div>
+        </div>
+        <span className="masthead-rim" aria-hidden="true" />
       </div>
-      {/* says what the red number is, nothing more (Malik, 2026-11-03): "12 starter photos", or "14 photos" and, quieter, since when */}
+      {/* names the count for a screen reader (Malik, 2026-11-03): "12 starter photos", or "14 photos" and since when */}
       <p className="issue-line" id="library-count">
         <span className="issue-count">{parts.count}</span>
         {parts.since && <span className="issue-since">{parts.since}</span>}
@@ -108,6 +119,7 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
   const store = useStore()
   const status = b.status ?? 'ready'
   const busy = status === 'extracting' || status === 'pending'
+  const reading = status === 'extracting'   // being read now; a pending photo is only queued or held
   const blocked = retryBlocked(b)
   const date = dateLine(b), cap = cardCaption(b, labelsOfBrick(b, 1)[0]?.label ?? null)
   const [alert, setAlert] = useState(false)
@@ -129,8 +141,9 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
   return (
     <li ref={root} className="relative min-w-0">
       {busy ? (
-        <div className="card-tile" role="img" aria-label={`${waitingTip(b)} ${cap.title}, ${date}`} title={waitingTip(b)}>
+        <div className="card-tile" role="img" aria-label={`${waitingTip(b)} ${cap.title}, ${date}`} title={waitingTip(b)} data-reading={reading || undefined}>
           {photo}
+          {reading && <><Reseau /><span className="reading-tag" aria-hidden="true">{COPY.reading}</span></>}
           <div className="card-progress" data-held={b.status === 'pending' && b.held ? b.held : undefined} />
         </div>
       ) : (
@@ -146,8 +159,8 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
             disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']} onClick={() => { setAlert(false); store.retry(b.id) }}>{COPY.retry}</button>
         </div>
       )}
-      {/* two lines, as on every card (Malik, 2026-11-03): what the photo is, then whose or when. The full credit is its hover and the Brick sheet's.
-          The id lets a capture name the caption exactly */}
+      {/* two lines, as on every card (Malik, 2026-11-03): what the photo is, then whose or when (its frame id is Details' alone, Malik 2026-11-04). The full
+          credit is its hover and the Brick sheet's. The id lets a capture name the caption exactly */}
       <p className="card-caption" id={`caption-${b.id}`} title={date}>
         <span className="cap-title">{cap.title}</span>
         <span className="cap-line tnum">{cap.line}</span>

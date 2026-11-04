@@ -1,6 +1,6 @@
 /** The brand board's own geometry (Claude Design canvas "Data tear", 2026-11-04), copied as drawn: the tear of TS-01-0001 (Staatliches Bauhaus) that
  *  is the master mark, and the primary lockup's mark, letters and the rim under the name. Values only; src/brand/tear.ts builds the shapes from them
- *  (and fixes the edges' ends). Read by scripts/brand.ts and the tests, never by the app itself. */
+ *  (and fixes the edges' ends). Read by scripts/brand.ts and the tests; the app reads the lockup's mark edges (the header's Lockup) and the rim under the name (tornEdge.ts: the header's bite and the Library's torn masthead). */
 
 /** The master mark in the 104-unit box: the torn right edge's x, row by row from the top, and the torn bottom's y, column by column from the left. */
 export const MASTER_EDGES = {

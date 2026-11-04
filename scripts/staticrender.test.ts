@@ -74,10 +74,11 @@ describe('Shell staticRender', () => {
 })
 
 describe('PhotoPeek', () => {
-  it('draws the region tint from the chrome accent token, not a copy of its color', () => {
+  it('draws the region with the chrome .region box and .idtag (the trace token on a white halo), not a copy of a color', () => {
     const src = readFileSync(new URL('../src/compose/PhotoPeek.tsx', import.meta.url), 'utf8')
-    assert.match(src, /color-mix\(in oklab, var\(--accent\) 18%, transparent\)/)
-    assert.doesNotMatch(src, /rgba\(200, ?80, ?42/)
+    assert.match(src, /className="region"/)
+    assert.match(src, /className="idtag"/)
+    assert.doesNotMatch(src, /rgba\(200, ?80, ?42|#2338E8|#C8502A/i)
   })
 })
 

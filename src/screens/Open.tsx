@@ -55,7 +55,7 @@ export function OpenScreen() {
           ) : (
             <>
               <h1><span className="mono tracking-[0.2em]" style={{ fontSize: 18 }}>{code}</span></h1>
-              <p className="mt-2" style={{ color: 'var(--accent)' }}>{COPY.opening(code)}{progress?.total ? ` uploading ${progress.sent}/${progress.total}` : ''}</p>
+              <p className="mt-2" style={{ color: 'var(--ink)' }}>{COPY.opening(code)}{progress?.total ? ` uploading ${progress.sent}/${progress.total}` : ''}</p>
               <p className="ink-2 mt-2 text-[12px]">{COPY.hint}</p>
             </>
           )}

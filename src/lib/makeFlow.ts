@@ -3,7 +3,7 @@ import { candidatesOf, resolveProject, type Project, type Resolved } from './map
 import { labelsOf, labelsOfBrick } from './shortLabels'
 import { creditLine, savedLabel } from './brickLabels'
 import { originOf, ownBricks } from './starters'
-import { PARAMETER_KEYS } from '../shell/params'
+import { PARAMETER_KEYS, type ParameterKey } from '../shell/params'
 import type { Brick, Unexpressed } from './types'
 
 /** Spec v3 P2: three examples of the expected granularity, shown under the empty field. */
@@ -51,10 +51,21 @@ export function photoRow(project: Project, bricks: Brick[]): PhotoChip[] {
 /** A photo's one label: the first short label among the values it sets on the screens (in the order of its own rules, then its skin);
  *  when none of those has a label, its first label overall. Never a glyph, never rule text. */
 export function oneLabel(brick: Brick, resolved: Resolved): string | null {
+  return labelsOf(setsInOrder(brick, resolved))[0]?.label ?? labelsOfBrick(brick, 1)[0]?.label ?? null
+}
+
+/** The values a photo sets on the screens, in the order of its own rules, then its skin. */
+function setsInOrder(brick: Brick, resolved: Resolved) {
   const order: string[] = candidatesOf(brick).candidates.map(c => c.key)
   const rank = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length : i }
-  const sets = PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === brick.id).sort((a, b) => rank(a) - rank(b)).map(k => resolved.values[k])
-  return labelsOf(sets)[0]?.label ?? labelsOfBrick(brick, 1)[0]?.label ?? null
+  return PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === brick.id).sort((a, b) => rank(a) - rank(b)).map(k => resolved.values[k])
+}
+
+/** Measured drawing: the parameter a photo's numbered callout points at on the screens, the one behind its label (the first value it sets that has a label),
+ *  else the first value it sets. Null when it sets nothing. */
+export function leadKey(brick: Brick, resolved: Resolved): ParameterKey | null {
+  const sets = setsInOrder(brick, resolved)
+  return labelsOf(sets)[0]?.key ?? sets[0]?.key ?? null
 }
 
 /** C+D (DESIGN_SYSTEM.md §12.6–7): what Make's "couldn't carry over" line counts and its fold lists. Only the rules with no slot, grouped by the photo they

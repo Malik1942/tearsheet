@@ -9,11 +9,12 @@ import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
 import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
 import { standInLine } from '../lib/standIns'
-import { NEUTRAL_SKIN, autoName, photoRow, toggleMuted } from '../lib/makeFlow'
+import { NEUTRAL_SKIN, autoName, leadKey, photoRow, toggleMuted } from '../lib/makeFlow'
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { Fold, Overlay } from '../make/Steps'
 import type { Unexpressed } from '../lib/types'
 import { ScaledScreens } from '../make/Screens'
+import { Callouts } from '../make/Callouts'
 import { screensOf, toShellContent, type ScreenKey } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
 import { AnchorThumb, HeadlineField } from '../make/Start'
@@ -198,13 +199,17 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
 
         {!busy && project && resolved && params && (
           <>
-            {/* C+D: the two screens are a spread on paper with crop marks, never on a red block (DESIGN_SYSTEM.md §8, do and don't 4) */}
-            <div className="make-spread crop-marks"><ScaledScreens params={params} flash={flash} reserve={RESERVE} content={toShellContent(project.content)} /></div>
+            {/* the two screens are a spread on paper with crop marks, never on a block (docs/DESIGN_SYSTEM.md) */}
+            {/* Measured drawing: each photo that is on keeps its slot number, on its thumbnail and at the end of a leader to what it changes on the List screen */}
+            <div className="make-spread crop-marks">
+              <ScaledScreens params={params} flash={flash} reserve={RESERVE} content={toShellContent(project.content)} />
+              <Callouts marks={photos.flatMap(({ brick, muted }, i) => { const key = muted ? null : leadKey(brick, resolved); return key ? [{ n: i + 1, key }] : [] })} />
+            </div>
             {/* each photo is one switch, its state in the photo itself (off: faded and grey). Its first short label shows for two seconds after a tap, and on hover
                 on a desktop; a dot in one corner counts what couldn't carry over, ⇄ in the other swaps it. The slots are fixed, so a photo never moves. */}
             <div className="photo-dock">
               <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">
-                {photos.map(({ brick, muted, label }) => {
+                {photos.map(({ brick, muted, label }, i) => {
                   const why = project.proposal?.picks.find(p => p.brickId === brick.id)?.why
                   const name = label ?? cardCaption(brick, null).title
                   const missing = unexpressedBy.get(brick.id)?.length ?? 0
@@ -214,6 +219,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
                       <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={name} title={why} onClick={() => toggle(brick.id, name, muted)}>
                         <Photo src={brick.photo.url} alt="" style={tileFit(brick.photo, 1)} />
                       </button>
+                      {!muted && <span className="callout photo-callout" aria-hidden="true">{i + 1}</span>}
                       <span className={`photo-caption ${shown ? 'is-shown' : ''}`} aria-hidden={!shown} role={shown ? 'status' : undefined}>{shown ? caption.text : name}</span>
                       {missing > 0 && (
                         <button type="button" className="photo-badge tnum" aria-label={COPY.carryBadge(missing, name)} title={COPY.carryBadge(missing, name)} onClick={() => setDialog({ carry: brick.id })}>{missing}</button>
