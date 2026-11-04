@@ -10,9 +10,14 @@ import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
 import type { Params } from '../src/shell/params.ts'
 import { RULES, type RuleId, type Violation } from '../src/shell/contractMeasure.ts'
+import { readFileSync } from 'node:fs'
+import { CONCERT_CONTENT, toShellContent, type SampleContent } from '../src/shell/content.ts'
 
 const RUN = process.env.CONTRACT === '1'
-const OUT = process.env.CONTRACT_OUT ?? 'docs/contract'
+/** Which words the screens carry (shell item 1): the concert log, or with CONTRACT_CONTENT=reading the hand-written reading tracker (src/fixtures/content). */
+const READING = process.env.CONTRACT_CONTENT === 'reading'
+const CONTENT = READING ? toShellContent(JSON.parse(readFileSync(new URL('../src/fixtures/content/reading-tracker.json', import.meta.url), 'utf8')) as SampleContent) : CONCERT_CONTENT
+const OUT = process.env.CONTRACT_OUT ?? (READING ? 'docs/contract/reading' : 'docs/contract')
 const VIEW = { width: 390, height: 844 }
 const SCREENS = ['list', 'review'] as const
 
@@ -51,7 +56,7 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
       for (const u of unique.values()) {
         const v = { list: [] as Violation[], review: [] as Violation[] }
         for (const screen of SCREENS) {
-          await page.evaluate(([p, s]) => window.__shell!(p, s), [u.params, screen] as const)
+          await page.evaluate(([p, s, c]) => window.__shell!(p, s, c), [u.params, screen, CONTENT] as const)
           v[screen] = await page.evaluate(() => window.__measure!())
         }
         results.push({ ...u, v })
@@ -77,7 +82,7 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
       const worstLines: string[] = []
       for (const [i, r] of worst.entries()) {
         const screen = r.v.list.length >= r.v.review.length ? 'list' : 'review'
-        await shots.evaluate(([p, s]) => window.__shell!(p, s), [r.params, screen] as const)
+        await shots.evaluate(([p, s, c]) => window.__shell!(p, s, c), [r.params, screen, CONTENT] as const)
         const file = `worst-${i + 1}-${screen}.png`
         await shots.screenshot({ path: join(OUT, file) })
         worstLines.push(`### ${i + 1}. ${r.combos[0].ids.join(' + ')} (${screen}; ${r.combos.length} composition${r.combos.length > 1 ? 's' : ''} render the same)`, '',
@@ -86,7 +91,7 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
       }
       const report = [
         '# Layout contract report', '',
-        `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC · ${combos.length} compositions (ordered triples of the ${SAMPLES.length} samples), ${unique.size} distinct parameter sets, both screens at ${VIEW.width} × ${VIEW.height}.`, '',
+        `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC · ${combos.length} compositions (ordered triples of the ${SAMPLES.length} samples), ${unique.size} distinct parameter sets, both screens at ${VIEW.width} × ${VIEW.height}, with the ${READING ? 'reading-tracker' : 'concert'} content.`, '',
         `**${failing} of ${combos.length} compositions break at least one rule.**`, '',
         '| Rule | Compositions breaking it | List | Year review |', '|---|---|---|---|',
         ...(Object.keys(RULES) as RuleId[]).map(r => `| ${RULES[r]} | ${perRule[r]} | ${perRuleScreens[r].list} | ${perRuleScreens[r].review} |`), '',

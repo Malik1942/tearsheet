@@ -12,6 +12,7 @@ import { INTENT_EXAMPLES, NEUTRAL_SKIN, autoName, photoLine, photoRow, toggleMut
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { Fold, MoreMenu, Overlay } from '../make/Steps'
 import { ScaledScreens } from '../make/Screens'
+import { toShellContent } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
@@ -112,7 +113,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
     const proposed = out.picks.filter(p => p.brickId !== lean.anchor_id).map((p): ProposalPick => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' }))
     const picks = [...first, ...orderOwnFirst(proposed, ready)].slice(0, MAX_BRICKS)
     const proposal: Proposal = { at: new Date().toISOString(), model: out.model, effort: out.effort, intent: sent, latency_ms: out.latency_ms, dropped: out.dropped, picks, ...(lean.chips.length || lean.anchor_id ? { lean } : {}), ...(out.ranking.length ? { ranking: out.ranking } : {}) }
-    navigate(`/project/${store.createProject(sent, picks.map(p => p.brickId), autoName(sent) || undefined, { proposal })}`)
+    navigate(`/project/${store.createProject(sent, picks.map(p => p.brickId), autoName(sent) || undefined, { proposal, ...(out.content ? { content: out.content } : {}) })}`)
   }
   // by hand: on this project's page with its own intent, the picks replace its photos (a new version); otherwise they make a new project
   const pickDone = (ids: string[]) => {
@@ -170,7 +171,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
 
         {!busy && project && resolved && params && (
           <>
-            <ScaledScreens params={params} flash={flash} reserve={RESERVE} />
+            <ScaledScreens params={params} flash={flash} reserve={RESERVE} content={toShellContent(project.content)} />
             {/* each photo is one switch: the thumbnail, its label and a switch in one target. The slots are fixed, so a photo never moves when another one appears */}
             <div className="photo-dock">
               <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">

@@ -26,7 +26,7 @@ async function withModel(answer: unknown, fn: () => Promise<void>): Promise<any[
 
 describe('the propose schema', () => {
   it('requires a ranking of at most ten strings next to the picks', () => {
-    assert.deepEqual(PROPOSE_SCHEMA.required, ['picks', 'ranking'])
+    assert.deepEqual(PROPOSE_SCHEMA.required, ['picks', 'ranking', 'content'])
     assert.deepEqual(PROPOSE_SCHEMA.properties.ranking, { type: 'array', maxItems: 10, items: { type: 'string' } })
   })
   it('leaves the reasoning room to finish: 8,000 output tokens', () => {
@@ -36,7 +36,7 @@ describe('the propose schema', () => {
 
 describe('the prompt', () => {
   it('asks for the ranking in one sentence after the lean slot and before the library', () => {
-    assert.ok(PROPOSE_PROMPT.includes(`{{LEAN}}\n\n${SENTENCE}\n\nLibrary:\n{{LIBRARY}}`))
+    assert.ok(PROPOSE_PROMPT.includes(`{{LEAN}}\n\n${SENTENCE}\n\nAlso return content:`))
     assert.equal(PROPOSE_PROMPT.split(SENTENCE).length, 2)
   })
 })
@@ -67,7 +67,7 @@ describe('handlePropose: the ranking comes from the same call', () => {
     })
     assert.equal(sent.length, 1)
     assert.ok(sent[0].input[0].content[0].text.includes(SENTENCE))
-    assert.deepEqual(sent[0].text.format.schema.required, ['picks', 'ranking'])
+    assert.deepEqual(sent[0].text.format.schema.required, ['picks', 'ranking', 'content'])
     assert.equal(out.code, 200)
     assert.deepEqual(out.body.picks.map((p: any) => p.brickId), ['g2'])
     assert.deepEqual(out.body.ranking, ['g2', 'c1', 'calmmouse'])

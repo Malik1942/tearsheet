@@ -1,0 +1,14 @@
+{
+  "screen_titles": { "list": "Books", "review": "Reading year" },
+  "tabs": ["Shelf", "Pace", "Me"],
+  "entries": [
+    { "title": "The Left Hand of Darkness", "subtitle": "Ursula K. Le Guin", "date": "2026-01-11", "tags": ["sci-fi", "classic"] },
+    { "title": "Piranesi", "subtitle": "Susanna Clarke", "date": "2026-02-08", "tags": ["fantasy"] },
+    { "title": "The Remains of the Day", "subtitle": "Kazuo Ishiguro", "date": "2026-03-15", "tags": ["literary"] },
+    { "title": "Braiding Sweetgrass", "subtitle": "Robin Wall Kimmerer", "date": "2026-04-19", "tags": ["nature", "essays"] },
+    { "title": "Project Hail Mary", "subtitle": "Andy Weir", "date": "2026-06-07", "tags": ["sci-fi"] },
+    { "title": "Pachinko", "subtitle": "Min Jin Lee", "date": "2026-07-26", "tags": ["literary", "family"] },
+    { "title": "The Overstory", "subtitle": "Richard Powers", "date": "2026-09-13", "tags": ["nature"] },
+    { "title": "Klara and the Sun", "subtitle": "Kazuo Ishiguro", "date": "2026-10-25", "tags": ["literary", "sci-fi"] }
+  ]
+}

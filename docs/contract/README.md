@@ -27,6 +27,8 @@ Each phone frame now carries a status bar, a large title on the List, a tab bar 
 | Tab bar, 49 px (list, chart, person) | 2: the gap inside a tab is 4. 3: labels at caption size. 4: every tab is a target of at least 44 × 44. 5: no tab label repeats a title on the screen (measured: `.tab-label` against `.bar-title`, `.large-title`, `.screen-title`). |
 | Home indicator, 34 px | 2: padding-bottom 8. |
 
+**Sample content (item 1).** The screens now take every word from the project's content: the propose call's placeholder text, or the concert log when there is none. The contract is run with both: `npm run test:contract` (the concert log, `REPORT.md`) and `CONTRACT_CONTENT=reading npm run test:contract` (the hand-written reading tracker in `src/fixtures/content/reading-tracker.json`, `reading/REPORT.md`). On 2026-11-03 both gave 0 of 1,320. Rule 5 holds for written content too: a tab label that repeats a screen title is refused when the content is read, and the year review names the content's own year once.
+
 The active tab takes `color_accent` only when `accent_placement` is labels or actions; under none, dividers and one-hero (the first item's alone) it is `color_fg`. Inactive tabs are `color_fg` at half opacity. Under the neutral skin all of it is grey.
 
 ## Measured

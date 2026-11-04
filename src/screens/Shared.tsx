@@ -7,6 +7,7 @@ import { autoName, sharedView } from '../lib/makeFlow'
 import { exportHandoff } from '../export'
 import { Markdown } from '../lib/markdown'
 import { ScaledScreens } from '../make/Screens'
+import { toShellContent } from '../shell/content'
 import type { Brick } from '../lib/types'
 
 const COPY = {
@@ -53,7 +54,7 @@ export function SharedScreen() {
         <p className="ink-2 m-0">{project.intent}</p>
         <p className="ink-2 caption m-0">{COPY.readOnly}</p>
       </header>
-      <ScaledScreens params={resolved.params} flash={[]} reserve={48} />
+      <ScaledScreens params={resolved.params} flash={[]} reserve={48} content={toShellContent(project.content)} />
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="em">{COPY.reasons}</h2>
