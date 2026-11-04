@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../lib/store'
 import { Link } from '../lib/router'
-import { dateLine } from '../lib/brickLabels'
+import { dateLine, titleProvenance } from '../lib/brickLabels'
 import { labelsOfBrick } from '../lib/shortLabels'
 import { retryBlocked } from '../lib/queue'
 import { LabelChip } from '../compose/LabelChip'
@@ -27,7 +27,7 @@ const COPY = {
 export function BrickSheet({ brick, onClose }: { brick: Brick | null; onClose: () => void }) {
   const ref = useModal(brick !== null)
   return (
-    <dialog ref={ref} className="sheet sheet-side" aria-label={brick ? `Photo, ${dateLine(brick)}` : undefined} onClose={onClose} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+    <dialog ref={ref} className="sheet sheet-side" aria-label={brick ? `${brick.title ?? 'Photo'}, ${dateLine(brick)}` : undefined} onClose={onClose} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       {brick && <SheetBody key={brick.id} brick={brick} onClose={onClose} />}
     </dialog>
   )
@@ -39,10 +39,15 @@ function SheetBody({ brick, onClose }: { brick: Brick; onClose: () => void }) {
   const status = brick.status ?? 'ready'
   const labels = status === 'ready' ? labelsOfBrick(brick) : []
   const blocked = retryBlocked(brick)
+  const by = titleProvenance(brick)
 
   const summary = (
     <div className="flex flex-col gap-5 px-6 pb-6 pt-4">
-      <div className="caption ink-2 truncate" title={dateLine(brick)}>{dateLine(brick)}</div>
+      {/* the title above the full credit or dates; one written by hand says so (Malik, 2026-11-03). No rename yet */}
+      <div>
+        {brick.title && <p className="em m-0 flex flex-wrap items-center gap-2">{brick.title}{by && <span className="chip chip-adapted px-1.5 text-[10px]">{by}</span>}</p>}
+        <div className="caption ink-2 truncate" title={dateLine(brick)}>{dateLine(brick)}</div>
+      </div>
       {status === 'ready' ? (
         <section aria-labelledby={`carries-${brick.id}`}>
           <h2 id={`carries-${brick.id}`} className="em">{COPY.carries}</h2>
