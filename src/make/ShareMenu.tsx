@@ -7,11 +7,13 @@ import { download, exportCss, exportHandoff, exportJson } from '../export'
 
 /** E1 minimal. false is the 18:30 fallback: the popover offers Download only. */
 const SHARE_LINK = true
+/** How long Copy link reads "Link copied" before it is Copy link again (Malik: in place, 2 s; there is no Share-complete page). */
+const COPIED_MS = 2000
 
 const COPY = {
   share: 'Share',
   copy: 'Copy link',
-  copied: 'Copied',
+  copied: 'Link copied',
   making: 'Making the link…',
   noLink: "Couldn't make the link.",
   retry: 'Try again',
@@ -32,6 +34,8 @@ export function ShareMenu({ project, resolved, initialOpen = false }: { project:
   const [note, setNote] = useState<string | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const storeRef = useRef(store); storeRef.current = store
+  const copiedTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(copiedTimer.current), [])
 
   const prepare = async () => {
     const code = shareCodeFor(project.id, generateCode)
@@ -53,7 +57,14 @@ export function ShareMenu({ project, resolved, initialOpen = false }: { project:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  const onCopy = () => { if (link) navigator.clipboard.writeText(link).then(() => setNote(COPY.copied), () => setNote(COPY.copyFailed)) }
+  const onCopy = () => {
+    if (!link) return
+    navigator.clipboard.writeText(link).then(() => {
+      setNote(COPY.copied)
+      window.clearTimeout(copiedTimer.current)
+      copiedTimer.current = window.setTimeout(() => setNote(n => (n === COPY.copied ? null : n)), COPIED_MS)
+    }, () => setNote(COPY.copyFailed))
+  }
   const used = project.brickIds.map(id => store.bricks.find(b => b.id === id)).filter((b): b is NonNullable<typeof b> => !!b)
   const files = [
     ['parameters.json', () => exportJson(project.intent, resolved, project.proposal, project.brickIds), 'application/json'],
@@ -62,7 +73,7 @@ export function ShareMenu({ project, resolved, initialOpen = false }: { project:
   ] as const
 
   return (
-    <div ref={root} className="relative">
+    <div ref={root} className="relative max-md:static">
       <button type="button" className="btn btn-accent flex min-h-9 items-center gap-1.5 max-md:min-h-11 max-md:min-w-11 max-md:justify-center" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(v => !v)}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3" /><path d="M7 8l5-5 5 5" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" /></svg>
         <span className="max-md:sr-only">{COPY.share}</span>

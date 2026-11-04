@@ -238,7 +238,11 @@
     linear-gradient(var(--ink), var(--ink)) right calc(var(--crop) + 4px) bottom 0 / 1px var(--crop) no-repeat; }
 
 /* Make: the intent becomes the headline at 24 / 600 ink; the two screens sit as a spread on paper */
-.intent-headline { font: 600 var(--type-title)/30px var(--font-ui); color: var(--ink); margin: 0; max-width: 40ch; text-wrap: balance; }
+.intent-headline, .chrome .intent-headline { font: 600 var(--type-title)/30px var(--font-ui); color: var(--ink); margin: 0; max-width: 40ch; text-wrap: balance; }
+/* the second selector outranks .chrome h1, which would set the headline at 15 px (the trap .display had) */
+.intent-headline .intent-edit { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; cursor: text; border-radius: var(--radius); }   /* the headline is the way back to the field */
+.intent-headline .intent-edit:hover { text-decoration: underline 1px var(--ink-2); text-underline-offset: 6px; }
+.intent-headline .intent-edit:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 .make-spread { margin: var(--space-32) auto 0; width: fit-content; padding: var(--space-24) var(--space-32); display: flex; gap: var(--space-32); }
 @media (max-width: 767.98px) { .make-spread { display: block; width: auto; margin: var(--space-16) 0 0; padding: 0; } .make-spread.crop-marks::before { display: none; } }   /* phone: a full-width block (auto side margins would shrink it to both screens side by side), so the swipe pager takes the width */
 .carry-line { display: block; margin: var(--space-16) auto 0; text-align: center; font-size: var(--type-body); color: var(--ink-2); background: none; border: 0; cursor: pointer; }

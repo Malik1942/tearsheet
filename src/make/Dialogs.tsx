@@ -19,7 +19,7 @@ const COPY = {
   rename: 'Rename', save: 'Save',
   versions: 'Versions', first: 'First version', noMove: 'no value moved',
   style: 'Adjust style', lean: 'Lean', leanHint: 'from your library · adapted · by rule', moreLikeThis: 'More like this one', clearAnchor: 'Clear the starting point',
-  styleNote: 'Press Enter in the field to look again with these.',
+  styleNote: 'Press Enter in the field to look again with these. On a project, click its title to get the field back.',
   pick: 'Pick photos myself', count: (n: number, max: number) => `${n} of ${max}`, show: 'Show the screens', starter: 'starter',
   empty: 'Nothing to pick from yet. Add photos, or include the starters from ⋯.', needIntent: 'Type what you are making first.',
   swap: 'Swap', noSpare: 'No other photo to swap in.', inProject: 'Already in this project',

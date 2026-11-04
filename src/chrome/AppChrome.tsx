@@ -7,6 +7,7 @@ import { originOf } from '../lib/starters'
 import { readingCount } from '../lib/addPhotos'
 import { tabOf, volumeOf, type Tab } from '../lib/nav'
 import { useModal } from './useModal'
+import { PageActionsProvider, usePageActionsValue, type PageMenuItem } from './pageActions'
 
 const COPY = {
   library: 'Library',
@@ -37,19 +38,21 @@ const COPY = {
 
 const CREDITS_URL = 'https://github.com/Malik1942/tearsheet#sample-credits'
 
-/** 15_SIMPLIFY §1: one header above every screen (not the solo shell renders): wordmark · `Library` `Make` · `Shoot` · `⋯`.
+/** 15_SIMPLIFY §1: one header above every screen (not the solo shell renders): wordmark · `Library` `Make` · the page's primary action · `⋯`.
  *  On a phone the tabs and Shoot move to a bottom bar, Shoot in the middle. */
 export function AppChrome({ children }: { children: ReactNode }) {
   const path = usePath()
   const tab = tabOf(path)
   return (
-    <div className="chrome flex min-h-full flex-col" data-volume={volumeOf(path)}>
-      <a href="#content" className="skip-link">Skip to content</a>
-      <AppHeader tab={tab} />
-      <AddNotice />
-      <main id="content" tabIndex={-1} className="with-bar flex min-w-0 flex-1 flex-col outline-none">{children}</main>
-      <BottomBar tab={tab} />
-    </div>
+    <PageActionsProvider>
+      <div className="chrome flex min-h-full flex-col" data-volume={volumeOf(path)}>
+        <a href="#content" className="skip-link">Skip to content</a>
+        <AppHeader tab={tab} />
+        <AddNotice />
+        <main id="content" tabIndex={-1} className="with-bar flex min-w-0 flex-1 flex-col outline-none">{children}</main>
+        <BottomBar tab={tab} />
+      </div>
+    </PageActionsProvider>
   )
 }
 
@@ -75,15 +78,19 @@ function ShootButton({ className = '' }: { className?: string }) {
 }
 
 function AppHeader({ tab }: { tab: Tab }) {
+  const page = usePageActionsValue()
   return (
     <header className="app-header gutter">
       <Link href="/" className="wordmark">Tearsheet</Link>
       <nav aria-label="Main" className="hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
-      <div className="ml-auto flex items-center gap-3">
+      {/* relative: on a phone the page's popover (Share) hangs from this group, so it ends at the gutter */}
+      <div className="relative ml-auto flex items-center gap-3">
         <QueueStatus />
-        {/* Make is one page about the result: Shoot sits in the header on the Library side only (the phone's bottom bar keeps it everywhere) */}
+        {/* C+D, as a rule: the right side holds the page's single primary action, then ⋯. Shoot on the Library side (the phone's bottom bar keeps it
+            everywhere); Share on Make, which also puts its menu items at the top of this ⋯ */}
         {tab === 'library' && <ShootButton className="hidden md:inline-block" />}
-        <MoreMenu />
+        {page.primary}
+        <MoreMenu pageItems={page.items ?? []} />
       </div>
     </header>
   )
@@ -106,7 +113,7 @@ function QueueStatus() {
   )
 }
 
-function MoreMenu() {
+function MoreMenu({ pageItems }: { pageItems: PageMenuItem[] }) {
   const store = useStore()
   const add = useAddPhotos()
   const [open, setOpen] = useState(false)
@@ -116,12 +123,12 @@ function MoreMenu() {
 
   useEffect(() => {
     if (!open) return
-    root.current?.querySelector<HTMLElement>('[role^="menuitem"]')?.focus()
+    root.current?.querySelector<HTMLElement>('[role^="menuitem"]:not(:disabled)')?.focus()
     const outside = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false) }
     const keys = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setOpen(false); button.current?.focus(); return }
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
-      const items = [...(root.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? [])]
+      const items = [...(root.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]:not(:disabled)') ?? [])]
       const at = items.indexOf(document.activeElement as HTMLElement)
       items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus()
       e.preventDefault()
@@ -137,6 +144,16 @@ function MoreMenu() {
       <button ref={button} type="button" className="btn btn-quiet icon-btn" aria-haspopup="menu" aria-expanded={open} aria-label={COPY.more} title={COPY.more} onClick={() => setOpen(v => !v)}><MoreIcon /></button>
       {open && (
         <div role="menu" aria-label={COPY.more} className="menu">
+          {pageItems.map(it => (
+            <div key={it.label} className="contents">
+              {it.sep && <div className="menu-sep" role="separator" />}
+              <button type="button" role={it.pressed === undefined ? 'menuitem' : 'menuitemcheckbox'} aria-checked={it.pressed} disabled={it.disabled}
+                className="menu-item disabled:cursor-default disabled:opacity-50" onClick={() => { close(); it.onSelect() }}>
+                <span>{it.label}</span>{it.pressed !== undefined && <span className="switch" data-on={it.pressed || undefined} aria-hidden />}
+              </button>
+            </div>
+          ))}
+          {pageItems.length > 0 && <div role="separator" className="menu-sep" />}
           <Link role="menuitem" href="/projects" className="menu-item" onClick={close}>{COPY.projects}</Link>
           <Link role="menuitem" href="/sync" className="menu-item" onClick={close}>{COPY.sync}</Link>
           <button role="menuitem" type="button" className="menu-item" onClick={() => { close(); add.pickMany() }}>{COPY.addMany}</button>
