@@ -4,7 +4,7 @@ import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
 import { BrickSheet } from './bricks/BrickSheet'
 import { RETRY_TITLE } from './bricks/retryCopy'
-import { dateLine, issueParts, shortOriginLine } from './lib/brickLabels'
+import { dateLine, issueParts, originParts } from './lib/brickLabels'
 import { originOf } from './lib/starters'
 import type { Brick } from './lib/types'
 
@@ -107,7 +107,7 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
   const status = b.status ?? 'ready'
   const busy = status === 'extracting' || status === 'pending'
   const blocked = retryBlocked(b)
-  const date = dateLine(b)
+  const date = dateLine(b), cap = originParts(b)
   const [alert, setAlert] = useState(false)
   const root = useRef<HTMLLIElement>(null)
   useEffect(() => {
@@ -144,8 +144,13 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
             disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']} onClick={() => { setAlert(false); store.retry(b.id) }}>{COPY.retry}</button>
         </div>
       )}
-      {/* the short credit ("Mia, 1923"), as on the swap sheet, so an institution's name is never cut; the full credit is its hover and the Brick sheet's */}
-      <div className="caption ink-2 mt-2 truncate" title={date}>{shortOriginLine(b)}</div>
+      {/* who leads, when follows (Malik, 2026-11-03): the short institution in ink and its date quieter, or an own photo's date; never cut;
+          the full credit is its hover and the Brick sheet's. The id lets a capture name the caption exactly */}
+      <p className="card-caption" id={`caption-${b.id}`} title={date}>
+        {cap.noteFirst && cap.note && <span className="cap-note">{cap.note}</span>}
+        <span className="cap-lead">{cap.lead}</span>
+        {!cap.noteFirst && cap.note && <span className="cap-note">{cap.note}</span>}
+      </p>
     </li>
   )
 }
