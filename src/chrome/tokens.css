@@ -153,26 +153,29 @@
 
 /* Make: the photo row. Each photo is a switch (the thumbnail and its title in one target), its credit or date under it, Swap a quiet icon.
    On = a 2 px red ring; off = dimmed with a 1 px rule. The slots are fixed, so a photo never moves when another one appears or goes */
-.photo-row { display: grid; grid-template-columns: repeat(var(--slots, 3), 136px); justify-content: center; gap: 16px; margin: 0; padding: 0; list-style: none; }
-.photo-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.photo-switch { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 4px 0; border: 0; background: transparent; color: var(--ink); font: inherit; cursor: pointer; border-radius: var(--radius); }
-.photo-switch img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-brand); outline: 2px solid var(--red-ui); outline-offset: 3px; transition: opacity 0.15s, outline-color 0.15s; }
-.photo-switch[aria-pressed="false"] img { opacity: 0.35; outline: 1px solid var(--line); outline-offset: 0; }
-.photo-switch .cap-title { text-align: center; }
-.photo-switch[aria-pressed="false"] .cap-title { color: var(--ink-2); }
-.photo-switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.photo-cell .cap-line { text-align: center; text-wrap: balance; }
-.photo-swap { margin-top: auto; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; border-radius: 4px; }   /* bottom of the cell: a one-line title leaves Swap level with its neighbours' */
-@media (hover: hover) and (pointer: fine) { .photo-cell .photo-swap { min-width: 28px; min-height: 24px; opacity: 0; transition: opacity 0.15s; } .photo-cell:is(:hover, :focus-within) .photo-swap { opacity: 1; } }   /* hover shows a small Swap icon; always there on touch */
-.photo-swap:hover { color: var(--ink); }
-.photo-swap:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.photo-row { display: grid; grid-template-columns: repeat(var(--slots, 3), 88px); justify-content: center; gap: var(--space-16); margin: 0; padding: var(--space-12) 0 0; list-style: none; }
+.photo-cell { --thumb: 64px; position: relative; display: flex; justify-content: center; }
+.photo-switch { display: block; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.photo-switch img { display: block; width: var(--thumb); height: var(--thumb); object-fit: cover; border-radius: var(--radius-brand); outline: 1px solid var(--line); transition: opacity 0.15s, filter 0.15s; }
+.photo-switch[aria-pressed="false"] img { opacity: 0.4; filter: grayscale(1); }   /* off: faded and grey; on: the photo as it is */
+.photo-switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+/* the photo's first short label: for two seconds after a tap ("Title leads · off"), and on hover on a desktop; above the photo, never in the layout */
+.photo-caption { position: absolute; bottom: calc(100% + 6px); left: 50%; translate: -50% 0; z-index: 5; padding: 2px var(--space-8); white-space: nowrap; pointer-events: none;
+  border-radius: var(--radius); background: var(--ink); color: var(--paper); font: 500 var(--type-caption)/18px var(--font-ui); opacity: 0; transition: opacity 0.15s; }
+.photo-caption.is-shown { opacity: 1; }
+@media (hover: hover) and (pointer: fine) { .photo-cell:hover .photo-caption { opacity: 1; } }
+/* the corners: a 16 px dot counting what couldn't carry over (it opens that photo's list), and ⇄ (always on a phone, on hover or focus on a desktop) */
+.photo-badge, .photo-swap { position: absolute; top: -6px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 50%; cursor: pointer; }
+.photo-badge::before, .photo-swap::before { content: ''; position: absolute; inset: -12px; }   /* a 40 px target round a small mark */
+.photo-badge { right: calc(50% - var(--thumb) / 2 - 6px); width: 16px; height: 16px; border: 1px solid var(--paper); background: var(--ink); color: var(--paper); font: 600 10px/1 var(--font-ui); }
+.photo-swap { left: calc(50% - var(--thumb) / 2 - 6px); width: 20px; height: 20px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .photo-cell .photo-swap { opacity: 0; transition: opacity 0.15s; } .photo-cell:is(:hover, :focus-within) .photo-swap { opacity: 1; } }
+.photo-badge:focus-visible, .photo-swap:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 /* on a phone the row rides above the bottom bar, so the screens and their switches stay on screen together */
 @media (max-width: 767.98px) {
   .photo-dock { position: sticky; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); z-index: 20; margin: 0 calc(-1 * var(--gutter)); padding: 8px var(--gutter); background: var(--paper); border-top: 1px solid var(--line); }
-  .photo-row { grid-template-columns: repeat(var(--slots, 3), minmax(0, 1fr)); gap: 8px; }
-  .photo-switch img { width: 48px; height: 48px; }
-  /* both lines stay on a phone, as on every card (Malik, 2026-11-03); Swap keeps its 44 px target */
-  .photo-cell { gap: 0; }
+  .photo-row { grid-template-columns: repeat(var(--slots, 3), minmax(0, 1fr)); gap: var(--space-8); }
+  .photo-cell { --thumb: 56px; }
 }
 /* Make on a phone: the bar's Shoot is the Library's job, so it goes quiet here */
 .bottom-bar .shoot-quiet { background: transparent; border-color: var(--line); color: var(--ink); }
@@ -189,7 +192,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .card-progress::after, .pulse { animation: none; }
-  .switch, .switch::after, .photo-switch img { transition: none; }
+  .switch, .switch::after, .photo-switch img, .photo-caption, .photo-swap { transition: none; }
 }
 
 /* skip link: the first stop for a keyboard, hidden until it has focus */
@@ -253,37 +256,26 @@
 .intent-headline .intent-edit:hover { text-decoration: underline 1px var(--ink-2); text-underline-offset: 6px; }
 .intent-headline .intent-edit:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 
-/* Make before Enter (Malik, 2026-11-03): the question and one line of examples, a large field with its action in the corner, then the photos to start from */
-.make-start { width: 100%; max-width: 760px; margin: var(--space-32) auto var(--space-48); display: flex; flex-direction: column; gap: var(--space-24); }
-.make-start-head { display: flex; flex-direction: column; gap: var(--space-8); }
-.intent-hint { margin: 0; font-size: var(--type-em); line-height: 22px; color: var(--ink-2); }
-.intent-example { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline 1px var(--ink-2); text-underline-offset: 3px; }   /* words in the sentence, each fills the field */
-.intent-example:hover { text-decoration-color: var(--ink); }
-.intent-example:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
-.intent-field { position: relative; width: 100%; }
-.chrome .intent-field textarea { display: block; width: 100%; min-height: 128px; field-sizing: content; resize: none; margin: 0; padding: var(--space-16) var(--space-16) 64px;
-  font: 400 20px/28px var(--font-ui); color: var(--ink); background: var(--paper); border: 1px solid var(--ink-2); border-radius: var(--radius); }   /* outranks the phone's 16 px input rule; 18 px there */
-.chrome .intent-field textarea:focus-visible { border-color: var(--focus); outline: 1px solid var(--focus); outline-offset: 0; }   /* one 2 px ink edge */
-.chrome .intent-field textarea:disabled { color: var(--ink-2); }
-.intent-field .intent-go { position: absolute; right: var(--space-12); bottom: var(--space-12); display: inline-flex; align-items: center; gap: var(--space-8); min-height: 40px; }
-.start-photos { margin-top: var(--space-16); display: flex; flex-direction: column; gap: var(--space-16); }
-.start-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4) var(--space-16); }
-.start-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-24) var(--space-16); }
-.start-photo { display: flex; flex-direction: column; gap: var(--space-8); width: 100%; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
-.start-photo img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-brand); outline: 1px solid var(--line); transition: outline-color 0.15s; }
-.start-photo:hover img { outline-color: var(--ink-2); }
-.start-photo[aria-pressed="true"] img { outline: 2px solid var(--red-ui); outline-offset: 3px; }   /* the same ring as a photo that is on under the screens */
-.start-photo:focus-visible { outline: 2px solid var(--focus); outline-offset: 6px; border-radius: var(--radius); }
-.start-all { align-self: flex-start; min-height: 32px; padding: 0; font: inherit; font-size: var(--type-body); color: var(--ink); background: none; border: 0; cursor: pointer; text-decoration: underline 1px var(--ink-2); text-underline-offset: 3px; }   /* a link on the grid's edge, like the examples */
-.start-all:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
-@media (max-width: 767.98px) {
-  .make-start { margin-top: var(--space-24); gap: var(--space-16); }
-  .chrome .intent-field textarea { min-height: 120px; font-size: 18px; line-height: 26px; }
-  .start-photos { margin-top: var(--space-24); gap: var(--space-12); }
-  .start-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-16) var(--space-12); }
-  .start-grid > :nth-child(n+7) { display: none; }   /* two rows of three on a phone */
-}
-@media (prefers-reduced-motion: reduce) { .start-photo img { transition: none; } }
+/* Make (Malik, 2026-11-03: affordance over signifiers): the headline is the input. The field sits in the h1's own box (.intent-headline), so it takes the
+   h1's size, weight and tracking; it grows to three lines. A round ink arrow appears at its end once there is text; while proposing, the Library's reading
+   line runs under it. A starting point set elsewhere shows as its photo, with × to clear it. */
+.make-head { width: 100%; max-width: 680px; margin: var(--space-32) auto 0; display: flex; flex-direction: column; gap: var(--space-16); }
+.headline-field { position: relative; display: flex; align-items: flex-end; gap: var(--space-12); }
+.chrome .headline-input { flex: 1; min-width: 0; display: block; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); resize: none;
+  font: inherit; letter-spacing: inherit; overflow-y: auto; max-height: 90px; caret-color: var(--ink); }   /* three lines of 30; outranks the phone's 16 px input rule */
+.chrome .headline-input::placeholder { color: var(--ink-2); opacity: 1; }
+.chrome .headline-input:focus { outline: none; }   /* the field is the headline itself: its caret is the focus */
+.headline-go { flex: none; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; background: var(--ink); color: #fff; cursor: pointer; }
+.headline-go:hover { background: #2A2A2A; }
+.headline-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.headline-field .headline-progress { bottom: -12px; }
+.make-anchor { position: relative; width: 48px; height: 48px; }
+.make-anchor img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-brand); outline: 1px solid var(--line); }
+.make-anchor-clear { position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  border: 1px solid var(--ink-2); border-radius: 50%; background: var(--paper); color: var(--ink); font: 600 13px/1 var(--font-ui); cursor: pointer; }
+.make-anchor-clear::before { content: ''; position: absolute; inset: -12px; }   /* a 44 px target round a 20 px mark */
+.make-anchor-clear:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 767.98px) { .make-head { margin-top: var(--space-16); } }
 .make-spread { margin: var(--space-32) auto 0; width: fit-content; padding: var(--space-24) var(--space-32); display: flex; gap: var(--space-32); }
 @media (max-width: 767.98px) { .make-spread { display: block; width: auto; margin: var(--space-16) 0 0; padding: 0; } .make-spread.crop-marks::before { display: none; } }   /* phone: a full-width block (auto side margins would shrink it to both screens side by side), so the swipe pager takes the width */
 .carry-line { display: block; margin: var(--space-16) auto 0; text-align: center; font-size: var(--type-body); color: var(--ink-2); background: none; border: 0; cursor: pointer; }
