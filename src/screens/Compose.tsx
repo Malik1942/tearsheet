@@ -17,7 +17,7 @@ import { download, exportCss, exportHandoff, exportJson } from '../export'
 import { originLabel } from '../lib/brickLabels'
 import { originOf } from '../lib/starters'
 import { NEUTRAL_SKIN } from '../lib/makeFlow'
-import { toShellContent } from '../shell/content'
+import { screensOf, toShellContent, type ScreenKey } from '../shell/content'
 
 const NEUTRAL = NEUTRAL_SKIN
 const CONFLICT_W = 130   // C6: width of each mini-screen in a conflict tile
@@ -25,7 +25,7 @@ const COPY = { unexpressedEmpty: 'Everything from these bricks found a slot.', c
 
 /** Fine-tune: today's Compose, opened in a drawer from the Make page's ⋯; logic unchanged. Three columns at >= 960 px, stacked below:
  *  materials (left) feed the shell (center); the sheet (right) shows every value with its provenance. Neutral skin is the page's, so the drawer and the page agree. */
-export function ComposePanel({ project, neutral, onNeutral, screen }: { project: Project; neutral: boolean; onNeutral: () => void; screen: 'both' | 'list' | 'review' }) {
+export function ComposePanel({ project, neutral, onNeutral, screen }: { project: Project; neutral: boolean; onNeutral: () => void; screen: 'both' | ScreenKey }) {
   const store = useStore()
   const [swapping, setSwapping] = useState<string | null>(null)
   const resolved = useMemo(() => resolveProject(project, store.bricks), [project, store.bricks])
@@ -124,7 +124,7 @@ export function ComposePanel({ project, neutral, onNeutral, screen }: { project:
 
         {/* Shell */}
         <div className="flex flex-wrap justify-center gap-4 self-start">
-          {(screen === 'both' ? (['list', 'review'] as const) : [screen]).map(s => (
+          {(screen === 'both' ? screensOf(toShellContent(project.content)) : [screen]).map(s => (
             <div key={s} className="w-full max-w-[320px] overflow-hidden rounded-[20px]" style={{ border: '1px solid var(--line)', background: '#111', padding: 6, height: 652 }}>
               <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} flash={flash} content={toShellContent(project.content)} /></div>
             </div>

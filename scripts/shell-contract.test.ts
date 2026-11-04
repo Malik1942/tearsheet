@@ -11,17 +11,21 @@ import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
 import type { Params } from '../src/shell/params.ts'
 import { RULES, type RuleId, type Violation } from '../src/shell/contractMeasure.ts'
 import { readFileSync } from 'node:fs'
-import { CONCERT_CONTENT, toShellContent, type SampleContent } from '../src/shell/content.ts'
+import { CONCERT_CONTENT, screensOf, toShellContent, type SampleContent, type ScreenKey } from '../src/shell/content.ts'
 
 const RUN = process.env.CONTRACT === '1'
 /** Which words the screens carry (shell item 1): the concert log, or with CONTRACT_CONTENT=reading the hand-written reading tracker (src/fixtures/content). */
 const READING = process.env.CONTRACT_CONTENT === 'reading'
-const CONTENT = READING ? toShellContent(JSON.parse(readFileSync(new URL('../src/fixtures/content/reading-tracker.json', import.meta.url), 'utf8')) as SampleContent) : CONCERT_CONTENT
-const OUT = process.env.CONTRACT_OUT ?? (READING ? 'docs/contract/reading' : 'docs/contract')
+/** CONTRACT_CONTENT=board: the hand-written ops board, whose two screens are the overview and the list (2026-11-04). */
+const BOARD = process.env.CONTRACT_CONTENT === 'board'
+const fixture = (name: string) => toShellContent(JSON.parse(readFileSync(new URL(`../src/fixtures/content/${name}.json`, import.meta.url), 'utf8')) as SampleContent)
+const CONTENT = READING ? fixture('reading-tracker') : BOARD ? fixture('ops-board') : CONCERT_CONTENT
+const OUT = process.env.CONTRACT_OUT ?? (READING ? 'docs/contract/reading' : BOARD ? 'docs/contract/board' : 'docs/contract')
 /** CONTRACT_URL measures a running site instead of a local dev server, e.g. production: its /dev/contract page ships with the build. */
 const SITE = process.env.CONTRACT_URL?.replace(/\/$/, '')
 const VIEW = { width: 390, height: 844 }
-const SCREENS = ['list', 'review'] as const
+const SCREENS: readonly [ScreenKey, ScreenKey] = screensOf(CONTENT)
+const [S0, S1] = SCREENS
 
 type Combo = { ids: string[]; params: Params }
 function compositions(): Combo[] {
@@ -54,9 +58,9 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
         const u = unique.get(key) ?? { params: c.params, combos: [] }
         u.combos.push(c); unique.set(key, u)
       }
-      const results: { params: Params; combos: Combo[]; v: Record<(typeof SCREENS)[number], Violation[]> }[] = []
+      const results: { params: Params; combos: Combo[]; v: Record<ScreenKey, Violation[]> }[] = []
       for (const u of unique.values()) {
-        const v = { list: [] as Violation[], review: [] as Violation[] }
+        const v: Record<ScreenKey, Violation[]> = { list: [], review: [], board: [] }
         for (const screen of SCREENS) {
           await page.evaluate(([p, s, c]) => window.__shell!(p, s, c), [u.params, screen, CONTENT] as const)
           v[screen] = await page.evaluate(() => window.__measure!())
@@ -66,15 +70,15 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
 
       // count per rule: compositions (of 1,320) that break it on at least one screen
       const perRule = Object.fromEntries(Object.keys(RULES).map(r => [r, 0])) as Record<RuleId, number>
-      const perRuleScreens = Object.fromEntries(Object.keys(RULES).map(r => [r, { list: 0, review: 0 }])) as Record<RuleId, { list: number; review: number }>
+      const perRuleScreens = Object.fromEntries(Object.keys(RULES).map(r => [r, { list: 0, review: 0, board: 0 }])) as Record<RuleId, Record<ScreenKey, number>>
       let failing = 0
       for (const r of results) {
-        const broken = new Set([...r.v.list, ...r.v.review].map(x => x.rule))
+        const broken = new Set([...r.v[S0], ...r.v[S1]].map(x => x.rule))
         if (broken.size) failing += r.combos.length
         for (const rule of broken) perRule[rule] += r.combos.length
         for (const s of SCREENS) for (const rule of new Set(r.v[s].map(x => x.rule))) perRuleScreens[rule][s] += r.combos.length
       }
-      const score = (r: (typeof results)[number]) => { const all = [...r.v.list, ...r.v.review]; return new Set(all.map(x => x.rule)).size * 100 + all.reduce((t, x) => t + x.magnitude, 0) }
+      const score = (r: (typeof results)[number]) => { const all = [...r.v[S0], ...r.v[S1]]; return new Set(all.map(x => x.rule)).size * 100 + all.reduce((t, x) => t + x.magnitude, 0) }
       const worst = [...results].filter(r => score(r) > 0).sort((a, b) => score(b) - score(a)).slice(0, 3)
 
       mkdirSync(OUT, { recursive: true })
@@ -83,7 +87,7 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
       await shots.waitForFunction(() => typeof window.__shell === 'function', null, { timeout: 60_000 })
       const worstLines: string[] = []
       for (const [i, r] of worst.entries()) {
-        const screen = r.v.list.length >= r.v.review.length ? 'list' : 'review'
+        const screen = r.v[S0].length >= r.v[S1].length ? S0 : S1
         await shots.evaluate(([p, s, c]) => window.__shell!(p, s, c), [r.params, screen, CONTENT] as const)
         const file = `worst-${i + 1}-${screen}.png`
         await shots.screenshot({ path: join(OUT, file) })
@@ -93,10 +97,10 @@ describe('layout contract on every three-brick composition', { skip: !RUN && 'se
       }
       const report = [
         '# Layout contract report', '',
-        `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC · ${combos.length} compositions (ordered triples of the ${SAMPLES.length} samples), ${unique.size} distinct parameter sets, both screens at ${VIEW.width} × ${VIEW.height}, with the ${READING ? 'reading-tracker' : 'concert'} content.`, '',
+        `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC · ${combos.length} compositions (ordered triples of the ${SAMPLES.length} samples), ${unique.size} distinct parameter sets, both screens (${SCREENS.join(' and ')}) at ${VIEW.width} × ${VIEW.height}, with the ${READING ? 'reading-tracker' : BOARD ? 'ops-board' : 'concert'} content.`, '',
         `**${failing} of ${combos.length} compositions break at least one rule.**`, '',
-        '| Rule | Compositions breaking it | List | Year review |', '|---|---|---|---|',
-        ...(Object.keys(RULES) as RuleId[]).map(r => `| ${RULES[r]} | ${perRule[r]} | ${perRuleScreens[r].list} | ${perRuleScreens[r].review} |`), '',
+        `| Rule | Compositions breaking it | ${S0} | ${S1} |`, '|---|---|---|---|',
+        ...(Object.keys(RULES) as RuleId[]).map(r => `| ${RULES[r]} | ${perRule[r]} | ${perRuleScreens[r][S0]} | ${perRuleScreens[r][S1]} |`), '',
         worst.length ? '## The three worst' : '## The three worst: none, every composition passes', '',
         ...worstLines,
       ].join('\n')

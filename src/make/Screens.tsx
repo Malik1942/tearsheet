@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ParameterKey, Params } from '../shell/params'
 import { Shell } from '../shell/Shell'
-import type { ShellContent } from '../shell/content'
+import { CONCERT_CONTENT, SCREEN_NAMES, screensOf, type ShellContent } from '../shell/content'
 
 /** The shells render at their usual size inside a phone frame and are scaled, as MiniPreview does: one renderer, any size. */
 const SHELL_W = 320, SHELL_H = 640, PAD = 6
 const FRAME_W = SHELL_W + 2 * PAD, FRAME_H = SHELL_H + 2 * PAD
-const SCREENS = [['list', 'List screen'], ['review', 'Year review screen']] as const
 
 const useMedia = (q: string) => {
   const [on, setOn] = useState(() => typeof matchMedia === 'function' && matchMedia(q).matches)
@@ -21,6 +20,8 @@ const useMedia = (q: string) => {
 /** The two screens. On a wide screen side by side, scaled by a factor from the height left under them once `reserve` px are kept for what follows
  *  (the photo row and its line), so the page fits one viewport (1440x900). On a phone one at a time in a swipe pager with two dots, scaled to the width. */
 export function ScaledScreens({ params, flash, reserve, content }: { params: Params; flash: ParameterKey[]; reserve: number; content?: ShellContent }) {
+  // which two screens: a log's list and year review, a board's overview and list (content.ts screensOf)
+  const SCREENS = screensOf(content ?? CONCERT_CONTENT).map(k => [k, SCREEN_NAMES[k]] as const)
   const wide = useMedia('(min-width: 768px)')
   const box = useRef<HTMLDivElement>(null)
   const pane = useRef<HTMLDivElement>(null)
