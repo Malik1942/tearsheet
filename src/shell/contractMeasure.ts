@@ -52,7 +52,7 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year
   const all = <T extends Element = HTMLElement>(sel: string) => Array.from(shell.querySelectorAll<T & HTMLElement>(sel)).filter(visible)
 
   // 1. one alignment axis: every heading and title on the screen hugs the same edge; under center no list thumbnail sits beside or below its text
-  const heads = all('.bar-title, .screen-title, .group-title, .item .title, .row .title, .feature .title')
+  const heads = all('.bar-title, .large-title, .screen-title, .group-title, .item .title, .row .title, .feature .title')
   const edges = new Map<string, string[]>()
   for (const h of heads) { const e = edgeOf(h); edges.set(e, [...(edges.get(e) ?? []), label(h)]) }
   if (edges.size > 1) out.push({ rule: 'one-axis', magnitude: edges.size - 1, detail: [...edges].map(([e, ls]) => `${e}: ${[...new Set(ls)].join(' ')}`).join('; ') })
@@ -70,8 +70,9 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year
     const cs = getComputedStyle(el)
     for (const p of props) { const v = px(String(cs[p])); if (!onScale(v)) off.push(`${label(el)} ${String(p)} ${v.toFixed(1)}`) }
   }
-  for (const el of all('.bar, .item, .row, .group-title, .review-head, .feature')) check(el, ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'])
-  for (const el of all('.item, .row, .stats')) check(el, ['columnGap', 'rowGap'])
+  // the device details (item 3) are held to the same scale: the status bar, the large title, the tab bar and the home indicator, and the gaps inside them
+  for (const el of all('.bar, .item, .row, .group-title, .review-head, .feature, .large-title, .status-bar, .tab-bar, .home-indicator')) check(el, ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'])
+  for (const el of all('.item, .row, .stats, .status-icons, .tab-item')) check(el, ['columnGap', 'rowGap'])
   for (const el of all('.item .text')) check(el, ['paddingLeft', 'paddingRight'])
   for (const item of all('.item')) {
     const pad = px(getComputedStyle(item).paddingTop)
@@ -120,7 +121,10 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year
   }
   if (bad.length) out.push({ rule: 'readable-item', magnitude: bad.length + worstBand / 24, detail: [...new Set(bad)].slice(0, 6).join('; ') })
 
-  // 5. no duplicated information: the year appears once on the year review, in its head
+  // 5. no duplicated information: no tab label repeats a title on the screen (item 3), and the year appears once on the year review, in its head
+  const titles = new Set(all('.bar-title, .large-title, .screen-title').map(t => t.textContent?.trim().toLowerCase()))
+  const echoed = all('.tab-label').map(t => t.textContent?.trim() ?? '').filter(t => titles.has(t.toLowerCase()))
+  if (echoed.length) out.push({ rule: 'no-duplicates', magnitude: echoed.length, detail: `tab label repeats the title: ${echoed.join(', ')}` })
   if (screen === 'review') {
     let n = 0
     const w = document.createTreeWalker(shell, NodeFilter.SHOW_TEXT)

@@ -243,7 +243,8 @@ describe('peekPosition', () => {
 /** The mapping from parameter to shell element is CSS, so it is checked as text against the two screens' own markup. */
 describe('shell.css flash rules', () => {
   const css = readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
-  const markup = ['ListScreen.tsx', 'DetailScreen.tsx'].map(f => readFileSync(new URL(`../src/shell/${f}`, import.meta.url), 'utf8')).join('\n')
+  // the two screens and the phone around them (item 3: the status bar, tab bar and home indicator in Device.tsx)
+  const markup = ['ListScreen.tsx', 'DetailScreen.tsx', 'Device.tsx'].map(f => readFileSync(new URL(`../src/shell/${f}`, import.meta.url), 'utf8')).join('\n')
   const start = css.indexOf('/* ---------- C11')
   const block = css.slice(start)
   const rules = [...block.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ selector: m[1].replace(/\/\*[\s\S]*?\*\//g, '').trim(), body: m[2] })).filter(r => r.selector.includes('data-flash'))
@@ -259,7 +260,7 @@ describe('shell.css flash rules', () => {
   })
   it('targets only classes the two screens render', () => {
     const rendered = new Set([...markup.matchAll(/className=(?:"([^"]*)"|\{([^}]*)\})/g)].flatMap(m => (m[1] ?? m[2]).match(/[a-z][a-z0-9-]*/g) ?? []))
-    for (const c of ['item', 'row', 'pic', 'text', 'title', 'meta', 'tag', 'action', 'stats', 'feature', 'group', 'group-title', 'screen-title', 'review-head', 'review-section']) assert.ok(rendered.has(c), `the markup reading finds .${c}`)
+    for (const c of ['item', 'row', 'pic', 'text', 'title', 'meta', 'tag', 'action', 'stats', 'feature', 'group', 'group-title', 'screen-title', 'review-head', 'review-section', 'large-title', 'tab-item']) assert.ok(rendered.has(c), `the markup reading finds .${c}`)
     assert.ok(!rendered.has('hero-mark') && !rendered.has('nonexistent'), 'and not a class the screens never render')
     for (const r of rules) for (const m of r.selector.matchAll(/\.([a-z][a-z0-9-]*)/g)) assert.ok(rendered.has(m[1]) || m[1] === 'shell', `.${m[1]} in ${r.selector}`)
   })
@@ -326,8 +327,9 @@ describe('shell.css flash rules', () => {
 
   it('color_accent outlines the elements the accent colors under the placement the shell is in, and none under none', () => {
     assert.deepEqual(under('color_accent', 'none'), [])
-    assert.deepEqual(under('color_accent', 'labels'), ['.stats strong', '.tag'])
-    assert.deepEqual(under('color_accent', 'actions'), ['.action'])
+    // item 3: the active tab takes the accent under labels and actions, so it is outlined there too
+    assert.deepEqual(under('color_accent', 'labels'), ['.stats strong', '.tab-item[data-active="true"]', '.tag'])
+    assert.deepEqual(under('color_accent', 'actions'), ['.action', '.tab-item[data-active="true"]'])
     assert.deepEqual(under('color_accent', 'dividers'), ['.item', '.row'])
     assert.deepEqual(under('color_accent', 'one-hero'), [FIRST, '.screen-title'])
     assert.deepEqual(under('color_accent', 'one-hero', 'le15'), ['.feature', FIRST, '.screen-title'])
@@ -346,16 +348,16 @@ describe('shell.css flash rules', () => {
   })
   it('palette_hue_count outlines the third-hue tags wherever they are, and what the accent colors under each placement (one hue or two recolors every accent consumer)', () => {
     assert.deepEqual(under('palette_hue_count', 'none'), ['.palette-3 .tag'])
-    assert.deepEqual(under('palette_hue_count', 'labels'), ['.palette-3 .tag', '.stats strong', '.tag'])
-    assert.deepEqual(under('palette_hue_count', 'actions'), ['.action', '.palette-3 .tag'])
+    assert.deepEqual(under('palette_hue_count', 'labels'), ['.palette-3 .tag', '.stats strong', '.tab-item[data-active="true"]', '.tag'])
+    assert.deepEqual(under('palette_hue_count', 'actions'), ['.action', '.palette-3 .tag', '.tab-item[data-active="true"]'])
     assert.deepEqual(under('palette_hue_count', 'dividers'), ['.item', '.palette-3 .tag', '.row'])
     assert.deepEqual(under('palette_hue_count', 'one-hero'), [FIRST, '.palette-3 .tag', '.screen-title'])
     assert.deepEqual(under('palette_hue_count', 'one-hero', 'le15'), ['.feature', FIRST, '.palette-3 .tag', '.screen-title'])
   })
   it('accent_placement stays an ungated union on every placement, since the previous placement is unknown', () => {
-    for (const a of PLACEMENTS) for (const sel of ['.tag', '.action', '.stats strong']) assert.ok(under('accent_placement', a).includes(sel), `${a} ${sel}`)
-    assert.deepEqual(under('accent_placement', 'dividers'), ['.action', '.item', '.row', '.stats strong', '.tag'])
-    assert.deepEqual(under('accent_placement', 'one-hero'), ['.action', FIRST, '.screen-title', '.stats strong', '.tag'])
+    for (const a of PLACEMENTS) for (const sel of ['.tag', '.action', '.stats strong', '.tab-item[data-active="true"]']) assert.ok(under('accent_placement', a).includes(sel), `${a} ${sel}`)
+    assert.deepEqual(under('accent_placement', 'dividers'), ['.action', '.item', '.row', '.stats strong', '.tab-item[data-active="true"]', '.tag'])
+    assert.deepEqual(under('accent_placement', 'one-hero'), ['.action', FIRST, '.screen-title', '.stats strong', '.tab-item[data-active="true"]', '.tag'])
   })
 
   /** The selectors of shell.css above the highlight block, one per entry. */

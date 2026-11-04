@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
-import { CONCERTS, groupBy, shortDate, type Concert } from './content'
+import { CONCERTS, groupBy, shortDate, type Concert, type ShellContent } from './content'
 import type { Params } from './params'
 
-/** The minimal top bar inside each phone frame (design pass A3): the screen title at title size, one control on the right, a hairline below. */
-export function TopBar({ title, children }: { title: string; children: ReactNode }) {
+/** The minimal top bar inside each phone frame (design pass A3): the screen title at title size, one control on the right, a hairline below.
+ *  Without a title (the List, whose large title sits below it) it holds the control alone, so the title is said once (layout contract rule 5). */
+export function TopBar({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <header className="bar">
-      <h1 className="bar-title">{title}</h1>
+      {title && <h1 className="bar-title">{title}</h1>}
       {children}
     </header>
   )
@@ -42,13 +43,15 @@ function Item({ c, hues }: { c: Concert; hues: number }) {
   )
 }
 
-/** `staticRender` draws every control as a non-interactive element with the same class (a span for the top bar's Add show), for a copy that sits inside a button or a link. */
-export function ListScreen({ params, staticRender = false }: { params: Params; staticRender?: boolean }) {
+/** `staticRender` draws every control as a non-interactive element with the same class (a span for the top bar's Add show), for a copy that sits inside a button or a link.
+ *  Large-title navigation (item 3): the bar holds the control, and the title sits under it at the screen's largest size (shell.css). */
+export function ListScreen({ params, staticRender = false, content }: { params: Params; staticRender?: boolean; content: ShellContent }) {
   const groups = groupBy(CONCERTS, String(params.grouping))
   const hues = Number(params.palette_hue_count)
   return (
     <div>
-      <TopBar title="Shows"><AddShow labelled={params.accent_placement === 'actions'} staticRender={staticRender} /></TopBar>
+      <TopBar><AddShow labelled={params.accent_placement === 'actions'} staticRender={staticRender} /></TopBar>
+      <h1 className="large-title">{content.screenTitles.list}</h1>
       {groups.map(g => (
         <section className="group" key={g.label || 'all'}>
           {g.label && <h2 className="group-title">{g.label}</h2>}
