@@ -24,6 +24,7 @@ const COPY = {
   pick: 'Pick photos myself', count: (n: number, max: number) => `${n} of ${max}`, show: 'Show the screens', starter: 'starter',
   empty: 'Nothing to pick from yet. Add photos, or include the starters from ⋯.', needIntent: 'Type what you are making first.',
   swap: 'Swap', noSpare: 'No other photo to swap in.', inProject: 'Already in this project',
+  add: 'Add a photo', noSpareAdd: 'No other photo to add.',
 }
 
 /** P8, in Make's ⋯: the same bricks in their (at most three) rotations, each a mini-screen; picking one reorders the project (a new version). */
@@ -160,12 +161,14 @@ export function PickMyself({ pool, initial, max, note, canCreate, onClose, onDon
 }
 
 /** Swap one photo of the project for another (2026-11-03): Same job, Adds something, Everything else, each in the proposal's ranking and then newest saved
- *  (src/lib/swapSheet.ts). The photo being replaced is not offered; a photo already in the project shows a check and cannot be chosen. One tap swaps and closes. */
-export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; onClose: () => void; onPick: (id: string) => void }) {
+ *  (src/lib/swapSheet.ts). The photo being replaced is not offered; a photo already in the project shows a check and cannot be chosen. One tap swaps and closes.
+ *  With mode 'add' (spec 2026-11-04 §4) the same sheet adds a photo: its own title, empty line and tile labels. */
+export function SwapPicker({ groups, mode = 'swap', onClose, onPick }: { groups: SwapGroup[]; mode?: 'swap' | 'add'; onClose: () => void; onPick: (id: string) => void }) {
   const choosable = groups.some(g => g.tiles.some(t => !t.inProject))
+  const add = mode === 'add'
   return (
-    <Overlay title={COPY.swap} onClose={onClose}>
-      {!choosable && <p className="ink-2 m-0 mb-3 text-[13px]">{COPY.noSpare}</p>}
+    <Overlay title={add ? COPY.add : COPY.swap} onClose={onClose}>
+      {!choosable && <p className="ink-2 m-0 mb-3 text-[13px]">{add ? COPY.noSpareAdd : COPY.noSpare}</p>}
       <div className="flex flex-col gap-4">
         {groups.map(g => (
           <section key={g.id} aria-label={g.title}>
@@ -177,7 +180,7 @@ export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; o
                 return (
                   <button key={brick.id} type="button" disabled={inProject} onClick={() => onPick(brick.id)}
                     className={`relative overflow-hidden rounded p-0 text-left ${inProject ? 'cursor-default' : 'cursor-pointer'}`} style={{ border: '1px solid var(--line)', background: 'var(--panel)' }}
-                    aria-label={inProject ? `${name}: ${COPY.inProject}` : `Swap in: ${name}`} title={inProject ? COPY.inProject : undefined}>
+                    aria-label={inProject ? `${name}: ${COPY.inProject}` : `${add ? 'Add' : 'Swap in'}: ${name}`} title={inProject ? COPY.inProject : undefined}>
                     {/* the hover shows a licensed work's full credit; an uncredited photo has none, so the author's name never shows here */}
                     <div className="overflow-hidden" style={{ aspectRatio: '16 / 10' }}><Photo src={brick.photo.url} title={brick.credit ?? ''} className="h-full w-full object-cover" style={tileFit(brick.photo, 16 / 10)} /></div>
                     <div className="flex flex-col px-2 py-1.5">

@@ -9,7 +9,7 @@ import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
 import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
 import { standInLine } from '../lib/standIns'
-import { NEUTRAL_SKIN, autoName, carryByBrick, leadKey, photoRow, toggleMuted } from '../lib/makeFlow'
+import { NEUTRAL_KEYS, NEUTRAL_SKIN, autoName, carryByBrick, changeCaption, leadKey, photoRow, toggleCaption, toggleMuted } from '../lib/makeFlow'
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { Fold, Overlay } from '../make/Steps'
 import { ScaledScreens } from '../make/Screens'
@@ -35,6 +35,8 @@ const WORKSPACE = '(min-width: 1180px)'
 const useWorkspace = () => useSyncExternalStore(l => { const m = matchMedia(WORKSPACE); m.addEventListener('change', l); return () => m.removeEventListener('change', l) }, () => matchMedia(WORKSPACE).matches, () => false)
 /** How long a photo's caption stays after a tap (Malik, 2026-11-03). */
 const CAPTION_MS = 2000
+/** The photo row always has at least this many slots; an empty one adds a photo (spec 2026-11-04 §4). */
+const SLOTS = 3
 const COPY = {
   field: 'What are you making?',
   fromPhotos: 'From your photos',
@@ -44,20 +46,20 @@ const COPY = {
   noProposal: 'Nothing came back. Pick them yourself.',
   edit: 'Edit what you are making',
   fineTune: 'Fine-tune…', style: 'Adjust style…', arrangement: 'Try another arrangement…', neutral: 'Neutral skin', pick: 'Pick photos myself…', rename: 'Rename…',
-  isOn: 'on', isOff: 'off', swap: 'Swap',
-  carryBadge: (n: number, label: string) => `${n} ${n === 1 ? 'thing' : 'things'} from ${label} couldn't carry over`,
+  swap: 'Swap', add: 'Add a photo', notUsed: 'not used',
+  carryLine: (n: number) => `${n} ${n === 1 ? 'rule' : 'rules'} didn’t carry over`, carryTitle: 'Didn’t carry over',
   noSlot: 'No slot on these screens',
   files: 'Files', versions: 'Versions',
   list: 'List', review: 'Year review', board: 'Overview', both: 'Both',
   missing: "This project isn't on this device.", projects: 'Projects',
 }
 
-type Dialog = null | 'tune' | 'style' | 'arrange' | 'pick' | 'rename' | { swap: string } | { carry: string }
+type Dialog = null | 'tune' | 'style' | 'arrange' | 'pick' | 'rename' | 'carry' | { swap: string } | { add: true }
 
 /** Make, one page (Malik, 2026-11-03; overrides 15_SIMPLIFY's four steps). One field; Enter asks the model for up to three photos from the library (spec v3 P5,
  *  with the lean and the starting point from Adjust style), creates the project at once (P2 auto-name, the proposal record, the first arrangement) and shows it:
- *  the two screens, and under them the photos that set something. Tapping a photo turns its whole contribution off or on (`mutedBricks`, a new version, the
- *  change highlight), and its first short label shows for two seconds. A dot on a photo counts what of it couldn't carry over; ⇄ swaps it. The headline is
+ *  the two screens, and under them every photo of the project. Tapping a photo turns its whole contribution off or on (`mutedBricks`, a new version, the
+ *  change highlight), and a caption says for two seconds what that moved. One line over the row counts what couldn't carry over; ⇄ swaps a photo. The headline is
  *  the input (Malik, 2026-11-03: affordance over signifiers); after Enter the intent stays as the page's h1, and tapping it makes it editable again.
  *  The header holds Share (Copy link, E1, and Download) and ⋯, whose first items are this page's: Fine-tune (today's Compose), Adjust style,
  *  Try another arrangement, Neutral skin, Pick photos myself, Rename. `/make` has no project yet; `/project/:id` shows one; `?brick=` sets the starting point. */
@@ -102,16 +104,22 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const flash = useChangeFlash(project)
   const photos = useMemo(() => project ? photoRow(project, store.bricks) : [], [project, store.bricks])
   const workspace = useWorkspace()
-  // what of each photo couldn't carry over here, for its dot (a photo tapped off contributes nothing, so it has none)
+  // what of each photo couldn't carry over here, for the line over the row and its list (a photo tapped off contributes nothing, so it has none)
   const unexpressedBy = useMemo(() => {
     return carryByBrick(resolved?.unexpressed ?? [])
   }, [resolved])
-  // a tap turns the photo off or on, and says so next to it for two seconds
-  const toggle = (id: string, label: string, nowOn: boolean) => {
-    update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, id) }))
-    setCaption({ id, text: `${label} · ${nowOn ? COPY.isOn : COPY.isOff}` })
+  const carryTotal = [...unexpressedBy.values()].reduce((n, items) => n + items.length, 0)
+  // the caption over a photo for two seconds: what a tap or an add moved on the screens
+  const say = (id: string, text: string) => {
+    setCaption({ id, text })
     window.clearTimeout(captionTimer.current)
     captionTimer.current = window.setTimeout(() => setCaption(null), CAPTION_MS)
+  }
+  // a tap turns the photo off or on
+  const toggle = (id: string) => {
+    if (!project) return
+    say(id, toggleCaption(project, store.bricks, id, neutral ? NEUTRAL_KEYS : []))
+    update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, id) }))
   }
   const update = (patch: Partial<Project> | ((p: Project) => Partial<Project>)) => { if (project) store.updateProject(project.id, patch) }
 
@@ -204,39 +212,47 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
         {!busy && project && resolved && params && (
           <>
             {/* the two screens are a spread on paper with crop marks, never on a block (docs/DESIGN_SYSTEM.md) */}
-            {/* Measured drawing: each photo that is on keeps its slot number, on its thumbnail and at the end of a leader to what it changes on the List screen */}
+            {/* Measured drawing: each photo that shapes the screens keeps its slot number, on its thumbnail and at the end of a leader to what it changes on the List screen */}
             <div className="make-spread crop-marks">
               <ScaledScreens params={params} flash={flash} reserve={workspace ? 48 : RESERVE} content={toShellContent(project.content)} />
               <Callouts marks={photos.flatMap(({ brick, muted }, i) => { const key = muted ? null : leadKey(brick, resolved); return key ? [{ n: i + 1, key }] : [] })} />
             </div>
-            {/* each photo is one switch, its state in the photo itself (off: faded and grey). Its first short label shows for two seconds after a tap, and on hover
-                on a desktop; a dot in one corner counts what couldn't carry over, ⇄ in the other swaps it. The slots are fixed, so a photo never moves. */}
+            {/* each photo is one switch. Its callout number (inside its lower left corner) means it shapes the screens now; off is faded and grey; on but not used is
+                the photo as it is, with no number. A tap says for two seconds what it moved; on a desktop hover shows its name. ⇄ (inside the upper right corner)
+                swaps it. Numbers mean photos only, so what couldn't carry over is counted in words on the line over the row, and opens one list.
+                There are always at least three slots, and an empty one adds a photo. The slots are fixed, so a photo never moves. */}
             <div className="photo-dock">
-              <p className="dock-label">{COPY.fromPhotos}</p>
-              <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">
-                {photos.map(({ brick, muted, label }, i) => {
+              <div className="dock-label">
+                <span>{COPY.fromPhotos}</span>
+                {carryTotal > 0 && <button type="button" className="dock-carry" onClick={() => setDialog('carry')}>{COPY.carryLine(carryTotal)}<span aria-hidden="true"> ›</span></button>}
+              </div>
+              <ul className="photo-row" style={{ '--slots': Math.max(SLOTS, photos.length) } as CSSProperties} aria-label="Photos">
+                {photos.map(({ brick, muted, status, label }, i) => {
                   const why = project.proposal?.picks.find(p => p.brickId === brick.id)?.why
                   const name = label ?? cardCaption(brick, null).title
-                  const missing = unexpressedBy.get(brick.id)?.length ?? 0
                   const shown = caption?.id === brick.id
                   return (
                     <li key={brick.id} className="photo-cell">
-                      <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={name} title={why} onClick={() => toggle(brick.id, name, muted)}>
+                      <button type="button" className="photo-switch" data-state={status} aria-pressed={!muted} aria-label={status === 'unused' ? `${name}, ${COPY.notUsed}` : name} title={why} onClick={() => toggle(brick.id)}>
                         <Photo src={brick.photo.url} alt="" style={tileFit(brick.photo, 1)} />
                       </button>
-                      {!muted && <span className="callout photo-callout" aria-hidden="true">{i + 1}</span>}
+                      {status === 'used' && <span className="callout photo-callout" aria-hidden="true">{i + 1}</span>}
                       {/* the workspace's column reads each photo: what it sets, and why it was picked (hidden below the workspace width) */}
                       <span className="photo-text"><b aria-hidden="true">{name}</b>{why && <span>{why}</span>}</span>
                       <span className={`photo-caption ${shown ? 'is-shown' : ''}`} aria-hidden={!shown} role={shown ? 'status' : undefined}>{shown ? caption.text : name}</span>
-                      {missing > 0 && (
-                        <button type="button" className="photo-badge tnum" aria-label={COPY.carryBadge(missing, name)} title={COPY.carryBadge(missing, name)} onClick={() => setDialog({ carry: brick.id })}>{missing}</button>
-                      )}
                       <button type="button" className="photo-swap" aria-label={`${COPY.swap}: ${name}`} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13" /></svg>
                       </button>
                     </li>
                   )
                 })}
+                {Array.from({ length: Math.max(0, SLOTS - photos.length) }, (_, i) => (
+                  <li key={`add-${i}`} className="photo-cell">
+                    <button type="button" className="photo-add" aria-label={COPY.add} title={COPY.add} onClick={() => setDialog({ add: true })}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           </>
@@ -265,27 +281,35 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
         <PickMyself pool={ready} max={MAX_BRICKS} note={note} canCreate={!!intent.trim()} onClose={() => setDialog(null)} onDone={pickDone}
           initial={project && intent.trim() === project.intent.trim() ? project.brickIds : anchorBrick ? [anchorBrick.id] : pre ? [pre.id] : []} />
       )}
-      {dialog && typeof dialog === 'object' && 'carry' in dialog && project && (() => {
-        // one photo's dot: what of it couldn't carry over (no slot here), one line each; as many rows as the dot counts
-        const items = unexpressedBy.get(dialog.carry) ?? []
-        const row = photos.find(p => p.brick.id === dialog.carry)
-        return (
-          <Overlay title={row?.label ?? (row ? cardCaption(row.brick, null).title : '')} onClose={() => setDialog(null)}>
-            <div className="flex flex-col gap-4 text-[13px]">
-              <section className="flex flex-col gap-2">
-                <h3 className="caption ink-2 m-0 font-normal">{COPY.noSlot}</h3>
+      {dialog === 'carry' && project && (
+        // the line over the row: what couldn't carry over (no slot here), grouped by photo in slot order, one line each; as many rows as the line counts
+        <Overlay title={COPY.carryTitle} onClose={() => setDialog(null)}>
+          <div className="flex flex-col gap-4 text-[13px]">
+            <p className="caption ink-2 m-0">{COPY.noSlot}</p>
+            {/* headed by the photo itself and its own title, not its short label: two photos can share a label ("Big type contrast") */}
+            {photos.filter(p => unexpressedBy.has(p.brick.id)).map(({ brick }) => (
+              <section key={brick.id} className="flex flex-col gap-2">
+                <h3 className="m-0 flex items-center gap-2 text-[13px] font-semibold"><Photo src={brick.photo.url} alt="" style={{ ...tileFit(brick.photo, 1), width: 32, height: 32, outline: '1px solid var(--line)' }} />{cardCaption(brick, null).title}</h3>
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                  {items.map((u, i) => <li key={i}>{u.rule}<span className="ink-2 mt-0.5 block text-[12px]">{standInLine(u.rule)}</span></li>)}
+                  {(unexpressedBy.get(brick.id) ?? []).map((u, i) => <li key={i}>{u.rule}<span className="ink-2 mt-0.5 block text-[12px]">{standInLine(u.rule)}</span></li>)}
                 </ul>
               </section>
-            </div>
-          </Overlay>
-        )
-      })()}
+            ))}
+          </div>
+        </Overlay>
+      )}
       {dialog && typeof dialog === 'object' && 'swap' in dialog && project && (
         <SwapPicker groups={swapGroups(project, ready, dialog.swap, store.bricks)} onClose={() => setDialog(null)} onPick={to => {
           const from = dialog.swap
           update(p => ({ brickIds: p.brickIds.map(b => b === from ? to : b), mutedBricks: Object.fromEntries(Object.entries(p.mutedBricks ?? {}).filter(([k]) => k !== from)) as Record<string, true> }))
+          setDialog(null)
+        }} />
+      )}
+      {dialog && typeof dialog === 'object' && 'add' in dialog && project && (
+        <SwapPicker mode="add" groups={swapGroups(project, ready, null, store.bricks)} onClose={() => setDialog(null)} onPick={to => {
+          // appended, so it takes over nothing that is already there; ⋯ → Try another arrangement puts it first
+          say(to, changeCaption(project, { ...project, brickIds: [...project.brickIds, to] }, store.bricks, to, 'added', neutral ? NEUTRAL_KEYS : []))
+          update(p => ({ brickIds: [...p.brickIds, to] }))
           setDialog(null)
         }} />
       )}

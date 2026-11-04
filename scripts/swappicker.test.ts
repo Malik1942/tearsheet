@@ -59,4 +59,13 @@ describe('the swap sheet as rendered', () => {
     assert.equal(render(GROUPS).includes('No other photo to swap in.'), false)
     assert.equal(render([{ id: 'rest', title: 'Everything else', tiles: [{ brick: sample('g2'), inProject: true }] }]).includes('No other photo to swap in.'), true)
   })
+  it('add mode: the sheet is titled Add a photo, each tile is an Add, the empty line says so', () => {
+    const html = renderToStaticMarkup(h(SwapPicker, { groups: GROUPS, mode: 'add', onClose: () => {}, onPick: () => {} }))
+    assert.ok(html.includes('Add a photo'))
+    const choosable = tiles(html).filter(t => !t.includes('disabled'))
+    assert.ok(choosable.length > 0, tiles(html).join('\n'))
+    assert.ok(choosable.every(t => /aria-label="Add: /.test(t)), tiles(html).join('\n'))
+    const none = renderToStaticMarkup(h(SwapPicker, { groups: [{ id: 'rest', title: 'Everything else', tiles: [{ brick: sample('g2'), inProject: true }] }], mode: 'add', onClose: () => {}, onPick: () => {} }))
+    assert.ok(none.includes('No other photo to add.'))
+  })
 })

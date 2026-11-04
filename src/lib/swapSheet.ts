@@ -30,15 +30,15 @@ function byRanking(ranking: unknown): (a: Brick, b: Brick) => number {
   }
 }
 
-/** The sheet that replaces `replacing`: Same job (sets a parameter the replaced photo sets on the screens now, judged unmuted), Adds something (sets a parameter
+/** The sheet that replaces `replacing`, or adds a photo when it is null: Same job (sets a parameter the replaced photo sets on the screens now, judged unmuted), Adds something (sets a parameter
  *  still at the shell default), Everything else; each photo in the first group it qualifies for, empty groups left out. `pool` is what the sheet may offer,
  *  `bricks` resolves the project. The replaced photo is never offered; photos already in the project come marked. */
-export function swapGroups(project: Project, pool: Brick[], replacing: string, bricks: Brick[]): SwapGroup[] {
-  const unmuted: Project = project.mutedBricks?.[replacing]
+export function swapGroups(project: Project, pool: Brick[], replacing: string | null, bricks: Brick[]): SwapGroup[] {
+  const unmuted: Project = replacing !== null && project.mutedBricks?.[replacing]
     ? { ...project, mutedBricks: Object.fromEntries(Object.entries(project.mutedBricks).filter(([id]) => id !== replacing)) as Record<string, true> }
     : project
   const before = resolveProject(unmuted, bricks).values
-  const job = new Set(RELATIONSHIP_KEYS.filter(k => before[k].source?.brickId === replacing))
+  const job = new Set(replacing === null ? [] : RELATIONSHIP_KEYS.filter(k => before[k].source?.brickId === replacing))
   const now = resolveProject(project, bricks).values
   // judged before the layout contract: a value it filled in is set by a rule, not by a photo, so a photo that sets it still adds something
   const taken = new Set(RELATIONSHIP_KEYS.filter(k => !isShellDefault(now[k].before ?? now[k])))

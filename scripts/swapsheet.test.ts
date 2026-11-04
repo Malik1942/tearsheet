@@ -40,6 +40,12 @@ const proposal = (ranking: unknown[]): Proposal => ({ at: '2026-11-03T10:00:00.0
 const view = (groups: SwapGroup[]) => groups.map(g => [g.title, g.tiles.map(t => (t.inProject ? `${t.brick.id}✓` : t.brick.id))])
 
 describe('swap sheet groups', () => {
+  it('add mode (null): nothing is replaced, so there is no Same job; a photo that sets a free parameter adds something', () => {
+    assert.deepEqual(view(swapGroups(project(), ALL, null, ALL)), [
+      ['Adds something', ['same2', 'adds']],
+      ['Everything else', ['x✓', 'same1', 'rest', 'bare', 'top✓']],
+    ])
+  })
   it('puts each photo in the first group it qualifies for, newest saved first without a ranking', () => {
     assert.deepEqual(view(swapGroups(project(), ALL, 'x', ALL)), [
       ['Same job', ['same1', 'same2']],

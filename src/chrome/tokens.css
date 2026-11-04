@@ -175,32 +175,44 @@
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; padding: 0; }
 @media (pointer: coarse) { .icon-btn { min-width: 44px; min-height: 44px; } }
 
-/* Make: the photo row. Each photo is a switch (the thumbnail and its title in one target), its credit or date under it, Swap a quiet icon.
-   On = the photo as it is, with its callout number in the corner; off = faded and grey, no number. The slots are fixed, so a photo never moves when another one appears or goes */
-.photo-row { display: grid; grid-template-columns: repeat(var(--slots, 3), 88px); justify-content: center; gap: var(--space-16); margin: 0; padding: var(--space-12) 0 0; list-style: none; }
-.photo-cell { --thumb: 64px; position: relative; display: flex; justify-content: center; }
+/* Make: the photo row (tray spec §5, Malik 2026-11-04: "spacing and gaps … not matching my branding"). Each photo is a switch, on the one left edge (§7) with
+   an even 12 px between photos, never spread across the width. Two marks at most, the same 20 px and inside opposite corners: the callout number at the lower
+   left (used only, the one mark that says it shapes the screens) and ⇄ at the upper right. Numbers mean photos only (DESIGN_SYSTEM §5), so what couldn't carry
+   over is a line of words over the row. Off = faded and grey, no number; on but not used = the photo as it is, no number. An empty slot (fewer than three
+   photos) is a dashed frame that adds one. The slots are fixed, so a photo never moves when another one appears or goes */
+.dock-label { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-12); margin: 0 0 var(--space-12); font: 500 11px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.dock-carry { position: relative; padding: 0; border: 0; background: none; font: inherit; letter-spacing: 0; text-transform: none; white-space: nowrap; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; cursor: pointer; }
+.dock-carry::before { content: ''; position: absolute; inset: -6px -8px; }   /* a 28 px tall target round a 16 px line, clear of the swap targets 12 below */
+.dock-carry:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.photo-row { --thumb: 64px; display: grid; grid-template-columns: repeat(var(--slots, 3), var(--thumb)); justify-content: start; gap: var(--space-12); margin: 0; padding: 0; list-style: none; }
+.photo-cell { position: relative; display: flex; }
 .photo-switch { display: block; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .photo-switch img { display: block; width: var(--thumb); height: var(--thumb); object-fit: cover; border-radius: var(--radius-brand); outline: 1px solid var(--line); transition: opacity 0.15s, filter 0.15s; }
 .photo-switch[aria-pressed="false"] img { opacity: 0.4; filter: grayscale(1); }   /* off: faded and grey; on: the photo as it is */
+.photo-add { display: flex; align-items: center; justify-content: center; width: var(--thumb); height: var(--thumb); padding: 0; border: 1px dashed var(--ink-2); border-radius: var(--radius-brand); background: transparent; color: var(--ink-2); cursor: pointer; }
+.photo-add:hover { color: var(--ink); border-color: var(--ink); }
+.photo-add:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .photo-switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-/* the photo's first short label: for two seconds after a tap ("Title leads · off"), and on hover on a desktop; above the photo, never in the layout */
-.photo-caption { position: absolute; bottom: calc(100% + 6px); left: 50%; translate: -50% 0; z-index: 5; padding: 2px var(--space-8); white-space: nowrap; pointer-events: none;
+/* the photo's first short label: for two seconds after a tap ("Colors removed"), and on hover on a desktop; above the photo, never in the layout */
+.photo-caption { position: absolute; bottom: calc(100% + 6px); left: 50%; translate: -50% 0; z-index: 5; padding: 2px var(--space-8); white-space: normal; width: max-content; max-width: 120px; text-align: center; pointer-events: none;
   border-radius: var(--radius); background: var(--ink); color: var(--paper); font: 500 var(--type-caption)/18px var(--font-ui); opacity: 0; transition: opacity 0.15s; }
 .photo-caption.is-shown { opacity: 1; }
+.photo-cell:first-child .photo-caption { left: 0; translate: 0 0; }   /* the first photo is on the page's left edge: its caption starts there rather than past it */
 @media (hover: hover) and (pointer: fine) { .photo-cell:hover .photo-caption { opacity: 1; } }
-/* the corners: a 16 px dot counting what couldn't carry over (it opens that photo's list), and ⇄ (always on a phone, on hover or focus on a desktop) */
-.photo-badge, .photo-swap { position: absolute; top: -6px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 50%; cursor: pointer; }
-.photo-badge::before, .photo-swap::before { content: ''; position: absolute; inset: -12px; }   /* a 40 px target round a small mark */
-.photo-badge { right: calc(50% - var(--thumb) / 2 - 6px); width: 16px; height: 16px; border: 1px solid var(--paper); background: var(--ink); color: var(--paper); font: 600 10px/1 var(--font-ui); }
-.photo-swap { left: calc(50% - var(--thumb) / 2 - 6px); width: 20px; height: 20px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+/* ⇄ inside the upper right corner (always on a phone, on hover or focus on a desktop), the same 20 px as the number in the lower left */
+.photo-swap { position: absolute; top: 4px; left: calc(var(--thumb) - 24px); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); color: var(--ink); cursor: pointer; }
+.photo-swap::before { content: ''; position: absolute; inset: -8px -12px 0 0; }   /* a 32 × 28 target that grows up and out only: inward it would take a third of the photo's own tap (switch it off) for Swap */
 @media (hover: hover) and (pointer: fine) { .photo-cell .photo-swap { opacity: 0; transition: opacity 0.15s; } .photo-cell:is(:hover, :focus-within) .photo-swap { opacity: 1; } }
-.photo-badge:focus-visible, .photo-swap:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-/* on a phone the row rides above the bottom bar, so the screens and their switches stay on screen together */
+.photo-swap:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* on a phone the row rides above the bottom bar, so the screens and their switches stay on screen together. 32 under the row keeps it 8 clear of the shutter,
+   which rises 13 above the bar (and of the swap and number marks' targets); past three photos (five by hand) the thumbnails shrink to keep the 12 px gaps
+   inside the gutters */
 @media (max-width: 767.98px) {
-  .photo-dock { position: sticky; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); z-index: 20; margin: 0 calc(-1 * var(--gutter)); padding: 8px var(--gutter); background: var(--paper); border-top: 1px solid var(--line); }
-  .photo-row { grid-template-columns: repeat(var(--slots, 3), minmax(0, 1fr)); gap: var(--space-8); }
-  .photo-cell { --thumb: 56px; }
+  .photo-dock { position: sticky; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); z-index: 20; margin: 0 calc(-1 * var(--gutter)); padding: var(--space-12) var(--gutter) var(--space-32); background: var(--paper); border-top: 1px solid var(--line); }
+  .photo-row { --thumb: min(64px, calc((100vw - 2 * var(--gutter) - (var(--slots, 3) - 1) * var(--space-12)) / var(--slots, 3))); }
 }
+/* from the tablet up the row sits in the intent's own column (.make-head, 680), so the label, the photos and the h1 share one left edge (§7) */
+@media (min-width: 768px) { .photo-dock { width: 100%; max-width: 680px; margin: var(--space-24) auto 0; } }
 
 /* while the photos are found: the frames at their final size, a quiet pulse, the status inside them (the frames stand where the shell will be) */
 .finding { display: flex; justify-content: center; gap: 32px; }
@@ -370,7 +382,7 @@ a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
    ultramarine cased by a hairline of white either side (a 3 px casing under a 1.5 px line, as a subway map separates its lines), so it reads over the dark
    bezel and any screen, a blue one included, without the thick white outline it had before. The white number in its circle is 7.49:1 */
 .callout { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--trace); color: #FFFFFF; font: 600 11px/1 var(--font-mono); box-shadow: 0 0 0 1.5px var(--halo); }
-.photo-callout { position: absolute; left: calc(50% - var(--thumb) / 2 - 8px); top: calc(var(--thumb) - 12px); z-index: 2; pointer-events: none; }
+.photo-callout { position: absolute; left: 4px; top: calc(var(--thumb) - 24px); z-index: 2; pointer-events: none; }   /* inside the thumbnail's lower left corner, on its halo */
 .callouts { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 3; }
 .callouts .casing { fill: none; stroke: var(--halo); stroke-width: 3; stroke-linejoin: round; }
 .callouts .leader { fill: none; stroke: var(--trace); stroke-width: 1.5; stroke-linejoin: round; }
@@ -416,19 +428,16 @@ a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .drop-line { margin: 0; font: 500 var(--type-em)/20px var(--font-ui); color: var(--ink-2); }
 
 /* Make as a workspace from 1180 px (Make.tsx WORKSPACE): the screens at the left; at the right, sticky, the intent and each photo with what it sets and why
-   it was picked, the photo row re-laid as that list (its switches, swap and badges as they are). Below 1180 px, the photo row under the screens as before */
-.dock-label, .photo-text { display: none; }
+   it was picked, the photo row re-laid as that list (its switches, swap and number as they are). Below 1180 px, the photo row under the screens as before */
+.photo-text { display: none; }
 @media (min-width: 1180px) {
   .make-page.is-result { display: grid !important; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto auto 1fr; gap: 0 64px !important; align-items: start; max-width: 1312px !important; }   /* !important: over the page's own flex, gap and max-width utilities, which sit in a later layer */
   .make-page.is-result > .make-spread { grid-column: 1; grid-row: 1 / span 3; margin: var(--space-32) auto 0; }
   .make-page.is-result > .make-head { grid-column: 2; grid-row: 1; margin: 64px 0 0; max-width: none; }
-  .make-page.is-result > .photo-dock { grid-column: 2; grid-row: 2; position: sticky; top: 88px; margin: var(--space-32) 0 0; padding: 0; border: 0; background: none; }
-  .make-page.is-result .dock-label { display: block; margin: 0 0 var(--space-12); font: 500 11px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .make-page.is-result > .photo-dock { grid-column: 2; grid-row: 2; position: sticky; top: 88px; max-width: none; margin: var(--space-32) 0 0; padding: 0; border: 0; background: none; }
+  .make-page.is-result .dock-label { margin: 0 0 var(--space-12); }
   .make-page.is-result .photo-row { display: flex; flex-direction: column; gap: var(--space-16); padding: 0; }
   .make-page.is-result .photo-cell { --thumb: 56px; display: grid; grid-template-columns: var(--thumb) minmax(0, 1fr); column-gap: 14px; justify-content: stretch; align-items: start; }
-  .make-page.is-result .photo-callout { left: -8px; top: calc(var(--thumb) - 12px); }
-  .make-page.is-result .photo-badge { left: calc(var(--thumb) - 10px); right: auto; }
-  .make-page.is-result .photo-swap { left: -6px; }
   .make-page.is-result .photo-caption:not(.is-shown) { display: none; }   /* the name is in the list now; a tap's "· off" still shows */
   .make-page.is-result .photo-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .make-page.is-result .photo-text b { font: 600 var(--type-em)/20px var(--font-ui); color: var(--ink); }

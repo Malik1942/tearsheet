@@ -1,10 +1,11 @@
-/** Make as one page, the pure parts: the auto name (spec v3 P2), the date line, a photo muted as a whole, which photos the row shows and their one label, the routes, and the E1 link and landing.
+/** Make as one page, the pure parts: the auto name (spec v3 P2), the date line, a photo muted as a whole, every photo in the row and its status, the routes, and the E1 link and landing.
  *  Expected strings are typed out from the specs, never read from makeFlow.ts. Run: npm test */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, carryByBrick, sharedHeading, carryOver, leadKey, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
+import { autoName, carryByBrick, sharedHeading, carryOver, changeCaption, effectOf, leadKey, makeRoute, NEUTRAL_KEYS, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleCaption, toggleMuted } from '../src/lib/makeFlow.ts'
+import { PARAMETER_KEYS } from '../src/shell/params.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
 
@@ -90,20 +91,28 @@ describe('a photo muted as a whole (mutedBricks)', () => {
   })
 })
 
-describe('the photo row: which photos show, and the one label', () => {
-  it('Chicago and g2 both set something and show; echo sets nothing under Chicago and is left out', () => {
+describe('the photo row: every photo, its status and its one label', () => {
+  it('every photo shows: Chicago and g2 set something (used); echo sets nothing under Chicago (unused)', () => {
     const p = project({ brickIds: ['chicago', 'g2', 'echo'] })
-    assert.deepEqual(photoRow(p, [chicago, g2, echo]).map(c => [c.brick.id, c.muted]), [['chicago', false], ['g2', false]])
+    assert.deepEqual(photoRow(p, [chicago, g2, echo]).map(c => [c.brick.id, c.status]), [['chicago', 'used'], ['g2', 'used'], ['echo', 'unused']])
   })
-  it('a muted photo that would set something stays, dimmed; one that would not stays out', () => {
+  it('a muted photo is off, whether or not it would set something; muted mirrors it', () => {
     const p = project({ brickIds: ['chicago', 'g2', 'echo'], mutedBricks: { chicago: true, echo: true } })
-    assert.deepEqual(photoRow(p, [chicago, g2, echo]).map(c => [c.brick.id, c.muted]), [['chicago', true], ['g2', false]])
+    assert.deepEqual(photoRow(p, [chicago, g2, echo]).map(c => [c.brick.id, c.status, c.muted]), [['chicago', 'off', true], ['g2', 'used', false], ['echo', 'off', true]])
   })
-  it('with Chicago off, echo (next in line) sets its share and shows', () => {
+  it('with Chicago off, echo (next in line) sets its share and is used', () => {
     const on = project({ brickIds: ['chicago', 'echo', 'g2'] })
-    assert.deepEqual(photoRow(on, [chicago, g2, echo]).map(c => c.brick.id), ['chicago', 'g2'])
+    assert.deepEqual(photoRow(on, [chicago, g2, echo]).map(c => [c.brick.id, c.status]), [['chicago', 'used'], ['echo', 'unused'], ['g2', 'used']])
     const off = project({ brickIds: ['chicago', 'echo', 'g2'], mutedBricks: { chicago: true } })
-    assert.deepEqual(photoRow(off, [chicago, g2, echo]).map(c => c.brick.id), ['chicago', 'echo', 'g2'])
+    assert.deepEqual(photoRow(off, [chicago, g2, echo]).map(c => [c.brick.id, c.status]), [['chicago', 'off'], ['echo', 'used'], ['g2', 'used']])
+  })
+  it('the board screenshots (2026-11-04): MARS is in the row while CalmMouse sets everything first, and used once CalmMouse is off', () => {
+    const T = ['calmmouse', 'jpl-2016-visions-mars', 'lissitzky-1923-dlya-golosa']
+    assert.deepEqual(photoRow(project({ brickIds: T }), SAMPLES).map(c => c.status), ['used', 'unused', 'used'])
+    assert.deepEqual(photoRow(project({ brickIds: T, mutedBricks: { calmmouse: true } }), SAMPLES).map(c => c.status), ['off', 'used', 'used'])
+  })
+  it('an id with no brick is skipped', () => {
+    assert.deepEqual(photoRow(project({ brickIds: ['chicago', 'ghost'] }), [chicago]).map(c => c.brick.id), ['chicago'])
   })
   it('the label is the first one among the values the photo sets, in its own rule order', () => {
     const p = project({ brickIds: ['chicago', 'g2'] })
@@ -220,5 +229,54 @@ describe('the read-only page heading', () => {
   })
   it('a name a person gave goes first, with the intent under it', () => {
     assert.deepEqual(sharedHeading({ intent, name: 'Gig diary' }), { title: 'Gig diary', sub: intent })
+  })
+})
+
+describe('the caption after a tap says what moved (spec 2026-11-04 §3)', () => {
+  const T = ['calmmouse', 'jpl-2016-visions-mars', 'lissitzky-1923-dlya-golosa']
+  const MARS = 'jpl-2016-visions-mars', LISS = 'lissitzky-1923-dlya-golosa'
+  it('every parameter belongs to exactly one family', () => {
+    const base = resolveProject(project(), [chicago]).values
+    for (const k of PARAMETER_KEYS) {
+      const after = { ...base, [k]: { ...base[k], value: '__moved' } }
+      assert.equal(effectOf(base, after).length, 1, k)
+    }
+  })
+  it('a value that stays while its source moves is not a change', () => {
+    const base = resolveProject(project(), [chicago]).values
+    const after = { ...base, type_family: { ...base.type_family, source: { ...base.type_family.source, brickId: 'other' } } }
+    assert.deepEqual(effectOf(base, after), [])
+  })
+  it('CalmMouse off moves colors, the type scale and the image share; on again brings them back', () => {
+    assert.equal(toggleCaption(project({ brickIds: T }), SAMPLES, 'calmmouse'), 'Colors, type and layout removed')
+    assert.equal(toggleCaption(project({ brickIds: T, mutedBricks: { calmmouse: true } }), SAMPLES, 'calmmouse'), 'Colors, type and layout back')
+  })
+  it('Lissitzky off moves only the hue count', () => {
+    assert.equal(toggleCaption(project({ brickIds: T }), SAMPLES, LISS), 'Colors removed')
+  })
+  it('with the neutral skin on, a move in a skin key alone is no visible change', () => {
+    const base = resolveProject(project(), [chicago]).values
+    const after = { ...base, color_bg: { ...base.color_bg, value: '__moved' } }
+    assert.deepEqual(effectOf(base, after, ['color_bg']), [])
+  })
+  it('with the neutral skin on, CalmMouse off moves only type and layout', () => {
+    assert.equal(toggleCaption(project({ brickIds: T }), SAMPLES, 'calmmouse', NEUTRAL_KEYS), 'Type and layout removed')
+  })
+  it('with the neutral skin on, Lissitzky off still moves the hue count', () => {
+    assert.equal(toggleCaption(project({ brickIds: T }), SAMPLES, LISS, NEUTRAL_KEYS), 'Colors removed')
+  })
+  it('MARS sets nothing while CalmMouse is on: off or on, it says so', () => {
+    assert.equal(toggleCaption(project({ brickIds: T }), SAMPLES, MARS), 'Not used: earlier photos set the same things')
+    assert.equal(toggleCaption(project({ brickIds: T, mutedBricks: { [MARS]: true } }), SAMPLES, MARS), 'Not used: earlier photos set the same things')
+  })
+  it('a photo whose values the next one repeats moves nothing', () => {
+    const twin = brick('twin', [TITLE, ACCENT, HUE])
+    assert.equal(toggleCaption(project({ brickIds: ['chicago', 'twin'] }), [chicago, twin], 'chicago'), 'No visible change')
+  })
+  it('an added photo: what it brings, or that it is not used', () => {
+    const two = ['calmmouse', LISS]
+    assert.equal(changeCaption(project({ brickIds: two }), project({ brickIds: [...two, MARS] }), SAMPLES, MARS, 'added'), 'Not used: earlier photos set the same things')
+    const off = { calmmouse: true } as const
+    assert.equal(changeCaption(project({ brickIds: two, mutedBricks: off }), project({ brickIds: [...two, MARS], mutedBricks: off }), SAMPLES, MARS, 'added'), 'Type and layout added')
   })
 })

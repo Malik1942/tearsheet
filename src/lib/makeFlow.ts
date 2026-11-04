@@ -40,9 +40,14 @@ export function photoLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at'
   return b.taken_at ? savedLabel(b.taken_at, today).slice('saved '.length) : savedLabel(b.saved_at, today)
 }
 
-/** The photo row under the screens: each photo of the project that sets something on them, judged with that photo unmuted (a photo tapped off
- *  stays in the row, dimmed, as long as turning it back on would show), with its one short label. A photo that sets nothing is left out. */
-export type PhotoChip = { brick: Brick; muted: boolean; label: string | null }
+/** The photo row under the screens (spec 2026-11-04 §1): every photo of the project, in its order, with its state and its one short label (judged with
+ *  the photo unmuted). `used` sets something on the screens now; `off` is tapped off; `unused` is on but sets nothing (earlier photos, a lock or a
+ *  value set by hand took everything it would set). */
+export type PhotoStatus = 'used' | 'off' | 'unused'
+export type PhotoChip = { brick: Brick; muted: boolean; status: PhotoStatus; label: string | null }
+
+/** Whether any value on the screens comes from this photo. */
+const setsSomething = (r: Resolved, id: string) => PARAMETER_KEYS.some(k => r.values[k].source?.brickId === id)
 
 export function photoRow(project: Project, bricks: Brick[]): PhotoChip[] {
   return project.brickIds.flatMap(id => {
@@ -50,8 +55,8 @@ export function photoRow(project: Project, bricks: Brick[]): PhotoChip[] {
     if (!brick) return []
     const muted = !!project.mutedBricks?.[id]
     const r = resolveProject(muted ? { ...project, mutedBricks: toggleMuted(project.mutedBricks, id) } : project, bricks)
-    if (!PARAMETER_KEYS.some(k => r.values[k].source?.brickId === id)) return []
-    return [{ brick, muted, label: oneLabel(brick, r) }]
+    const status: PhotoStatus = muted ? 'off' : setsSomething(r, id) ? 'used' : 'unused'
+    return [{ brick, muted, status, label: oneLabel(brick, r) }]
   })
 }
 
@@ -149,3 +154,41 @@ export function openDestination(projectId: string | null, known: boolean, to: st
 
 /** Neutral skin: the same colors, radius, type and spacing on every shell, so only the relationship parameters remain (Make's ⋯ and Fine-tune share it). */
 export const NEUTRAL_SKIN = { color_bg: '#F4F2EE', color_fg: '#1B1B1B', color_accent: '#6B6B6B', radius: '8px', type_family: 'system-ui, -apple-system, "Segoe UI", sans-serif', spacing_unit: '8px' } as const
+/** The parameters Neutral skin overrides: while it is on they are not drawn, so a move in them is not a visible change. */
+export const NEUTRAL_KEYS = Object.keys(NEUTRAL_SKIN) as ParameterKey[]
+
+/** Spec 2026-11-04 §3: what the screens show, in three families, for the caption after a tap. Every parameter is in exactly one. */
+export type Family = 'colors' | 'type' | 'layout'
+const FAMILIES: readonly { name: Family; keys: readonly ParameterKey[] }[] = [
+  { name: 'colors', keys: ['color_bg', 'color_fg', 'color_accent', 'palette_hue_count', 'accent_placement', 'accent_coverage'] },
+  { name: 'type', keys: ['type_family', 'type_scale_ratio', 'hierarchy_mode'] },
+  { name: 'layout', keys: ['density', 'grouping', 'rhythm', 'alignment_edge', 'image_text_dominance', 'spacing_unit', 'radius'] },
+]
+
+/** The families whose value moved, in the order colors, type, layout. A value that stays while its source moves is not a change: the screens do not move.
+ *  Keys in `ignore` are not drawn (Neutral skin overrides them), so a move there is not a change either. */
+export function effectOf(before: Resolved['values'], after: Resolved['values'], ignore: readonly ParameterKey[] = []): Family[] {
+  return FAMILIES.filter(f => f.keys.some(k => !ignore.includes(k) && before[k].value !== after[k].value)).map(f => f.name)
+}
+
+const CAPTION = { notUsed: 'Not used: earlier photos set the same things', none: 'No visible change' } as const
+/** `Colors`, `Colors and type`, `Colors, type and layout`. */
+function joinFamilies(fs: Family[]): string {
+  const s = fs.length < 3 ? fs.join(' and ') : `${fs.slice(0, -1).join(', ')} and ${fs[fs.length - 1]}`
+  return s[0].toUpperCase() + s.slice(1)
+}
+
+export type CaptionVerb = 'removed' | 'back' | 'added'
+/** The caption over photo `id` after a change from `before` to `after`: that it is not used when it sets nothing while on (judged on whichever side has
+ *  it on; what is drawn does not matter there), else the families that moved and the verb, else that nothing moved. `ignore` are the keys not drawn. */
+export function changeCaption(before: Project, after: Project, bricks: Brick[], id: string, verb: CaptionVerb, ignore: readonly ParameterKey[] = []): string {
+  if (!setsSomething(resolveProject(verb === 'removed' ? before : after, bricks), id)) return CAPTION.notUsed
+  const fs = effectOf(resolveProject(before, bricks).values, resolveProject(after, bricks).values, ignore)
+  return fs.length ? `${joinFamilies(fs)} ${verb}` : CAPTION.none
+}
+
+/** The caption for a tap on photo `id`: off if it was on (`removed`), on if it was off (`back`). */
+export function toggleCaption(project: Project, bricks: Brick[], id: string, ignore: readonly ParameterKey[] = []): string {
+  const wasOff = !!project.mutedBricks?.[id]
+  return changeCaption(project, { ...project, mutedBricks: toggleMuted(project.mutedBricks, id) }, bricks, id, wasOff ? 'back' : 'removed', ignore)
+}
