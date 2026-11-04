@@ -94,10 +94,11 @@ await png(tile(512, 264, 0), 512, 512, 'public/icons/icon-512-maskable.png')    
 const ogW = 720, ogH = (ogW * VBH) / VBW
 await png(`<div style="width:1200px;height:630px;background:${BRAND.ultramarine};display:flex;align-items:center;justify-content:center">${sized(svgs['public/brand/lockup-on-ultramarine.svg'], ogW, ogH)}</div>`, 1200, 630, 'public/brand/og-default.png')
 await png(svgs['public/brand/readme-banner.svg'], 1200, 240, 'public/brand/readme-banner.png')
-// the video title card: the board's primary lockup frame (1440 x 810: lockup 1120 wide, 72 above the tagline, Archivo 600 30/36) at 1920 x 1080
+// the video title card: the board's primary lockup frame (1440 x 810: lockup 1120 wide, Archivo 600) at 1920 x 1080. The tagline is larger than the
+// board's 30/36 scaled (40/48), which read as a footnote under 200 px letters (Malik, 2026-11-04): 56/64, 80 below the lockup
 const tcW = 1493
-await png(`<div style="width:1920px;height:1080px;background:${BRAND.paper};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:96px">` +
-  `${sized(svgs['public/brand/lockup-on-paper.svg'], tcW, (tcW * VBH) / VBW)}<p style="margin:0;font-family:Archivo,'Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:40px;line-height:48px;color:${BRAND.ink}">${BRAND.tagline}</p></div>`,
+await png(`<div style="width:1920px;height:1080px;background:${BRAND.paper};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:80px">` +
+  `${sized(svgs['public/brand/lockup-on-paper.svg'], tcW, (tcW * VBH) / VBW)}<p style="margin:0;font-family:Archivo,'Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:56px;line-height:64px;color:${BRAND.ink}">${BRAND.tagline}</p></div>`,
   1920, 1080, 'public/brand/title-card.png')
 await browser.close()
 console.log('brand: wrote', Object.keys(svgs).length, 'SVGs, 9 PNGs and src/brand/staticMarks.ts')
