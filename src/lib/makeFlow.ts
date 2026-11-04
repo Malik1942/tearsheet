@@ -27,6 +27,13 @@ export function autoName(intent: string): string {
   return name ? name[0].toUpperCase() + name.slice(1) : ''
 }
 
+/** The read-only page's heading: the full intent. A project is created with `name` = autoName(intent), so only a name that differs from it was given by a person;
+ *  that one goes first and the intent stays under it. */
+export function sharedHeading(project: { name?: string; intent: string }): { title: string; sub: string | null } {
+  const named = !!project.name && project.name !== autoName(project.intent)
+  return named ? { title: project.name!, sub: project.intent } : { title: project.intent, sub: null }
+}
+
 /** The line under a photo in a picker: the day it was taken ("Dec 27, 2025") when the photo said, else "saved Nov 3"; a starter carries its credit line (SB2). */
 export function photoLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {
   if (originOf(b) === 'starter') return creditLine(b)

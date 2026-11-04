@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, carryByBrick, carryOver, leadKey, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
+import { autoName, carryByBrick, sharedHeading, carryOver, leadKey, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
 
@@ -209,5 +209,16 @@ describe("C+D: what couldn't carry over on Make", () => {
     assert.equal(by.has('chicago'), false)
     assert.equal(by.has('g2'), false)
     assert.deepEqual(by.get('secession')?.map(u => u.rule), ['link two focal elements with one curve', 'a second rule with no slot'])
+  })
+})
+
+describe('the read-only page heading', () => {
+  const intent = 'a concert log for someone who goes to a lot of shows'
+  it('is the full intent, also when the project holds the name it was created with', () => {
+    assert.deepEqual(sharedHeading({ intent, name: autoName(intent) }), { title: intent, sub: null })
+    assert.deepEqual(sharedHeading({ intent }), { title: intent, sub: null })
+  })
+  it('a name a person gave goes first, with the intent under it', () => {
+    assert.deepEqual(sharedHeading({ intent, name: 'Gig diary' }), { title: 'Gig diary', sub: intent })
   })
 })

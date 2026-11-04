@@ -3,7 +3,7 @@ import { Link } from '../lib/router'
 import { CODE_RE, normalizeCode, pull } from '../lib/syncClient'
 import { SAMPLES } from '../fixtures/samples'
 import { resolveProject, type Project } from '../lib/mapRelations'
-import { sharedView } from '../lib/makeFlow'
+import { sharedHeading, sharedView } from '../lib/makeFlow'
 import { cardCaption } from '../lib/brickLabels'
 import { labelsOfBrick } from '../lib/shortLabels'
 import { exportHandoff } from '../export'
@@ -46,6 +46,7 @@ export function SharedScreen() {
   if (!view || !resolved) return <Frame><p className="ink-2 m-0" role="status" aria-live="polite">{COPY.loading}</p></Frame>
 
   const { project, bricks } = view
+  const heading = sharedHeading(project)
   const used = project.brickIds.map(id => bricks.find(b => b.id === id)).filter((b): b is Brick => !!b)
   const page = exportHandoff(project.intent, used, resolved, project.proposal, { photos: 'inline', alt: b => cardCaption(b, labelsOfBrick(b, 1)[0]?.label ?? null).title })
   const copy = async () => { try { await navigator.clipboard.writeText(exportHandoff(project.intent, used, resolved, project.proposal)); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* clipboard blocked */ } }
@@ -53,8 +54,8 @@ export function SharedScreen() {
     <Frame>
       <header className="flex flex-col gap-1">
         {/* Data tear: the title is the share card's (the sans, 600, 24). It is the full intent; a name a person gave the project goes above it, the intent kept under it */}
-        <h1 className="title">{project.name || project.intent}</h1>
-        {project.name && <p className="ink-2 m-0">{project.intent}</p>}
+        <h1 className="title">{heading.title}</h1>
+        {heading.sub && <p className="ink-2 m-0">{heading.sub}</p>}
         <p className="ink-2 m-0" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: '16px', letterSpacing: '0.04em' }}>{COPY.readOnly}</p>
       </header>
       <ScaledScreens params={resolved.params} flash={[]} reserve={48} content={toShellContent(project.content)} />
