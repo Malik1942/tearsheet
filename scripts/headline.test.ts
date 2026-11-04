@@ -38,7 +38,7 @@ describe('the headline is the input', () => {
     assert.doesNotMatch(html, /headline-go/)
     assert.match(html, /<div class="card-progress headline-progress" role="progressbar"/)
     assert.match(html, /<textarea class="headline-input"[^>]*readOnly=""/)
-    assert.match(html, /<p class="headline-wait" aria-hidden="true">Looking through your photos · usually 15–25 s<\/p>/, 'the wait, said under the line')
+    assert.match(html, /<p class="headline-wait" aria-hidden="true">Reading your photos&#x27; rules · usually 15–25 s<\/p>/, 'the wait, said under the line')
     assert.doesNotMatch(html, /headline-track/)
   })
 })

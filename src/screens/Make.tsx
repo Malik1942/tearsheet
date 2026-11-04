@@ -34,7 +34,7 @@ const RESERVE = 150
 const CAPTION_MS = 2000
 const COPY = {
   field: 'What are you making?',
-  finding: 'Looking through your photos…',
+  finding: 'Reading your photos\' rules…',
   off: 'Finding is off here. Pick them yourself.',
   noRules: 'Nothing here has a rule to quote yet. Pick them yourself.',
   noProposal: 'Nothing came back. Pick them yourself.',

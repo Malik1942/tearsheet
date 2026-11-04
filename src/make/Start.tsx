@@ -5,9 +5,9 @@ import type { Brick } from '../lib/types'
 
 const COPY = {
   go: 'Find photos',
-  finding: 'Looking through your photos',
-  wait: 'Looking through your photos · usually 15–25 s',
-  still: 'Still looking…',
+  finding: 'Reading your photos\' rules',
+  wait: 'Reading your photos\' rules · usually 15–25 s',
+  still: 'Still reading…',
   startingFrom: 'Starting from this photo',
   clear: 'Clear the starting point',
 }
