@@ -4,12 +4,13 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { PROPOSE_PROMPT } from '../src/lib/proposePrompt.ts'
-import { PROPOSE_SCHEMA, handlePropose, validateRanking, type LibraryBrick } from '../src/lib/propose.ts'
+import { PROPOSE_SCHEMA, buildProposeRequest, handlePropose, validateRanking, type LibraryBrick } from '../src/lib/propose.ts'
 import { libraryFor, propose as proposeFromApp } from '../src/lib/proposeClient.ts'
 
 const INTENT = 'A concert log for someone who goes to a lot of shows'
 const LIB = libraryFor(SAMPLES)
-const SENTENCE = 'Also return ranking: every brick_id in the library exactly once, best fit first for what they are making, by the same preferences as your picks.'
+// capped at ten (2026-11-03 evening): ranking the whole library took 3,129 of 4,000 output tokens with twelve bricks
+const SENTENCE = 'Also return ranking: up to ten brick_ids from the library, best fit first for what they are making, each once, by the same preferences as your picks.'
 const firstRule = (id: string) => LIB.find(b => b.brick_id === id)!.rules[0].rule
 
 /** Stubs the model with one answer, runs `fn`, restores fetch; returns every request body sent. */
@@ -24,9 +25,12 @@ async function withModel(answer: unknown, fn: () => Promise<void>): Promise<any[
 }
 
 describe('the propose schema', () => {
-  it('requires a ranking of at most 60 strings next to the picks', () => {
+  it('requires a ranking of at most ten strings next to the picks', () => {
     assert.deepEqual(PROPOSE_SCHEMA.required, ['picks', 'ranking'])
-    assert.deepEqual(PROPOSE_SCHEMA.properties.ranking, { type: 'array', maxItems: 60, items: { type: 'string' } })
+    assert.deepEqual(PROPOSE_SCHEMA.properties.ranking, { type: 'array', maxItems: 10, items: { type: 'string' } })
+  })
+  it('leaves the reasoning room to finish: 8,000 output tokens', () => {
+    assert.equal(buildProposeRequest('a concert log', LIB).max_output_tokens, 8000)
   })
 })
 
@@ -44,6 +48,10 @@ describe('validateRanking', () => {
   })
   it('drops ids not in the library, repeats, near-misses and anything that is not a string', () => {
     assert.deepEqual(validateRanking(['x', 'b', 7, 'b', null, ' a', 'a', { id: 'c' }], lib), ['b', 'a'])
+  })
+  it('keeps at most ten, the first ten valid ones', () => {
+    const many: LibraryBrick[] = Array.from({ length: 12 }, (_, i) => ({ brick_id: `b${i}`, rules: [{ rule: `rule ${i}`, parameter: 'none' }] }))
+    assert.deepEqual(validateRanking(['nope', ...many.map(b => b.brick_id)], many), many.slice(0, 10).map(b => b.brick_id))
   })
   it('reads a missing or malformed ranking as none', () => {
     for (const raw of [undefined, null, 'a,b', {}, 3]) assert.deepEqual(validateRanking(raw, lib), [])

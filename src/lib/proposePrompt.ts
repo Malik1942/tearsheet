@@ -15,7 +15,7 @@ For each pick:
 - why: one sentence on how that rule serves what they are making. Plain language; no new claims about the photo.
 Prefer picks whose quoted rules map to different parameters. Do not pick the same brick twice.{{LEAN}}
 
-Also return ranking: every brick_id in the library exactly once, best fit first for what they are making, by the same preferences as your picks.
+Also return ranking: up to ten brick_ids from the library, best fit first for what they are making, each once, by the same preferences as your picks.
 
 Library:
 {{LIBRARY}}`
