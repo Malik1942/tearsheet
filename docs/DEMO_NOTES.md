@@ -2,6 +2,8 @@
 
 **Shot flow (Malik, Tue 2026-11-03, one-page Make):** type the intent, press Enter, tap the Chicago photo off, tap it on, Share. These notes describe the public version at `bricks-virid-nine.vercel.app`: commit 7768452, deployed 2026-11-03 17:13 PT. It has the swap sheet, and the proposal prompt asks for a ranking of the ten best photos. If a later deploy changes the proposal prompt or the layout contract, check step 1 and the table again before recording.
 
+> **To redo before recording.** Since these notes were written, the C+D chrome and the device details have changed every frame below. The carry line now says "1 thing", and a fresh Enter writes its own entries (Spark-written content), so beats that name an entry need a new take. The ⋯ and Share are now in the header, and the intent shows as the headline after Enter.
+
 ## The photo
 
 - **File:** `example-library/demo/IMG_6966.jpeg`, from Malik's camera roll. It sits outside the repo; only the shell renders below are committed.
@@ -27,7 +29,7 @@
 **Setup, before recording.**
 - **Library:** the 12 starters (⋯ in the header → Include starters) plus the Chicago photo. The live calls below saw exactly these 13.
 - **Window:** 1440 × 900. The screens, the photo row and the line under it fit without scrolling.
-- **Intent and lean:** on Make, type "a concert log for someone who goes to a lot of shows". Then use the ⋯ beside the field → Adjust style… → turn on `dark` and `one accent`, and close it.
+- **Intent and lean:** on Make, type "a concert log for someone who goes to a lot of shows". Then use the ⋯ in the header → Adjust style… → turn on `dark` and `one accent`, and close it.
   - This is the lean of the live calls below; without it, Chicago first is untested.
   - The chips appear once the intent is typed. With the 12 starters and Chicago they are dark, one accent, airy, two colors, big titles and text-heavy.
   - The lean holds while the page stays open. A reload clears it.
@@ -78,12 +80,12 @@
 
 ## Fallbacks
 
-- **Chicago in none of three takes:** use the ⋯ beside the field → Adjust style… → More like this one → the Chicago photo. "Starting from" and its thumbnail show under the field; press Enter.
+- **Chicago in none of three takes:** use the ⋯ in the header → Adjust style… → More like this one → the Chicago photo. "Starting from" and its thumbnail show under the field; press Enter.
   - Chicago comes first as the starting point, and the model adds up to three more.
   - The same start works from Library: tap the photo → Use in Make.
   - Say "I start from this one", not "it found it".
   - The other picks may differ from g2 and secession, so check the frames against the table before recording.
-- **Still not usable:** use the ⋯ beside the field → Pick photos myself… → Chicago, g2, secession → Show the screens. The screens match the table in either order. Say "I picked these three".
+- **Still not usable:** use the ⋯ in the header → Pick photos myself… → Chicago, g2, secession → Show the screens. The screens match the table in either order. Say "I picked these three".
 
 ## Narration facts
 

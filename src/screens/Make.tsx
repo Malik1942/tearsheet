@@ -10,13 +10,14 @@ import { resolveProject, type Project, type Proposal, type ProposalPick } from '
 import { standInLine } from '../lib/standIns'
 import { INTENT_EXAMPLES, NEUTRAL_SKIN, autoName, carryOver, photoLine, photoRow, toggleMuted } from '../lib/makeFlow'
 import { useChangeFlash } from '../compose/useChangeFlash'
-import { Fold, MoreMenu, Overlay } from '../make/Steps'
+import { Fold, Overlay } from '../make/Steps'
 import { ScaledScreens } from '../make/Screens'
 import { toShellContent } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
 import { ComposePanel } from './Compose'
+import { usePageActions } from '../chrome/pageActions'
 import { FilesView } from './Export'
 
 const MAX_BRICKS = 5
@@ -33,7 +34,7 @@ const COPY = {
   noProposal: 'Nothing came back. Pick them yourself.',
   startingFrom: 'Starting from',
   clearAnchor: 'Clear the starting point',
-  more: 'More for this page',
+  edit: 'Edit what you are making',
   fineTune: 'Fine-tune…', style: 'Adjust style…', arrangement: 'Try another arrangement…', neutral: 'Neutral skin', pick: 'Pick photos myself…', rename: 'Rename…',
   turnOff: 'Turn this photo off', turnOn: 'Turn this photo back on', swap: 'Swap this photo',
   couldnt: (n: number) => `${n} ${n === 1 ? 'thing' : 'things'} couldn't carry over`,
@@ -47,7 +48,8 @@ type Dialog = null | 'tune' | 'style' | 'arrange' | 'pick' | 'rename' | { swap: 
 /** Make, one page (Malik, 2026-11-03; overrides 15_SIMPLIFY's four steps). One field; Enter asks the model for up to three photos from the library (spec v3 P5,
  *  with the lean and the starting point from Adjust style), creates the project at once (P2 auto-name, the proposal record, the first arrangement) and shows it:
  *  the two screens, and under them the photos that set something, each with one short label. Tapping a photo turns its whole contribution off or on
- *  (`mutedBricks`, a new version, the change highlight). Share (top right): Copy link (E1) and Download. ⋯: Fine-tune (today's Compose), Adjust style,
+ *  (`mutedBricks`, a new version, the change highlight). After Enter the intent is the page's headline; clicking it brings the field back (Malik, C+D).
+ *  The header holds Share (Copy link, E1, and Download) and ⋯, whose first items are this page's: Fine-tune (today's Compose), Adjust style,
  *  Try another arrangement, Neutral skin, Pick photos myself, Rename. `/make` has no project yet; `/project/:id` shows one; `?brick=` sets the starting point. */
 export function MakeScreen({ id, share = false }: { id: string | null; share?: boolean }) {
   const store = useStore()
@@ -64,6 +66,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const [neutral, setNeutral] = useState(false)
   const [screen, setScreen] = useState<'both' | 'list' | 'review'>('both')
   const [example, setExample] = useState(0)
+  const [editing, setEditing] = useState(false)
   const req = useRef(0)
   useEffect(() => { proposeEnabled().then(setEnabled) }, [])
   // the field holds the project's intent; moving to another project (or to /make) brings its own, and its lean
@@ -71,6 +74,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   if (shownId !== id) {
     setShownId(id)
     setIntent(project?.intent ?? '')
+    setEditing(false)
     if (project?.proposal?.lean) { setChips(project.proposal.lean.chips as ChipId[]); setAnchor(project.proposal.lean.anchor_id ?? null) }
   }
   useEffect(() => {
@@ -124,8 +128,6 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
     else navigate(`/project/${store.createProject(sent, ids, autoName(sent) || undefined)}`)
   }
 
-  if (id && !project) return <div className="chrome min-h-full"><div className="gutter mx-auto flex max-w-3xl flex-col gap-4 py-8"><p className="ink-2 m-0">{COPY.missing}</p><Link href="/projects" className="btn w-fit no-underline">{COPY.projects}</Link></div></div>
-  const params = resolved ? (neutral ? { ...resolved.params, ...NEUTRAL_SKIN } : resolved.params) : null
   const menu = [
     ...(project ? [{ label: COPY.fineTune, onSelect: () => setDialog('tune') }] : []),
     { label: COPY.style, onSelect: () => setDialog('style'), disabled: withRules.length === 0, sep: !!project },
@@ -136,19 +138,31 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
     { label: COPY.pick, onSelect: () => openPick(), sep: true },
     ...(project ? [{ label: COPY.rename, onSelect: () => setDialog('rename') }] : []),
   ]
+  // C+D, as a rule: the header's right side holds this page's one primary action, Share, then ⋯ with this page's items first
+  usePageActions({ primary: project && resolved ? <ShareMenu key={project.id} project={project} resolved={resolved} initialOpen={share} /> : undefined, items: menu })
+
+  if (id && !project) return <div className="chrome min-h-full"><div className="gutter mx-auto flex max-w-3xl flex-col gap-4 py-8"><p className="ink-2 m-0">{COPY.missing}</p><Link href="/projects" className="btn w-fit no-underline">{COPY.projects}</Link></div></div>
+  const params = resolved ? (neutral ? { ...resolved.params, ...NEUTRAL_SKIN } : resolved.params) : null
+  const headline = !!project && !editing && !busy
 
   return (
     <div className="chrome min-h-full">
       <div className="gutter mx-auto flex w-full max-w-6xl flex-col gap-4 py-4">
-        <h1 className="sr-only">{project ? project.name || autoName(project.intent) || COPY.field : COPY.field}</h1>
-        {/* the field and its two controls share the screens' width, so Share and ⋯ sit over what they act on */}
+        {!headline && <h1 className="sr-only">{project ? project.intent : COPY.field}</h1>}
         <div className="mx-auto flex w-full max-w-[680px] items-center gap-2">
-          <input value={intent} disabled={busy} maxLength={300} autoFocus={!project && finePointer()} aria-label={COPY.field} placeholder={COPY.field}
-            onChange={e => setIntent(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) void run() }}
-            className="min-w-0 flex-1 rounded border px-3 py-2.5 text-[15px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
-          {project && resolved && <ShareMenu key={project.id} project={project} resolved={resolved} initialOpen={share} />}
-          <MoreMenu label={COPY.more} items={menu} />
+          {project && headline ? (
+            // after Enter the intent is the page's headline; clicking it brings the field back, where Enter proposes again and Escape puts the headline back
+            <h1 className="intent-headline"><button type="button" className="intent-edit" title={COPY.edit} onClick={() => setEditing(true)}>{project.intent}<span className="sr-only">{` (${COPY.edit.toLowerCase()})`}</span></button></h1>
+          ) : (
+            <input value={intent} disabled={busy} maxLength={300} autoFocus={editing || (!project && finePointer())} aria-label={COPY.field} placeholder={COPY.field}
+              onChange={e => setIntent(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) void run()
+                if (e.key === 'Escape' && project) { setIntent(project.intent); setEditing(false) }
+              }}
+              onBlur={() => { if (project && intent.trim() === project.intent.trim()) setEditing(false) }}
+              className="min-w-0 flex-1 rounded border px-3 py-2.5 text-[15px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
+          )}
         </div>
         {(busy || (!project && (anchorBrick || !intent))) && (
           <div className="ink-2 mx-auto flex min-h-5 w-full max-w-[680px] flex-wrap items-center gap-x-4 gap-y-1 text-[13px]" aria-live="polite">
