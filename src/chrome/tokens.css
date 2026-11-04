@@ -1,5 +1,6 @@
-/* App chrome: M, Measured drawing (Round 2, adopted 2026-11-04). White paper, graphite, and ultramarine for one thing only: what Tearsheet traced to a photo
-   (the READING crosses and their line, region boxes, the numbered callouts that tie a photo to the screens, the m and r ids). Everything else is graphite.
+/* App chrome: M, Measured drawing (Round 2, adopted 2026-11-04). White paper, graphite, and ultramarine for what Tearsheet traced to a photo
+   (the READING crosses and their line, region boxes, the numbered callouts that tie a photo to the screens, the m and r ids) and for the Library's count block,
+   the tally of what it has measured (Malik, 2026-11-04: the Library needs one iconic color). Everything else is graphite.
    A number bleeds off an edge only from a solid field; inside an outline it sits whole. The shell never inherits any of this, and the chrome never
    inherits a shell color: no variable here shares a name with the shell's own (--font-display, --font-family, --color-*). Rules: docs/DESIGN_SYSTEM.md. */
 
@@ -18,7 +19,7 @@
   --ink-2: #727475;        /* muted graphite: the lightest mix that keeps 4.5:1 on paper (4.70:1) */
   --line: rgba(27, 30, 33, 0.12);   /* rules: graphite at 12%, 1 px */
   --panel: #FFFFFF;        /* raised surfaces are paper too; elevation is a 1 px rule, never a shadow */
-  --trace: #2338E8;        /* ultramarine: only what Tearsheet traced to a photo (7.49:1 on paper; white on it 7.49:1). Never on graphite */
+  --trace: #2338E8;        /* ultramarine: what Tearsheet traced to a photo, and the Library's count block (7.49:1 on paper; white on it 7.49:1). Never on graphite */
   --halo: #FFFFFF;         /* under every trace mark that sits on a photo or a screen, so it reads on dark and light grounds alike (20:1 on the darkest photo) */
   --accent: var(--trace);  /* the old name, kept for the shell's one-second change outline (shell.css reads var(--accent)) and Fine-tune's row tint: both trace a photo's change */
   --measured: #1B1E21;     /* provenance: measured chip, filled graphite */
@@ -206,20 +207,20 @@
 
 /* ---------- volumes, display type, masthead, blocks, crop marks, issue line ---------- */
 /* data-volume sits on the app root for the whole view, header included. "loud": Library, empty Library. "quiet": Make and everything else.
-   The volume decides whether display type is shown; the colors are the same in both: graphite chrome, ultramarine only on traces. */
+   The volume decides whether display type is shown; the colors are the same in both (graphite chrome, ultramarine on traces), but for the loud Library's ultramarine count block. */
 [data-volume="loud"] .count-badge { background: var(--paper); color: var(--ink); border: 1px solid var(--ink); line-height: 16px; }   /* beside the graphite Shoot, the badge is outlined */
 
 .display, .chrome .display { font-family: var(--font-poster); font-weight: 900; font-stretch: 62%; text-transform: uppercase; line-height: 0.84; letter-spacing: -0.005em; font-size: var(--type-display); color: var(--ink); margin: 0; }
 [data-volume="quiet"] .display, .chrome[data-volume="quiet"] .display { font-size: var(--type-title); font-weight: 600; font-stretch: 100%; text-transform: none; line-height: 30px; }   /* display type is loud-zone only */
 
-/* the Library masthead: LIBRARY in display graphite, the count in white display type on a solid graphite block, full bleed, cropped at the right edge.
+/* the Library masthead: LIBRARY in display graphite, the count in white display type on a solid ultramarine block, full bleed, cropped at the right edge.
    The count bleeds off the block's bottom edge as in C+D: a number bleeds only off a solid field (inside an outline it would sit whole). No dimension line on a count.
    It sits in the same .gutter container as the grid. The word starts at the gutter, then moves left by the L's side bearing
    (0.0405 em in Archivo 900 at width 62), so its ink and the grid's first column share one left edge at every width */
 .masthead { display: flex; align-items: stretch; height: calc(var(--type-display) * 1.08); margin: 0 calc(-1 * var(--gutter)); overflow: hidden; border-bottom: 1px solid var(--ink); border-radius: var(--radius-brand); }
 .masthead > .display { align-self: flex-end; padding: 0; margin-left: calc(var(--gutter) - 0.0405em); margin-bottom: -0.12em; white-space: nowrap; }   /* on the count's baseline (Malik, 2026-11-04: the two did not line up): the rule crops both alike */
-.masthead .count-block { position: relative; margin-left: auto; flex: 0 0 min(28%, 360px); background: var(--ink); overflow: hidden; }
-.masthead .count-block .display { position: absolute; left: var(--space-24); bottom: -0.12em; padding: 0; color: var(--paper); }   /* white on graphite, 16.74:1 */
+.masthead .count-block { position: relative; margin-left: auto; flex: 0 0 min(28%, 360px); background: var(--trace); overflow: hidden; }
+.masthead .count-block .display { position: absolute; left: var(--space-24); bottom: -0.12em; padding: 0; color: var(--paper); }   /* white on ultramarine, 7.49:1 */
 @media (max-width: 767.98px) { .masthead .count-block { flex-basis: 36%; } }
 
 /* a solid block (was C+D's red block): white display type on graphite; links and buttons go on paper below it */

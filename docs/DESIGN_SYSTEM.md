@@ -1,6 +1,6 @@
 # Tearsheet design system: Measured drawing
 
-**Color rule.** Ultramarine marks only what Tearsheet traced to a photo (the READING crosses and line, region boxes, the numbered callouts that tie a photo to the screens, the m and r ids), always on a white halo and never on graphite; everything else is graphite on white.
+**Color rule.** Ultramarine marks what Tearsheet traced to a photo (the READING crosses and line, region boxes, the numbered callouts that tie a photo to the screens, the m and r ids), always on a white halo and never on graphite, plus one solid field, the Library's count block; everything else is graphite on white.
 
 **Bleed rule.** A number bleeds off an edge only from a solid field; inside an outline it sits whole.
 
@@ -11,10 +11,10 @@ Adopted on 2026-11-04 from Round 2, tile M, with Malik's changes: both counts ar
 | Token | Value | Role |
 |---|---|---|
 | `--paper` | `#FFFFFF` | Page, every zone, raised surfaces. Elevation is a 1 px rule, never a shadow. |
-| `--ink` | `#1B1E21` | Graphite: text, display type, buttons, tabs, counts and their blocks, toasts, focus rings. |
+| `--ink` | `#1B1E21` | Graphite: text, display type, buttons, tabs, Make's count block, toasts, focus rings. |
 | `--ink-2` | `#727475` | Muted graphite: captions, credits, the issue line, placeholders, an input's edge. |
 | `--line`, `--rule` | graphite at 12% (`#E4E4E4` on white) | 1 px rules. Decoration only. |
-| `--trace` | `#2338E8` | Ultramarine, for traces only (the color rule). |
+| `--trace` | `#2338E8` | Ultramarine: traces, and the Library's count block (the color rule). |
 | `--halo` | `#FFFFFF` | Sits under every trace mark on a photo or a screen. |
 | `--measured`, `--interpreted`, `--adapted` | `#1B1E21`, `#727475`, `#8A8C8E` | Provenance chips: filled, dotted, outlined. |
 | `--accent` | `var(--trace)` | Old name. `shell.css` reads it for the one-second change outline, and Fine-tune's row tint uses it. Both trace a photo's change. |
@@ -23,7 +23,7 @@ Removed: `--red-display`, `--red-ui` and the warm paper. The primary button (`.b
 
 ## 2. Volumes
 
-The Library is loud: display type, plus the masthead with its count block. Every other view is quiet. Both volumes use the same colors.
+The Library is loud: display type, plus the masthead with its count block. Every other view is quiet. Both volumes use the same palette; the one difference is the loud Library's ultramarine count block.
 
 ## 3. Type
 
@@ -35,13 +35,13 @@ Same as C+D:
 
 ## 4. Counts
 
-The Library's loud count is a solid graphite block at the right of the masthead. The count is white display type and bleeds off the block's bottom edge, which crops it (as in C+D). A count has no dimension line.
+The Library's loud count is a solid ultramarine block at the right of the masthead, the Library's one iconic color (Malik, 2026-11-04). It is the tally of what Tearsheet has measured. The count is white display type (7.49:1) and bleeds off the block's bottom edge, which crops it (as in C+D). A count has no dimension line.
 
 LIBRARY sits on the count's baseline, so the masthead's rule crops both alike and the two read as one line of type.
 
 On a phone the issue line under the masthead is dropped, because the block already says how many. Screen readers still hear it, since the block itself is hidden from them.
 
-Make's count is meant to be the same block (`.count-block`), in the B2 masthead. B2 is not built yet, so Make shows no count for now.
+Make's count is meant to be the same block in graphite (Make is quiet), in the B2 masthead. B2 is not built yet, so Make shows no count for now.
 
 ## 4a. The phone's tab bar
 
@@ -100,7 +100,7 @@ WCAG 2.2, measured:
 | adapted on white | 3.37:1 | 3 | The adapted chip's outline |
 | graphite on white | 16.74:1 | 3 | Selected tab bar, focus ring |
 | ultramarine on white | 7.49:1 | 3 | Crosses, region boxes, leaders and circles on a light ground, a mark against its own halo |
-| white on ultramarine | 7.49:1 | 4.5 | READING, id tags, callout numbers |
+| white on ultramarine | 7.49:1 | 4.5 | READING, id tags, callout numbers, the Library's count |
 | white halo on `#060605` (the Chicago field) | 20.27:1 | 3 | Every mark on the darkest photo |
 | ultramarine alone on `#060605` | 2.71:1 | fails | Never used without its halo |
 | ultramarine on graphite | 2.23:1 | fails | Never used |

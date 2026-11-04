@@ -71,7 +71,7 @@ export function Library() {
   )
 }
 
-/** The loud Library's masthead (C+D §12.3): LIBRARY in display type, the count in white on a solid graphite block (Measured drawing), and the issue line under it with real counts only.
+/** The loud Library's masthead (C+D §12.3): LIBRARY in display type, the count in white on a solid ultramarine block (the Library's one iconic color, Malik 2026-11-04), and the issue line under it with real counts only.
  *  The block counts what the grid shows and names it (Malik, 2026-11-03: a bare "0" beside twelve photos said nothing): the person's own photos and since
  *  when (the earliest date a card shows, so a photo's EXIF date counts), or, before there are any, the starters standing in for them. */
 function Masthead({ bricks, starters }: { bricks: Brick[]; starters: number }) {
