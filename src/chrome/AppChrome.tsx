@@ -8,6 +8,7 @@ import { readingCount } from '../lib/addPhotos'
 import { tabOf, volumeOf, type Tab } from '../lib/nav'
 import { useModal } from './useModal'
 import { PageActionsProvider, usePageActionsValue, type PageMenuItem } from './pageActions'
+import { Lockup } from '../brand/Lockup'
 
 const COPY = {
   library: 'Library',
@@ -89,7 +90,7 @@ function AppHeader({ tab }: { tab: Tab }) {
   const page = usePageActionsValue()
   return (
     <header className="app-header gutter">
-      <Link href="/" className="wordmark">Tearsheet</Link>
+      <Link href="/" className="wordmark" aria-label="Tearsheet"><Lockup /></Link>
       <nav aria-label="Main" className="hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
       {/* relative: on a phone the page's popover (Share) hangs from this group, so it ends at the gutter */}
       <div className="relative ml-auto flex items-center gap-3">

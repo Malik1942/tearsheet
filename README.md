@@ -1,3 +1,5 @@
+<p align="center"><img src="public/brand/readme-banner.svg" alt="Tearsheet" width="600"></p>
+
 # Tearsheet
 
 Designers tear pages out of magazines to keep what they like. Tearsheet turns those photos into composable visual material with evidence (bricks), then apply that material to a small prototype of your own product and see, with your real content, whether the character survives.
