@@ -73,6 +73,18 @@ Malik's direction (2026-11-04): a newspaper front page on the desktop, clear and
 - **On the Library:** a 60 px graphite shutter riding the bar's top edge, with a white ring that separates it from the page and an inner ring. No word shows; a screen reader still hears "Shoot".
 - **On Make:** a 44 px outline inside the bar, since shooting is the Library's job.
 
+## 4b. The desktop as an app
+
+Added 2026-11-04, after Malik asked how to make the desktop feel like an app. There is no footer: about and credits stay in ⋯.
+- **Drop and paste to save.** Photos dropped anywhere on the window, or pasted with ⌘V, are saved the same way Shoot saves them. While files are dragged over the window, the page fades and DROP TO SAVE stands in its crop marks over a small stack of sheets with the count. Files that aren't JPEG, PNG or WebP are refused with one line.
+- **Install.** "Install Tearsheet" sits in ⋯ where the browser can install: Chrome and Edge show their prompt, and Safari gets one sentence pointing to File › Add to Dock. It is hidden once the app runs in its own window, and in browsers that can't install.
+- **Keys.**
+  - 1 and 2 go to Library and Make, and N shoots.
+  - ← and → step through photos in the Brick sheet, and Esc closes a sheet.
+  - ? opens the list (also in ⋯).
+  - Keys never fire while you type in a field, or while a sheet is open (except the sheet's own arrows). Phones show neither the list nor its item.
+- **Make as a workspace, from 1180 px.** The screens sit at the left. At the right, in a sticky column, are the intent, then "From your photos": each photo with what it sets and why it was picked. That list is the photo row re-laid, with its switches, swap and badges as they are. Below 1180 px, the photo row stays under the screens.
+
 ## 5. The measured layer
 
 | Mark | Where it shows |

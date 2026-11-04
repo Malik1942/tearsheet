@@ -44,6 +44,19 @@ export function Library() {
   const starters = newestFirst(store.bricks.filter(b => originOf(b) === 'starter'))
   // a removed brick closes its sheet; so does a retry, which supersedes it
   const selected = openId ? store.bricks.find(b => b.id === openId && !b.superseded_by) ?? null : null
+  // ← → step through the photos the grid shows, in its order, while the sheet is open (Malik, 2026-11-04: the desktop's keys); a photo still being read has no sheet
+  const shown = (bricks.length === 0 && store.showStarters ? starters : bricks).filter(b => b.status !== 'extracting' && b.status !== 'pending')
+  useEffect(() => {
+    if (!openId) return
+    const keys = (e: KeyboardEvent) => {
+      if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement | null)?.closest('input, textarea, select')) return
+      const at = shown.findIndex(b => b.id === openId), next = shown[at + (e.key === 'ArrowRight' ? 1 : -1)]
+      if (at < 0 || !next) return
+      e.preventDefault(); setOpenId(next.id)
+    }
+    document.addEventListener('keydown', keys)
+    return () => document.removeEventListener('keydown', keys)
+  }, [openId, shown])
 
   // C+D (DESIGN_SYSTEM.md §7, §12.3–4): the masthead sits in the same .gutter as the grid, so LIBRARY's ink and the grid share one left edge
   return (
