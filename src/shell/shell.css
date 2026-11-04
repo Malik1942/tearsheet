@@ -233,7 +233,9 @@
 
 /* ---------- board (overview, 2026-11-04): tiles on a surface, two to a row. Every gap is a step of the scale: tiles 8 apart, 8 under the title, the tile's padding
    16 24 32 as density goes 4 2 1 (the list's ITEM_PAD, the contract's 16–32), 16 for the rows density 6 makes. Inside a tile: label → value 4, value → note 8, → tag 8 ---------- */
-.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space); padding: var(--space) var(--side) 0; container-type: inline-size; }
+/* two tiles a row while each keeps rule 4's 9em text column at its label's size (padding 16 a side and the 1 px border included); one a row only when two
+   would not (Malik, 2026-11-04, "one column if needed": the phone frame's 320 screen at a low type ratio). Never more than two */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(calc(var(--t-caption) * 9 + var(--space) * 4 + 2px), calc((100% - var(--space)) / 2)), 1fr)); gap: var(--space); padding: var(--space) var(--side) 0; container-type: inline-size; }
 .board:last-of-type .tiles { padding-bottom: calc(var(--space) * 4); }
 .tile { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; min-width: 0; padding: calc(var(--space) * 2); background: var(--color-surface); border: 1px solid transparent; border-radius: var(--radius); }
 .tile > * { min-width: 0; }

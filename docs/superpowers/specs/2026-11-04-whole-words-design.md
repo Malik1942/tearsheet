@@ -50,6 +50,16 @@ Text set to one line with an ellipsis (`nowrap`) is outside the rule. It never w
 - **Equal steps share a factor.** At a high ratio the title and display steps are both capped at 44 px. A rendered size cannot tell them apart, so they share one factor.
 - **The scale is undone before measuring.** A Range's boxes come back drawn, after Make's or MiniPreview's `transform: scale`, so the fit divides by the element's own scale.
 
+## Board tiles at 320 (rule 4; Malik, 2026-11-04: "One column if needed")
+
+Rendering at the frame's 320 width surfaced something that predates this change. At density 4 the board's two tile columns gave a 106 px text column, under rule 4's 9em at the label's size whenever the caption is large (a low type ratio): 152 of 1,320 compositions.
+
+The tile grid is now `repeat(auto-fit, minmax(max(9em at --t-caption + the tile's padding and border, half the row), 1fr))`:
+- It shows two tiles a row whenever each keeps its 9em, and never more than two.
+- It drops to one only when two would not fit.
+
+The designer-tool board at ratio 3 keeps its 2 × 3 grid (106 px against 99). g1 + g2 + Bauhaus at ratio 1.125 goes to one column (254 px against 120). All six contract runs now pass every rule.
+
 ## Verification
 
 - **Unit tests:**
