@@ -140,7 +140,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             if (d.held === 'limit') limitHit.current = true; else { offlineHold.current = true; armRetry() }
             waiting.current = reinsertFirst(waiting.current, id, sentAt.current)
             update(id, { status: d.status, held: d.held, error: d.error })
-          } else if (d.status === 'ready' && done) update(id, { ...done, id, saved_at: brick.saved_at, version: brick.version, supersedes: brick.supersedes, status: 'ready', prompt_version: 'v3' })
+          } else if (d.status === 'ready' && done) update(id, { ...done, id, photo: brick.photo, saved_at: brick.saved_at, version: brick.version, supersedes: brick.supersedes, status: 'ready', prompt_version: 'v3' })   // the photo as saved, its border included
           else update(id, { status: 'unparsed', error: d.error ?? 'No brick came back.' })
         })
         .catch(e => update(id, { status: 'unparsed', error: (e as Error).message }))

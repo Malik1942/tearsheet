@@ -10,6 +10,7 @@ import type { ChipId } from '../lib/leanFamilies'
 import type { Brick } from '../lib/types'
 import { MiniPreview } from '../shell/MiniPreview'
 import { Photo } from '../bricks/Photo'
+import { tileFit } from '../lib/photoFit'
 import { Overlay } from './Steps'
 
 const COPY = {
@@ -113,7 +114,7 @@ export function AdjustStyle({ offered, active, onChip, anchor, anchorable, onAnc
             const cap = tileCaption(b)
             return (
               <button key={b.id} type="button" onClick={() => { onAnchor(b.id); setPicking(false) }} aria-pressed={b.id === anchor?.id} className="cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: `2px solid ${b.id === anchor?.id ? 'var(--ink)' : 'var(--line)'}`, background: 'var(--panel)' }} title={`Start from ${cap.title}`}>
-                <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" /></div>
+                <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" style={tileFit(b.photo, 16 / 10)} /></div>
                 <div className="flex flex-col px-1.5 py-1"><span className="cap-title">{cap.title}</span><span className="cap-line tnum">{cap.line}</span></div>
               </button>
             )
@@ -137,7 +138,7 @@ export function PickMyself({ pool, initial, max, note, canCreate, onClose, onDon
           const on = picked.includes(b.id), cap = tileCaption(b)
           return (
             <button key={b.id} type="button" onClick={() => toggle(b.id)} aria-pressed={on} aria-label={`${cap.title}, ${cap.line}`} className="relative cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: `2px solid ${on ? 'var(--ink)' : 'var(--line)'}`, background: 'var(--panel)' }}>
-              <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" /></div>
+              <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" style={tileFit(b.photo, 16 / 10)} /></div>
               {/* the starter mark sits on the photo, opposite the check, so the two caption lines keep the tile's width */}
               {originOf(b) === 'starter' && <span className="chip chip-adapted absolute left-1.5 top-1.5 px-1.5 text-[10px]" style={{ background: 'var(--panel)' }}>{COPY.starter}</span>}
               <div className="flex flex-col px-2 py-1.5">
@@ -178,7 +179,7 @@ export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; o
                     className={`relative overflow-hidden rounded p-0 text-left ${inProject ? 'cursor-default' : 'cursor-pointer'}`} style={{ border: '1px solid var(--line)', background: 'var(--panel)' }}
                     aria-label={inProject ? `${name}: ${COPY.inProject}` : `Swap in: ${name}`} title={inProject ? COPY.inProject : undefined}>
                     {/* the hover shows a licensed work's full credit; an uncredited photo has none, so the author's name never shows here */}
-                    <div className="overflow-hidden" style={{ aspectRatio: '16 / 10' }}><Photo src={brick.photo.url} title={brick.credit ?? ''} className="h-full w-full object-cover" /></div>
+                    <div className="overflow-hidden" style={{ aspectRatio: '16 / 10' }}><Photo src={brick.photo.url} title={brick.credit ?? ''} className="h-full w-full object-cover" style={tileFit(brick.photo, 16 / 10)} /></div>
                     <div className="flex flex-col px-2 py-1.5">
                       <span className="cap-title">{title}</span>
                       <span className="cap-line tnum">{line}</span>

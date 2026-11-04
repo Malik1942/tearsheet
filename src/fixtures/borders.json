@@ -1,0 +1,50 @@
+{
+  "g1": {
+    "plain": false,
+    "color": "#787367"
+  },
+  "g2": {
+    "plain": false,
+    "color": "#060606"
+  },
+  "calmmouse": {
+    "plain": true,
+    "color": "#ffffff"
+  },
+  "greencar": {
+    "plain": false,
+    "color": "#75746f"
+  },
+  "c1": {
+    "plain": false,
+    "color": "#45423f"
+  },
+  "bauhaus-1923-staatliches-bauhaus-weimar": {
+    "plain": false,
+    "color": "#c9c2a2"
+  },
+  "haeckel-1904-trochilidae-plate-99": {
+    "plain": false,
+    "color": "#6e725a"
+  },
+  "iran-1260s-star-cross-luster-tiles": {
+    "plain": false,
+    "color": "#c8c2bd"
+  },
+  "matthews-19c-glyphography-trade-card": {
+    "plain": true,
+    "color": "#e3d9ce"
+  },
+  "lissitzky-1923-dlya-golosa": {
+    "plain": false,
+    "color": "#f2e5d3"
+  },
+  "secession-1902-beethoven-catalogue": {
+    "plain": false,
+    "color": "#0a0a0a"
+  },
+  "jpl-2016-visions-mars": {
+    "plain": true,
+    "color": "#ffffff"
+  }
+}

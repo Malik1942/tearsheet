@@ -1,7 +1,8 @@
 /** Starter bricks (spec v3 SB1–SB4, L7): the shipped, pre-extracted bricks are built in, never stored. The person's own bricks are the saved state;
  *  the starters are added to what the screens see, fill a thin library after the person's own bricks, and can be hidden. Pure: no React. */
 import { SAMPLES } from '../fixtures/samples'
-import type { Brick } from './types'
+import BORDERS from '../fixtures/borders.json'
+import type { Brick, PhotoBorder } from './types'
 
 /** Every shipped brick is a starter, Malik's own five photos included: for anyone else they are not "yours". */
 export const STARTER_IDS: ReadonlySet<string> = new Set(SAMPLES.map(b => b.id))
@@ -11,9 +12,13 @@ export const STARTER_IDS: ReadonlySet<string> = new Set(SAMPLES.map(b => b.id))
 export const originOf = (b: Pick<Brick, 'id' | 'origin'>): 'own' | 'starter' => b.origin ?? (STARTER_IDS.has(b.id) ? 'starter' : 'own')
 
 let built: Brick[] | undefined
-/** The starters as ready bricks (prompt v3), the same objects every time so a screen can rely on their identity. Their photos are plain `/samples/*.jpg` URLs, never IndexedDB. */
+/** The starters as ready bricks (prompt v3), the same objects every time so a screen can rely on their identity. Their photos are plain `/samples/*.jpg` URLs, never IndexedDB,
+ *  each with the border scripts/borders.ts measured into fixtures/borders.json the way a photo is measured at save (the extraction fixtures stay as they are). */
 export function starterBricks(): Brick[] {
-  return built ??= SAMPLES.map(b => ({ ...b, status: 'ready' as const, prompt_version: 'v3', origin: 'starter' as const }))
+  return built ??= SAMPLES.map(b => {
+    const border = (BORDERS as Record<string, PhotoBorder | undefined>)[b.id]
+    return { ...b, photo: border ? { ...b.photo, border } : b.photo, status: 'ready' as const, prompt_version: 'v3', origin: 'starter' as const }
+  })
 }
 
 /** What the store exposes as `bricks`: the saved bricks that are the person's, then every starter that no brick of theirs shadows, so every screen can still resolve a project that uses one.

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useStore } from './lib/store'
 import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
+import { tileFit } from './lib/photoFit'
 import { BrickSheet } from './bricks/BrickSheet'
 import { RETRY_TITLE } from './bricks/retryCopy'
 import { cardCaption, dateLine, issueParts } from './lib/brickLabels'
@@ -124,7 +125,7 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
     e.preventDefault()
     onOpen(b.id)
   }
-  const photo = <Photo src={b.photo.url} className={`h-full w-full object-cover ${busy ? 'opacity-60' : ''}`} />
+  const photo = <Photo src={b.photo.url} className={`h-full w-full object-cover ${busy ? 'opacity-60' : ''}`} style={tileFit(b.photo, 4 / 5)} />   // .card-tile is 4:5
   return (
     <li ref={root} className="relative min-w-0">
       {busy ? (
