@@ -1,0 +1,23 @@
+{
+  "shape": "board",
+  "screen_titles": { "list": "Queue", "review": "Overview" },
+  "tabs": ["Items", "Status", "Me"],
+  "entries": [
+    { "title": "Nightly build", "subtitle": "Last run passed in 6 min", "date": "2026-01-18", "tags": ["ci", "green"] },
+    { "title": "Open incidents", "subtitle": "One on the payments path", "date": "2026-02-09", "tags": ["incident"] },
+    { "title": "Agent runs", "subtitle": "Twelve finished, two retried", "date": "2026-03-05", "tags": ["agents"] },
+    { "title": "Deploy window", "subtitle": "Opens at 14:00", "date": "2026-04-21", "tags": ["release"] },
+    { "title": "Error budget", "subtitle": "Sixty-two percent left", "date": "2026-06-02", "tags": ["slo"] },
+    { "title": "Pull requests", "subtitle": "Seven waiting on review", "date": "2026-07-14", "tags": ["review"] },
+    { "title": "Queue depth", "subtitle": "Back under a hundred", "date": "2026-09-08", "tags": ["queue"] },
+    { "title": "On call", "subtitle": "Hands over at 18:00", "date": "2026-11-03", "tags": ["people"] }
+  ],
+  "tiles": [
+    { "label": "Open incidents", "value": "1", "note": "Payments path, since 09:40", "tag": "urgent" },
+    { "label": "Agent runs today", "value": "14", "note": "Two retried, none failed", "tag": "active" },
+    { "label": "Error budget", "value": "62%", "note": "Of the month left", "tag": "steady" },
+    { "label": "Queue depth", "value": "84", "note": "Falling since noon", "tag": "steady" },
+    { "label": "Pull requests", "value": "7", "note": "Waiting on review", "tag": "waiting" },
+    { "label": "Next deploy", "value": "14:00", "note": "Window opens in two hours", "tag": "planned" }
+  ]
+}

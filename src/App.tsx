@@ -25,7 +25,7 @@ const DevContract = lazy(() => import('./screens/DevContract').then(m => ({ defa
 function Routes() {
   const path = usePath()
   const solo = match('/solo/:target/:screen', path)
-  if (solo) return <Solo target={solo.target} screen={solo.screen as 'list' | 'review'} />
+  if (solo) return <Solo target={solo.target} screen={solo.screen as import('./shell/content').ScreenKey} />
   const brick = match('/brick/:id', path)
   if (brick) return <BrickScreen id={brick.id} />
   if (path === '/projects') return <ProjectsScreen />
