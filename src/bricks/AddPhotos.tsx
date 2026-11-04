@@ -17,7 +17,7 @@ const photosOf = (files: Iterable<File>) => [...files].filter(f => TYPES.include
 const carriesFiles = (dt: DataTransfer | null) => !!dt && [...dt.types].includes('Files')
 
 type AddPhotos = {
-  /** L2: opens the camera directly on a phone (one photo). */
+  /** L2: on a phone, the system's own choice of Photo Library, Take Photo or Choose File (Malik, 2026-11-04: the camera alone left no way to the album). */
   shoot: () => void
   /** L3: several photos at once from the camera roll or disk. */
   pickMany: () => void
@@ -33,7 +33,6 @@ const Ctx = createContext<AddPhotos | null>(null)
  *  pending brick (`taken_at` from its EXIF when there is one), and goes in the store's queue. */
 export function AddPhotosProvider({ children }: { children: ReactNode }) {
   const store = useStore()
-  const shoot = useRef<HTMLInputElement>(null)
   const pick = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -80,12 +79,12 @@ export function AddPhotosProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const value: AddPhotos = { shoot: () => shoot.current?.click(), pickMany: () => pick.current?.click(), notice, dismiss: () => setNotice(null) }
+  const value: AddPhotos = { shoot: () => pick.current?.click(), pickMany: () => pick.current?.click(), notice, dismiss: () => setNotice(null) }
   return (
     <Ctx.Provider value={value}>
       {children}
-      {/* L2: capture opens the camera directly on iOS. L3: multiple, no capture, for the camera roll. Never list heic (L3). */}
-      <input ref={shoot} type="file" accept={ACCEPT} capture="environment" className="hidden" aria-hidden tabIndex={-1} onChange={e => { onFiles(e.target.files); e.target.value = '' }} />
+      {/* L2 + L3: no `capture`, so iOS and Android offer the photo library and the camera from one tap; multiple, so several photos come in at once.
+          A web page cannot read the album itself, so there is no strip of recent photos as a native app has. Never list heic (L3). */}
       <input ref={pick} type="file" accept={ACCEPT} multiple className="hidden" aria-hidden tabIndex={-1} onChange={e => { onFiles(e.target.files); e.target.value = '' }} />
       {dragging !== null && <DropOverlay count={dragging} />}
     </Ctx.Provider>
