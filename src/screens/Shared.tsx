@@ -50,9 +50,10 @@ export function SharedScreen() {
   return (
     <Frame>
       <header className="flex flex-col gap-1">
+        {/* Data tear: the title is already the share card's (the sans, 600, 24); the meta line takes the card's mono */}
         <h1 className="title">{project.name || autoName(project.intent) || project.intent}</h1>
         <p className="ink-2 m-0">{project.intent}</p>
-        <p className="ink-2 caption m-0">{COPY.readOnly}</p>
+        <p className="ink-2 m-0" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: '16px', letterSpacing: '0.04em' }}>{COPY.readOnly}</p>
       </header>
       <ScaledScreens params={resolved.params} flash={[]} reserve={48} content={toShellContent(project.content)} />
       <section className="flex flex-col gap-3">

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { DISPLAY_TITLE } from '../brand/type'
 
-/** §5: a page title, 24 px. Set inline: the chrome's own h1 rule would win over a utility class. */
+/** §5: a page title in the display face (Data tear), on its 30 px line. Set inline: the chrome's own h1 rule would win over a utility class. */
 export function StepTitle({ children, id }: { children: ReactNode; id?: string }) {
-  return <h1 id={id} style={{ fontSize: 24, lineHeight: '30px', fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>{children}</h1>
+  return <h1 id={id} style={{ ...DISPLAY_TITLE, lineHeight: '30px', margin: 0 }}>{children}</h1>
 }
 
 /** §5: the page gutter (32 desktop, 20 phone) and the 32 px section gap, at a readable width. */

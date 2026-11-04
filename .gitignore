@@ -29,3 +29,6 @@ docs/screens/*.jpg
 !public/fixtures/c1.jpg
 !public/samples/*.jpg
 .env*
+
+# Data tear brand review: before/after screenshots and renders (local only; some show a personal photo)
+brand-review/
