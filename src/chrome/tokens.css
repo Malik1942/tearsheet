@@ -135,7 +135,7 @@
 .bar-item[aria-current="page"]::after { content: ''; position: absolute; top: -1px; left: calc(50% - 16px); width: 32px; height: 2px; background: var(--ink); }
 .bar-item:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; }
 .bar-shoot { color: var(--ink); }
-.bar-shoot .shutter { position: relative; display: grid; place-items: center; width: 60px; height: 60px; translate: 0 -16px; border-radius: 50%; background: var(--ink); color: var(--paper); box-shadow: 0 0 0 4px var(--paper); }
+.bar-shoot .shutter { position: relative; display: grid; place-items: center; width: 60px; height: 60px; translate: 0 -16px; border-radius: 50%; background: var(--ink); color: var(--paper); box-shadow: 0 0 0 4px var(--paper), 0 0 0 5px var(--line); }   /* the bar's own 1 px top line, carried round the shutter (Malik, 2026-11-04) */
 .bar-shoot .shutter::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 1.5px solid color-mix(in oklab, var(--paper) 55%, transparent); pointer-events: none; }   /* a shutter's inner ring */
 .bar-shoot .shutter .shoot-icon { width: 24px; height: 24px; }
 .bar-shoot .count-badge { top: -2px; right: -6px; }
