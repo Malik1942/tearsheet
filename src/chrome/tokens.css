@@ -95,6 +95,9 @@
    the newspapers' front pages): the lockup centered, the sections at the left, the actions at the right; on the Library with no line of its own */
 .app-header { display: flex; align-items: center; gap: 24px; height: 56px; background: var(--paper); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
 .app-header > .header-actions { margin-left: auto; }
+/* the same on every page (Malik, 2026-11-04): no line at rest, a hairline once the page has scrolled under it (AppChrome.tsx data-scrolled) */
+.app-header { border-bottom-color: transparent; transition: border-color 0.15s; }
+.app-header[data-scrolled] { border-bottom-color: var(--line); }
 .app-header .wordmark svg { width: 150px; height: auto; }
 @media (min-width: 768px) {
   .app-header { display: grid; grid-template-columns: 1fr auto 1fr; column-gap: 24px; height: 64px; }
@@ -103,7 +106,6 @@
   .app-header > .header-actions { grid-column: 3; grid-row: 1; justify-self: end; margin-left: 0; }
   .app-header .tab { height: 64px; }
   .app-header .wordmark svg { width: 228px; }
-  [data-volume="loud"] .app-header { border-bottom-color: transparent; }
 }
 .wordmark { font-size: var(--type-em); font-weight: 600; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
 .tab { position: relative; display: inline-flex; align-items: center; height: 56px; padding: 0 2px; font-weight: 600; color: var(--ink-2); text-decoration: none; }
@@ -124,8 +126,8 @@
 /* the phone's tab bar (Malik, 2026-11-04: the 49 px bar and its 30 px Shoot were too tight). 64 px over the home indicator: iOS draws its own bar at 49 pt, but a page
    in a browser sits by the browser's toolbar and carries a shutter, and Android's bar is 80 dp with 48 px targets. Three items of equal width, each its whole
    third as the touch target; Library and Make a 24 px glyph over an 11 px label, unselected muted graphite (4.70:1), selected graphite with the 2 px bar over the
-   glyph. Shoot is a 60 px shutter riding the bar's top edge, with no word (a screen reader still hears "Shoot"); on Make, where shooting is the Library's job,
-   it sits inside the bar as a 44 px outline */
+   glyph. Shoot is a 60 px shutter riding the bar's top edge on every page, so the bar keeps its shape from tab to tab (Malik, 2026-11-04),
+   with no word (a screen reader still hears "Shoot") */
 .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); height: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding: 0 0 env(safe-area-inset-bottom); background: var(--paper); border-top: 1px solid var(--line); }
 .bar-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: var(--bar-h); padding: 0; border: 0; background: none; color: var(--ink-2); font: 500 11px/14px var(--font-ui); letter-spacing: 0.01em; text-decoration: none; cursor: pointer; }
 .bar-item > svg { width: 24px; height: 24px; }
@@ -136,8 +138,6 @@
 .bar-shoot .shutter { position: relative; display: grid; place-items: center; width: 60px; height: 60px; translate: 0 -16px; border-radius: 50%; background: var(--ink); color: var(--paper); box-shadow: 0 0 0 4px var(--paper); }
 .bar-shoot .shutter::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 1.5px solid color-mix(in oklab, var(--paper) 55%, transparent); pointer-events: none; }   /* a shutter's inner ring */
 .bar-shoot .shutter .shoot-icon { width: 24px; height: 24px; }
-.bar-shoot.shoot-quiet .shutter { width: 44px; height: 44px; translate: none; background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
-.bar-shoot.shoot-quiet .shutter::after { display: none; }
 .bar-shoot .count-badge { top: -2px; right: -6px; }
 @media (min-width: 768px) { .bottom-bar { display: none; } }
 
@@ -310,12 +310,6 @@
 .headline-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .headline-field .headline-progress { bottom: -12px; }
 .headline-wait { margin: var(--space-4) 0 0; font-size: var(--type-body); line-height: 18px; color: var(--ink-2); }   /* said under the line while proposing, both widths */
-/* touch: the empty field shows the reading line's track, still, as its underline; the caret takes over on focus */
-.headline-track { display: none; }
-@media (pointer: coarse) {
-  .headline-track { display: block; position: absolute; left: 0; right: 0; bottom: -12px; height: 2px; background: var(--line); }
-  .headline-field:focus-within .headline-track { display: none; }
-}
 /* phone: the empty page shows where the screens will land, one frame with the spread's crop marks, still at 6% ink (desktop shows nothing) */
 .make-ghost { display: none; }
 @media (max-width: 767.98px) {

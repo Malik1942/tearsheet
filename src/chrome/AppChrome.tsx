@@ -117,9 +117,16 @@ function ShootButton({ className = '', bar = false }: { className?: string; bar?
 
 function AppHeader({ tab, onShortcuts }: { tab: Tab; onShortcuts: () => void }) {
   const page = usePageActionsValue()
+  // a hairline under the header only once the page has scrolled under it, on every page alike
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 0)
+    on(); window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
   return (
     // the front page's nameplate (Malik, 2026-11-04): the lockup centered, its tear ultramarine, the sections at the left, the page's actions at the right
-    <header className="app-header gutter">
+    <header className="app-header gutter" data-scrolled={scrolled || undefined}>
       <Link href="/" className="wordmark" aria-label="Tearsheet"><Lockup mark="var(--trace)" /></Link>
       <nav aria-label="Main" className="header-sections hidden items-center gap-5 md:flex"><Tabs tab={tab} /></nav>
       {/* relative: on a phone the page's popover (Share) hangs from this group, so it ends at the gutter */}
@@ -263,7 +270,7 @@ function BottomBar({ tab }: { tab: Tab }) {
   return (
     <nav aria-label="Main" className="bottom-bar">
       <Link href="/" className="bar-item" aria-current={tab === 'library' ? 'page' : undefined}><GridIcon /><span>{COPY.library}</span></Link>
-      <ShootButton bar className={tab === 'library' ? '' : 'shoot-quiet'} />
+      <ShootButton bar />
       <Link href="/make" className="bar-item" aria-current={tab === 'make' ? 'page' : undefined}><SpreadIcon /><span>{COPY.make}</span></Link>
     </nav>
   )

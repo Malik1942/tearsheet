@@ -42,7 +42,7 @@ Malik's direction (2026-11-04): a newspaper front page on the desktop, clear and
 
 **Header.**
 - **From the tablet up**, the header is a nameplate. The lockup (the Data tear mark and TEARSHEET) is centered, the sections (Library, Make) sit at the left, and the page's actions sit at the right.
-- **On the Library**, the header has no line of its own.
+- **On every page alike**, the header has no line at rest; a hairline appears only once the page has scrolled under it (Malik, 2026-11-04: Library and Make did not match).
 - **On a phone**, the lockup sits at the left and the actions at the right.
 - **The lockup** is the Claude Design board's primary lockup, drawn as the board draws it: its mark is the board's own tear, and TEARSHEET's letters have their bottoms bitten by the board's own bite line, set 35 units (0.035 em) nearer the baseline so the letters keep a little more. It is drawn without the rim (no brown line), at every size (Malik, 2026-11-04).
 - **Everywhere**, the lockup's tear is ultramarine and its letters graphite.
@@ -70,8 +70,7 @@ Malik's direction (2026-11-04): a newspaper front page on the desktop, clear and
 - Unselected items are muted graphite. The selected one is graphite, with the 2 px bar over its glyph.
 
 **Shoot.**
-- **On the Library:** a 60 px graphite shutter riding the bar's top edge, with a white ring that separates it from the page and an inner ring. No word shows; a screen reader still hears "Shoot".
-- **On Make:** a 44 px outline inside the bar, since shooting is the Library's job.
+- **On every page:** a 60 px graphite shutter riding the bar's top edge, with a white ring that separates it from the page and an inner ring, so the bar keeps its shape from tab to tab (Malik, 2026-11-04). No word shows; a screen reader still hears "Shoot".
 
 ## 4b. The desktop as an app
 
