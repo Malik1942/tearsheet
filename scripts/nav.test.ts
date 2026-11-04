@@ -12,6 +12,7 @@ describe('tabOf', () => {
   })
   it('selects Library everywhere else', () => {
     for (const p of ['/', '/brick/b_1', '/sync', '/projects', '/open', '/compare', '/maker', '/projects/x']) assert.equal(tabOf(p), 'library', p)
+    assert.equal(tabOf('/shared'), 'none', 'a project shared with you is in neither of your tabs')
   })
 })
 

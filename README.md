@@ -70,6 +70,11 @@ A library can be opened on another device with a six-character code (letters A�
 
 What the store holds: under `libraries/<code>/` in a Vercel Blob store, one JPEG per brick at 2048 px on the long side plus a `manifest.json` with the brick values and the projects (intent, bricks, choices, proposal record; at most 50, the most recently edited). Photos are stored under that unguessable id and are not indexed. Entering a code on a second device merges by brick id, newest version wins. `Forget this code` on `/sync` deletes everything under the prefix; the bricks stay on the device that pressed it. The manifest is gone at once; the CDN can still serve a deleted photo for up to a minute. Caps: 60 bricks and 40 MB per code; one request carries at most 4 MB, so the app uploads in batches. The function authenticates with Vercel's OIDC token for the store; no long-lived token exists anywhere.
 
+**Sharing a project** (Make → Share) never sends the library's code, the only key to the whole library.
+- **What goes up:** the project and the person's own photos it uses, under a code of its own (one per project, so sharing again updates the same link). The starters ship with the app and never travel.
+- **What the link opens:** `/shared?code=…&project=…`, a read-only page with the two screens and the reasons behind them.
+- **What it leaves alone:** it adopts no code, merges nothing into the library of the device that opens it, and saves nothing there.
+
 ## Propose
 
 When a project gets its one-line intent, the model proposes up to three bricks from the library (PRD P2–P3). It is a second kind of call, text only: `/api/propose` sends the intent and, for every ready brick, its id and its transferable rules with their parameter. No photo, no measurement and no hypothesis leaves the device. `muse-spark-1.3`, effort low, constrained to the schema `{ picks: [{ brick_id, quoted_rule, why }] }`, at most 4000 output tokens, `store: false`, about $0.006 a call.

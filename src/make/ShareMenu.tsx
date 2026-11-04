@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../lib/store'
 import type { Project, Resolved } from '../lib/mapRelations'
-import { generateCode, readSync, runSync } from '../lib/syncClient'
-import { instructionsLink } from '../lib/makeFlow'
+import { generateCode, push } from '../lib/syncClient'
+import { shareCodeFor, shareContent, sharedLink } from '../lib/makeFlow'
 import { download, exportCss, exportHandoff, exportJson } from '../export'
 
 /** E1 minimal. false is the 18:30 fallback: the popover offers Download only. */
@@ -16,13 +16,13 @@ const COPY = {
   noLink: "Couldn't make the link.",
   retry: 'Try again',
   copyFailed: "Couldn't copy.",
-  line: 'Opens these screens and the reasons behind them. Your saved photos go with it.',
+  line: 'Opens these screens and the reasons behind them, read-only. The photos in this project go with it; nothing else does.',
   download: 'Download',
 }
 
-/** Make's Share icon. Opening it uploads the library and the project under the library's sync code (a library without one gets a code), the path the phone
- *  footer used, so by the time Copy is tapped the link `/open?code=…&project=…&to=instructions` is ready and the clipboard write runs inside the tap (iOS).
- *  Download gives the three files. `initialOpen`: the older /share and /export routes land with it open. */
+/** Make's Share. Opening it uploads this project and the photos it uses under the project's own share code (never the library's sync code, which is the
+ *  only key to the whole library), so by the time Copy is tapped the read-only link `/shared?code=…&project=…` is ready and the clipboard write runs inside
+ *  the tap (iOS). Download gives the three files. `initialOpen`: the older /share and /export routes land with it open. */
 export function ShareMenu({ project, resolved, initialOpen = false }: { project: Project; resolved: Resolved; initialOpen?: boolean }) {
   const store = useStore()
   const [open, setOpen] = useState(initialOpen)
@@ -30,17 +30,15 @@ export function ShareMenu({ project, resolved, initialOpen = false }: { project:
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
-  const pending = useRef<string | null>(null)   // a failed first upload keeps its code for the retry instead of making a new one
   const root = useRef<HTMLDivElement>(null)
   const storeRef = useRef(store); storeRef.current = store
 
   const prepare = async () => {
-    const code = readSync()?.code ?? (pending.current ??= generateCode())
+    const code = shareCodeFor(project.id, generateCode)
     setBusy(true); setError(null)
     try {
-      const { info } = await runSync(code, storeRef.current)
-      pending.current = null
-      setLink(instructionsLink(location.origin, info.code, project.id))
+      await push(code, shareContent(project, storeRef.current.bricks), [project])
+      setLink(sharedLink(location.origin, code, project.id))
     } catch (e) { setError((e as Error).message) } finally { setBusy(false) }
   }
   // every opening uploads what changed since, so the link always opens the project as it is now; a link made earlier stays usable meanwhile
