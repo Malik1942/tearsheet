@@ -37,7 +37,19 @@ Same as C+D:
 
 The Library's loud count is a solid graphite block at the right of the masthead. The count is white display type and bleeds off the block's bottom edge, which crops it (as in C+D). A count has no dimension line.
 
+LIBRARY sits on the count's baseline, so the masthead's rule crops both alike and the two read as one line of type.
+
+On a phone the issue line under the masthead is dropped, because the block already says how many. Screen readers still hear it, since the block itself is hidden from them.
+
 Make's count is meant to be the same block (`.count-block`), in the B2 masthead. B2 is not built yet, so Make shows no count for now.
+
+## 4a. The phone's tab bar
+
+The tab bar follows Apple's HIG for an iPhone tab bar:
+- 49 px tall, above the home indicator.
+- Three items of equal width: Library, Shoot and Make. Each is a 24 px glyph over a 10 px label, and the whole item is the touch target.
+- Unselected items are muted graphite. The selected one is graphite, with the 2 px bar over its glyph.
+- Shoot sits in the middle: the camera in a 30 px graphite disc. On Make the disc becomes an outline, since shooting is the Library's job.
 
 ## 5. The measured layer
 

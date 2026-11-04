@@ -72,12 +72,29 @@ const CameraIcon = () => (
   </svg>
 )
 
-/** Shoot is a camera (Malik, 2026-11-03: an icon, not plain text): a round shutter in the phone's bottom bar, the camera beside its word in the header.
- *  The word stays the button's name for a screen reader. The queue count rides on it as a small badge ("3"), never as a text line. */
-function ShootButton({ className = '' }: { className?: string }) {
+/** The phone's tab bar glyphs, drawn like the camera: the Library a grid of photos (lucide `layout-grid`, ISC), Make the spread of two screens. */
+const GridIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />
+  </svg>
+)
+const SpreadIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="8" height="18" x="2.5" y="3" rx="2" /><rect width="8" height="18" x="13.5" y="3" rx="2" />
+  </svg>
+)
+
+/** Shoot is a camera (Malik, 2026-11-03: an icon, not plain text): the camera beside its word in the header; in the phone's tab bar (`bar`) the middle item,
+ *  the camera in a graphite disc over its word, like the items beside it. The queue count rides on it as a small badge ("3"), never as a text line. */
+function ShootButton({ className = '', bar = false }: { className?: string; bar?: boolean }) {
   const store = useStore()
   const add = useAddPhotos()
   const n = readingCount(store.bricks, b => originOf(b) === 'own')
+  if (bar) return (
+    <button type="button" className={`bar-item bar-shoot ${className}`} onClick={add.shoot} aria-label={n ? COPY.reading(n) : undefined}>
+      <span className="shutter"><CameraIcon />{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}</span><span>{COPY.shoot}</span>
+    </button>
+  )
   return (
     <button type="button" className={`btn btn-accent shoot whitespace-nowrap ${className}`} onClick={add.shoot} aria-label={n ? COPY.reading(n) : undefined} title={COPY.shoot}>
       <CameraIcon /><span className="shoot-label">{COPY.shoot}</span>{n > 0 && <span className="count-badge" aria-hidden>{n}</span>}
@@ -207,9 +224,9 @@ function AddNotice() {
 function BottomBar({ tab }: { tab: Tab }) {
   return (
     <nav aria-label="Main" className="bottom-bar">
-      <Link href="/" className="tab justify-self-center" aria-current={tab === 'library' ? 'page' : undefined}>{COPY.library}</Link>
-      <ShootButton className={tab === 'library' ? '' : 'shoot-quiet'} />
-      <Link href="/make" className="tab justify-self-center" aria-current={tab === 'make' ? 'page' : undefined}>{COPY.make}</Link>
+      <Link href="/" className="bar-item" aria-current={tab === 'library' ? 'page' : undefined}><GridIcon /><span>{COPY.library}</span></Link>
+      <ShootButton bar className={tab === 'library' ? '' : 'shoot-quiet'} />
+      <Link href="/make" className="bar-item" aria-current={tab === 'make' ? 'page' : undefined}><SpreadIcon /><span>{COPY.make}</span></Link>
     </nav>
   )
 }
