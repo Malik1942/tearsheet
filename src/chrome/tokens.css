@@ -261,6 +261,11 @@
    line runs under it. A starting point set elsewhere shows as its photo, with × to clear it. */
 .make-head { width: 100%; max-width: 680px; margin: var(--space-32) auto 0; display: flex; flex-direction: column; gap: var(--space-16); }
 .headline-field { position: relative; display: flex; align-items: flex-end; gap: var(--space-12); }
+.chrome .headline-field { max-width: none; }   /* outranks .chrome .intent-headline's 40ch: the field spans the column, as the h1 does */
+/* typing never moves what is already written (Malik, 2026-11-04): plain wrapping, not balanced (balance re-evens every line at each keystroke), across the
+   column less the arrow's 60; the h1 that the text becomes keeps the same width and wrapping, so it does not re-break on Enter */
+.chrome .headline-input { text-wrap: wrap; }
+.chrome .make-head > h1.intent-headline { max-width: none; padding-right: 60px; text-wrap: wrap; }   /* outranks .chrome :is(h1, …) { text-wrap: balance } */
 .chrome .headline-input { flex: 1; min-width: 0; display: block; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); resize: none;
   font: inherit; letter-spacing: inherit; overflow-y: auto; max-height: 90px; caret-color: var(--ink); }   /* three lines of 30; outranks the phone's 16 px input rule */
 .chrome .headline-input::placeholder { color: var(--ink-2); opacity: 1; }
