@@ -10,7 +10,10 @@ import { PROPOSE_PROMPT } from './proposePrompt.js'
 
 export const MODEL = 'muse-spark-1.3'
 export const EFFORT = 'low'
-export const MAX_OUT = 4000
+/** Reasoning counts against it: with the ranking, twelve bricks took 3,129 output tokens (2,791 reasoning) on 2026-11-03, and an unfinished answer fails the whole proposal. */
+export const MAX_OUT = 8000
+/** The ranking names the best ten at most; the swap sheet orders the rest by save date. */
+export const RANKING_MAX = 10
 const API = 'https://api.meta.ai/v1/responses'
 /** Muse Spark Standard, USD per token (meta-eval/docs/ENDPOINTS.md). Reasoning tokens are billed as output. */
 const PRICE_IN = 1.25 / 1e6, PRICE_OUT = 4.25 / 1e6
@@ -25,7 +28,7 @@ export const PROPOSE_SCHEMA = {
     picks: { type: 'array', maxItems: 3, items: {
       type: 'object', additionalProperties: false, required: ['brick_id', 'quoted_rule', 'why'],
       properties: { brick_id: { type: 'string' }, quoted_rule: { type: 'string' }, why: { type: 'string' } } } },
-    ranking: { type: 'array', maxItems: 60, items: { type: 'string' } },
+    ranking: { type: 'array', maxItems: RANKING_MAX, items: { type: 'string' } },
   },
 } as const
 
@@ -92,12 +95,15 @@ export function validatePicks(raw: RawPick[], library: LibraryBrick[], anchorId?
   return { picks, dropped }
 }
 
-/** The swap sheet's order (2026-11-03), from the same call as the picks: library ids only, in the model's order, each once. Anything else is
- *  dropped, and a missing or malformed ranking is none: it orders photos, it never costs a proposal. */
+/** The swap sheet's order (2026-11-03), from the same call as the picks: library ids only, in the model's order, each once, the first ten.
+ *  Anything else is dropped, and a missing or malformed ranking is none: it orders photos, it never costs a proposal. */
 export function validateRanking(raw: unknown, library: LibraryBrick[]): string[] {
   if (!Array.isArray(raw)) return []
   const ids = new Set(library.map(b => b.brick_id)), kept = new Set<string>()
-  for (const id of raw) if (typeof id === 'string' && ids.has(id)) kept.add(id)
+  for (const id of raw) {
+    if (kept.size >= RANKING_MAX) break
+    if (typeof id === 'string' && ids.has(id)) kept.add(id)
+  }
   return [...kept]
 }
 

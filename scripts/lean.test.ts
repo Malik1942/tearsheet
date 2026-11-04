@@ -24,7 +24,7 @@ const DARK_PARA = '\n\nAlso prefer these bricks when they serve what they are ma
 const anchorPara = (id: string) => `\n\nAnchor. The designer has already chosen brick "${id}" as the starting point. Do not pick it. Pick at most two other bricks whose rules work with it.`
 const ENDS = 'Do not pick the same brick twice.'
 /** The one sentence added after v1 for the swap sheet's ranking (2026-11-03), between the {{LEAN}} slot and the library. */
-const RANKING = '\n\nAlso return ranking: every brick_id in the library exactly once, best fit first for what they are making, by the same preferences as your picks.'
+const RANKING = '\n\nAlso return ranking: up to ten brick_ids from the library, best fit first for what they are making, each once, by the same preferences as your picks.'
 /** What the prompt says between the last instruction line and the ranking sentence: the {{LEAN}} slot. */
 const leanSlot = (prompt: string) => { const i = prompt.indexOf(ENDS) + ENDS.length; return prompt.slice(i, prompt.indexOf(RANKING, i)) }
 
