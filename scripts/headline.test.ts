@@ -26,7 +26,7 @@ describe('the headline is the input', () => {
     assert.match(html, /^<div class="intent-headline headline-field">/)
     assert.match(html, /<textarea class="headline-input"[^>]*aria-label="What are you making\?"[^>]*placeholder="What are you making\?"/)
     assert.doesNotMatch(html, /headline-go|progressbar|<button/)
-    assert.match(html, /<div class="headline-track" aria-hidden="true"><\/div>/, 'the still track a touch screen shows as the empty field\'s underline')
+    assert.doesNotMatch(html, /headline-track/, 'no underline under the empty field (Malik, 2026-11-04): the placeholder is enough')
   })
   it('shows the round arrow once there is text, never disabled', () => {
     const html = render('a reading tracker')

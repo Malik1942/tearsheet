@@ -263,7 +263,7 @@ function BottomBar({ tab }: { tab: Tab }) {
   return (
     <nav aria-label="Main" className="bottom-bar">
       <Link href="/" className="bar-item" aria-current={tab === 'library' ? 'page' : undefined}><GridIcon /><span>{COPY.library}</span></Link>
-      <ShootButton bar className={tab === 'library' ? '' : 'shoot-quiet'} />
+      <ShootButton bar />
       <Link href="/make" className="bar-item" aria-current={tab === 'make' ? 'page' : undefined}><SpreadIcon /><span>{COPY.make}</span></Link>
     </nav>
   )

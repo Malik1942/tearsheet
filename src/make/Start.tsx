@@ -49,7 +49,6 @@ export function HeadlineField({ value, onChange, onSubmit, busy, label, autoFocu
       )}
       {busy && <div className="card-progress headline-progress" role="progressbar" aria-label={COPY.finding} />}
       {/* on touch, an empty field with no caret shows the reading line's track, still, as its underline; focus hides it (tokens.css) */}
-      {!value && !busy && <div className="headline-track" aria-hidden="true" />}
     </div>
     {/* the page's aria-live line already says this to a screen reader */}
     {busy && <p className="headline-wait" aria-hidden="true">{slow ? COPY.still : COPY.wait}</p>}
