@@ -16,6 +16,11 @@ export type Brick = {
   credit?: string
   /** Where the brick came from (spec v3 SB2): `own` is anything a person added, `starter` ships with Tearsheet. Absent reads by id (see `originOf` in starters.ts). Not a provenance. */
   origin?: 'own' | 'starter'
+  /** A short name for the photo, shown first on its card (Malik, 2026-11-03). Metadata only: never sent to the extraction, never read from it.
+   *  A licensed starter's is its catalogue title, shortened; any other is written by hand, `adapted · by you` (`titleProvenance` in brickLabels.ts). */
+  title?: string
+  /** A licensed work's catalogue title in its own language when `title` is the English one (Lissitzky's "Dlya Golosa"); Details only, never on a card. */
+  title_original?: string
   measurements: Measurement[]
   hypotheses: Hypothesis[]
   relations: Relation[]

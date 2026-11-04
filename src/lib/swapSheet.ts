@@ -4,7 +4,7 @@
 import { CAP_PER_BRICK, candidatesOf, resolveProject, type Project } from './mapRelations'
 import { isShellDefault } from './landing'
 import { labelsOfBrick } from './shortLabels'
-import { shortOriginLine } from './brickLabels'
+import { cardCaption } from './brickLabels'
 import { RELATIONSHIP_KEYS, type ParameterKey, type RelationshipKey } from '../shell/params'
 import type { Brick } from './types'
 
@@ -52,6 +52,6 @@ export function swapGroups(project: Project, pool: Brick[], replacing: string, b
   return (['same', 'adds', 'rest'] as const).filter(id => tiles[id].length > 0).map(id => ({ id, title: TITLES[id], tiles: tiles[id] }))
 }
 
-/** A tile's two lines: the first short label from the label table (null when it has none) and the short origin line ("Mia, 1923", "Dec 27, 2025", "saved Nov 3"). */
-export const tileCaption = (brick: Brick, today: Date = new Date()): { label: string | null; line: string } =>
-  ({ label: labelsOfBrick(brick, 1)[0]?.label ?? null, line: shortOriginLine(brick, today) })
+/** A tile's two lines, as every card shows them (`cardCaption`): the title, else the first short label from the label table; then the short credit or the date. */
+export const tileCaption = (brick: Brick, today: Date = new Date()): { title: string; line: string } =>
+  cardCaption(brick, labelsOfBrick(brick, 1)[0]?.label ?? null, today)

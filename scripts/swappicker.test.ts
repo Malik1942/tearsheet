@@ -40,10 +40,10 @@ describe('the swap sheet as rendered', () => {
     assert.ok(grid)
     assert.ok(grid[1].split(' ').includes('grid-cols-2') && grid[1].split(' ').includes('sm:grid-cols-4'), grid[1])
   })
-  it('captions a tile with its label in 13/500 ink, then its short credit in 12 muted', () => {
+  it('captions a tile as every card is captioned: its title, then its short credit (the classes are sized in tokens.css, caption.test.ts)', () => {
     const html = render(GROUPS)
-    assert.match(html, /<span class="[^"]*text-\[13px\] font-medium[^"]*" style="color:var\(--ink\)">[^<&]+<\/span><span class="ink-2 text-\[12px\][^"]*">Mia, 1923<\/span>/)
-    assert.match(html, /<span class="ink-2 text-\[12px\][^"]*">NASA\/JPL<\/span>/)
+    assert.match(html, /<span class="cap-title">Staatliches Bauhaus<\/span><span class="cap-line[^"]*">Mia, 1923<\/span>/)
+    assert.match(html, /<span class="cap-title">Visions of the Future: Mars<\/span><span class="cap-line[^"]*">NASA\/JPL<\/span>/)
     assert.equal(html.includes('Malik'), false)
   })
   it('checks a photo already in the project and does not let it be chosen; the others can be', () => {

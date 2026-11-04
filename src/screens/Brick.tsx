@@ -77,6 +77,7 @@ export function BrickDetails({ brick, variant = 'page', open = true, summary, on
   )
   const meta = (
     <div>
+      {brick.title_original && <p className="mt-2 text-[12px]"><cite>{brick.title_original}</cite></p>}
       {brick.credit && <p className="mt-2 text-[12px]">{brick.credit}</p>}
       <p className="mono ink-2 mt-2 text-[11px]">{brick.model.id} · effort {brick.model.effort} · {(brick.model.latency_ms / 1000).toFixed(1)} s · {brick.model.input_tokens} in / {brick.model.output_tokens} out{brick.prompt_version ? ` · prompt ${brick.prompt_version}` : ''}</p>
     </div>

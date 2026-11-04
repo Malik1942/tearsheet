@@ -4,7 +4,8 @@ import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
 import { BrickSheet } from './bricks/BrickSheet'
 import { RETRY_TITLE } from './bricks/retryCopy'
-import { dateLine, issueParts, originParts } from './lib/brickLabels'
+import { cardCaption, dateLine, issueParts } from './lib/brickLabels'
+import { labelsOfBrick } from './lib/shortLabels'
 import { originOf } from './lib/starters'
 import type { Brick } from './lib/types'
 
@@ -19,14 +20,14 @@ const COPY = {
   offline: 'Offline. Your photo is saved and will be read when you are back online.',
   unparsed: "Couldn't read this one",
   retry: 'Try again',
-  open: (date: string) => `Open photo, ${date}`,
+  open: (title: string, date: string) => `Open ${title}, ${date}`,
   /** L7 and SB4: the starters are built in and persistent, and they step aside as the library fills. Said once, in the issue line, with their count. */
   starterCount: (n: number) => `${n} starter ${n === 1 ? 'photo' : 'photos'}`,
   startersHidden: 'Starters are hidden.',
   showStarters: 'Show starters',
 }
 
-/** Library (15_SIMPLIFY §2): a grid of photos, each with one date line and nothing else. Tapping one opens the Brick sheet. Adding never asks for an intent:
+/** Library (15_SIMPLIFY §2): a grid of photos, each with its two-line caption (`cardCaption`) and nothing else. Tapping one opens the Brick sheet. Adding never asks for an intent:
  *  `Shoot` is in the header (PRD L2), `Add from library` takes several photos at once (L3), and the store's queue sends them two at a time (L5). */
 export function Library() {
   const store = useStore()
@@ -100,14 +101,14 @@ function waitingTip(b: Brick): string {
   return b.held === 'limit' ? COPY.limit : b.held === 'offline' ? COPY.offline : COPY.queued
 }
 
-/** One card (15_SIMPLIFY §2): the photo and its date line. The state is on the photo: a thin line while it waits or is read (no text), a small `!` when it could not be read,
+/** One card (15_SIMPLIFY §2): the photo and its two-line caption. The state is on the photo: a thin line while it waits or is read (no text), a small `!` when it could not be read,
  *  which opens "Couldn't read this one · Try again". A read or failed card is a link to `/brick/:id` that opens the Brick sheet in place (a new tab still gets the page). */
 function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void }) {
   const store = useStore()
   const status = b.status ?? 'ready'
   const busy = status === 'extracting' || status === 'pending'
   const blocked = retryBlocked(b)
-  const date = dateLine(b), cap = originParts(b)
+  const date = dateLine(b), cap = cardCaption(b, labelsOfBrick(b, 1)[0]?.label ?? null)
   const [alert, setAlert] = useState(false)
   const root = useRef<HTMLLIElement>(null)
   useEffect(() => {
@@ -127,12 +128,12 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
   return (
     <li ref={root} className="relative min-w-0">
       {busy ? (
-        <div className="card-tile" role="img" aria-label={`${waitingTip(b)} ${date}`} title={waitingTip(b)}>
+        <div className="card-tile" role="img" aria-label={`${waitingTip(b)} ${cap.title}, ${date}`} title={waitingTip(b)}>
           {photo}
           <div className="card-progress" data-held={b.status === 'pending' && b.held ? b.held : undefined} />
         </div>
       ) : (
-        <a href={`/brick/${b.id}`} className="card-tile" aria-label={COPY.open(date)} onClick={open}>{photo}</a>
+        <a href={`/brick/${b.id}`} className="card-tile" aria-label={COPY.open(cap.title, date)} onClick={open}>{photo}</a>
       )}
       {status === 'unparsed' && (
         <button type="button" className="alert-badge" aria-label={COPY.unparsed} title={COPY.unparsed} aria-expanded={alert} onClick={() => setAlert(v => !v)}>!</button>
@@ -144,12 +145,11 @@ function Card({ brick: b, onOpen }: { brick: Brick; onOpen: (id: string) => void
             disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']} onClick={() => { setAlert(false); store.retry(b.id) }}>{COPY.retry}</button>
         </div>
       )}
-      {/* who leads, when follows (Malik, 2026-11-03): the short institution in ink and its date quieter, or an own photo's date; never cut;
-          the full credit is its hover and the Brick sheet's. The id lets a capture name the caption exactly */}
+      {/* two lines, as on every card (Malik, 2026-11-03): what the photo is, then whose or when. The full credit is its hover and the Brick sheet's.
+          The id lets a capture name the caption exactly */}
       <p className="card-caption" id={`caption-${b.id}`} title={date}>
-        {cap.noteFirst && cap.note && <span className="cap-note">{cap.note}</span>}
-        <span className="cap-lead">{cap.lead}</span>
-        {!cap.noteFirst && cap.note && <span className="cap-note">{cap.note}</span>}
+        <span className="cap-title">{cap.title}</span>
+        <span className="cap-line tnum">{cap.line}</span>
       </p>
     </li>
   )
