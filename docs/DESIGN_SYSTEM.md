@@ -44,7 +44,7 @@ Malik's direction (2026-11-04): a newspaper front page on the desktop, clear and
 - **From the tablet up**, the header is a nameplate. The lockup (the Data tear mark and TEARSHEET) is centered, the sections (Library, Make) sit at the left, and the page's actions sit at the right.
 - **On the Library**, the header has no line of its own.
 - **On a phone**, the lockup sits at the left and the actions at the right.
-- **The lockup** is the Claude Design board's primary lockup, drawn as the board draws it: its mark is the board's own tear, and TEARSHEET's letters have their bottoms bitten by that tear. It is drawn without the rim (no brown line), at every size (Malik, 2026-11-04).
+- **The lockup** is the Claude Design board's primary lockup, drawn as the board draws it: its mark is the board's own tear, and TEARSHEET's letters have their bottoms bitten by the board's own bite line, set 35 units (0.035 em) nearer the baseline so the letters keep a little more. It is drawn without the rim (no brown line), at every size (Malik, 2026-11-04).
 - **Everywhere**, the lockup's tear is ultramarine and its letters graphite.
 
 **Masthead, from the tablet up: the front page's poster.**

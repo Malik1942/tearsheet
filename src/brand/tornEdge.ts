@@ -21,6 +21,14 @@ function nameRim(): { bite: Edge; fibre: Edge } {
   return { fibre: norm(fibre), bite: norm(bite) }
 }
 
+/** The header lockup's bite: the board's own bite under the name, every sample of it, as a clip-path for TEARSHEET set whole (baseline at y 686), in the
+ *  lockup's units. `lower` sets it that many units nearer the baseline than the board draws it (Malik, 2026-11-04: the letters cut a little less). */
+export function nameBite(lower = 35): string {
+  const { bite } = nameRimUnits()
+  const edge = [...bite].reverse().map(p => `L${p.x},${p.y + lower}`)
+  return `M${bite[0].x},-60 L${bite[bite.length - 1].x},-60 ${edge.join(' ')} Z`
+}
+
 const pct = (x: number) => `${(Math.min(1, Math.max(0, x)) * 100).toFixed(2)}%`
 const em = (units: number) => `${(units / 1000).toFixed(4)}em`
 

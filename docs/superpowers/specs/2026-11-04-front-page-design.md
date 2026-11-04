@@ -44,6 +44,6 @@ Date: 2026-11-04. Decided with Malik in review, on mocks rendered against the ru
 - `docs/DESIGN_SYSTEM.md` §1, §4, §4a, §6, §10.
 
 ## Later the same day
-- **Header lockup.** It is the Claude Design board's primary lockup as drawn: the board's mark tear and the bitten letters, without the rim. Two attempts to thin the tear for small sizes were rejected as too regular and artificial: a resampled bite, and a mark with fibres added along its edges.
+- **Header lockup.** It is the Claude Design board's primary lockup: the board's mark tear, and the letters clipped by the board's own bite set 35 units lower ("cut the letters a little less"), without the rim. Two attempts to thin the tear for small sizes were rejected as too regular and artificial: a resampled bite, and a mark with fibres added along its edges.
 - **Make's callouts.** They became pins on the List screen, with no leader lines. The white-cased leaders were clumsy. A thin white ring keeps a pin visible on a blue screen.
 
