@@ -1,14 +1,16 @@
-import type { Brick } from './types'
+import type { Brick, PhotoBorder } from './types'
 import type { ExtractResult } from './extract'
 import { exifTakenAt } from './exifDate'
+import { borderOfCanvas } from './photoFit'
 
 /** Formats the file picker accepts. Never list heic and never use a bare image/*: iOS converts library HEICs to JPEG only when heic is absent, and Safari 17+ turns jpeg/png picks into .heic when it is present. */
 export const ACCEPT = 'image/jpeg,image/png,image/webp'
 
 /** Make the photo upright and at most 2048 px on the long side, as JPEG, before it leaves the browser. Same prep as the gate harness.
+ *  The same canvas gives the photo's border (photoFit.ts), which only decides how its tiles crop it; it is never sent.
  *  Decodes through an <img> element rather than createImageBitmap: WebKit drops EXIF orientation when decoding a Blob with
  *  createImageBitmap (bug 237895) and ignores it again when drawing the bitmap (242137); <img> is upright in every modern browser. */
-export async function prepareImage(file: File, maxSide = 2048): Promise<{ dataUrl: string; width: number; height: number; takenAt: string | null }> {
+export async function prepareImage(file: File, maxSide = 2048): Promise<{ dataUrl: string; width: number; height: number; takenAt: string | null; border?: PhotoBorder }> {
   // the canvas below drops EXIF, so the capture date is read from the original bytes first (the EXIF block sits at the start of the file)
   const takenAt = await file.slice(0, 256 * 1024).arrayBuffer().then(exifTakenAt, () => null)
   const url = URL.createObjectURL(file)
@@ -24,7 +26,9 @@ export async function prepareImage(file: File, maxSide = 2048): Promise<{ dataUr
     const canvas = document.createElement('canvas')
     canvas.width = w; canvas.height = h
     canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
-    return { dataUrl: canvas.toDataURL('image/jpeg', 0.9), width: w, height: h, takenAt }
+    let border: PhotoBorder | undefined
+    try { border = borderOfCanvas(canvas) } catch { /* the photo is added all the same; its tiles keep the crop */ }
+    return { dataUrl: canvas.toDataURL('image/jpeg', 0.9), width: w, height: h, takenAt, ...(border ? { border } : {}) }
   } finally {
     URL.revokeObjectURL(url)
   }

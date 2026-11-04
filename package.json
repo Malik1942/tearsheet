@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check:prompts": "tsx scripts/check-prompt-sha.ts",
+    "borders": "tsx scripts/borders.ts",
     "test": "node --disable-warning=DEP0205 --import tsx --test scripts/*.test.ts",
     "test:contract": "CONTRACT=1 node --disable-warning=DEP0205 --import tsx --test scripts/shell-contract.test.ts"
   },

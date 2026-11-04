@@ -6,9 +6,13 @@ export type Hypothesis = BrickExtraction['hypotheses'][number]
 export type Region = BrickExtraction['regions'][number]
 export type Relation = BrickExtraction['transferable_relations'][number] & { id: string }
 
+/** A photo's outer ring, read once from its pixels (photoFit.ts): `plain` when it is one color to the eye, `color` its median as sRGB hex. Presentation only. */
+export type PhotoBorder = { plain: boolean; color: string }
+
 export type Brick = {
   id: string
-  photo: { url: string; width: number; height: number }
+  /** `border` is measured at save (client.ts prepareImage); a starter's comes from fixtures/borders.json. A brick saved before it has none, and its tiles keep the crop. */
+  photo: { url: string; width: number; height: number; border?: PhotoBorder }
   saved_at: string
   /** When the photo was taken, `YYYY-MM-DD`, from its EXIF DateTimeOriginal at import; absent when the file carried none. */
   taken_at?: string

@@ -14,7 +14,7 @@ const WITHHELD = `data:image/svg+xml;utf8,${encodeURIComponent(
  *  An `idb:` source is an own photo still on its way back from IndexedDB (or gone from this device): a plain dark box, never an <img>. */
 export function Photo(props: ImgHTMLAttributes<HTMLImageElement>) {
   const [failed, setFailed] = useState(false)
-  if (typeof props.src === 'string' && props.src.startsWith(IDB)) return <div className={props.className} style={{ background: '#2a2a2a', ...props.style }} role="img" aria-label={props.alt || 'Photo not loaded'} title={props.title} />
+  if (typeof props.src === 'string' && props.src.startsWith(IDB)) return <div className={props.className} style={{ ...props.style, background: '#2a2a2a' }} role="img" aria-label={props.alt || 'Photo not loaded'} title={props.title} />
   const credit = typeof props.src === 'string' ? CREDITS.get(props.src) : undefined
   return <img {...props} src={failed ? WITHHELD : props.src} onError={() => setFailed(true)} alt={props.alt ?? ''} title={props.title ?? credit} />
 }

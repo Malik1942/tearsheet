@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
+import { tileFit } from '../lib/photoFit'
 import { propose, proposeEnabled } from '../lib/proposeClient'
 import { orderOwnFirst, proposalPool } from '../lib/starters'
 import { chipsFor, type Lean } from '../lib/lean'
@@ -209,7 +210,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
                   return (
                     <li key={brick.id} className="photo-cell">
                       <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={name} title={why} onClick={() => toggle(brick.id, name, muted)}>
-                        <Photo src={brick.photo.url} alt="" />
+                        <Photo src={brick.photo.url} alt="" style={tileFit(brick.photo, 1)} />
                       </button>
                       <span className={`photo-caption ${shown ? 'is-shown' : ''}`} aria-hidden={!shown} role={shown ? 'status' : undefined}>{shown ? caption.text : name}</span>
                       {missing > 0 && (

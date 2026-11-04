@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Photo } from '../bricks/Photo'
+import { tileFit } from '../lib/photoFit'
 import type { Brick } from '../lib/types'
 
 const COPY = {
@@ -44,7 +45,7 @@ export function HeadlineField({ value, onChange, onSubmit, busy, label, autoFocu
 export function AnchorThumb({ brick, onClear }: { brick: Brick; onClear: () => void }) {
   return (
     <div className="make-anchor">
-      <Photo src={brick.photo.url} alt={COPY.startingFrom} title={COPY.startingFrom} />
+      <Photo src={brick.photo.url} alt={COPY.startingFrom} title={COPY.startingFrom} style={tileFit(brick.photo, 1)} />
       <button type="button" className="make-anchor-clear" aria-label={COPY.clear} title={COPY.clear} onClick={onClear}>×</button>
     </div>
   )

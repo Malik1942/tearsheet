@@ -10,6 +10,7 @@ import { Shell } from '../shell/Shell'
 import { MiniPreview } from '../shell/MiniPreview'
 import { choiceStands, conflictTiles } from '../lib/conflictPreview'
 import { Photo } from '../bricks/Photo'
+import { tileFit } from '../lib/photoFit'
 import { ProvenanceChip } from '../compose/ProvenanceChip'
 import { Section, Row } from '../compose/Sheet'
 import { useChangeFlash } from '../compose/useChangeFlash'
@@ -78,7 +79,7 @@ export function ComposePanel({ project, neutral, onNeutral, screen }: { project:
           {materials.map(b => (
             <div key={b.id} className="panel p-2" style={locked[b.id] ? { borderColor: 'var(--ink)' } : undefined}>
               <div className="flex items-center gap-2">
-                <Link href={`/brick/${b.id}`} aria-label={`Open brick ${b.id}`}><Photo src={b.photo.url} className="h-10 w-14 rounded object-cover" /></Link>
+                <Link href={`/brick/${b.id}`} aria-label={`Open brick ${b.id}`}><Photo src={b.photo.url} className="h-10 w-14 rounded object-cover" style={{ outline: '1px solid var(--line)', ...tileFit(b.photo, 56 / 40) }} /></Link>
                 <div className="min-w-0 flex-1">
                   <div className="mono text-[12px]">{b.id}</div><div className="ink-2 truncate text-[11px]" title={originLabel(b)}>{originLabel(b)}</div>
                   {(() => { const p = pickOf(b.id); return p ? <span className={`chip ${p.status === 'proposed' ? 'chip-proposed' : 'chip-adapted'} mt-0.5 px-1.5 text-[10px]`} title={p.status === 'proposed' ? `Proposed by the model for this intent, quoting: ${p.quotedRule}` : p.status === 'anchor' ? 'Chosen by you as the starting point' : `Swapped in by you for ${p.swappedFrom}`}>{p.status === 'proposed' ? 'proposed · model' : 'adapted · by you'}</span> : null })()}
@@ -96,7 +97,7 @@ export function ComposePanel({ project, neutral, onNeutral, screen }: { project:
               </div>
               {swapping === b.id && (
                 <div className="mt-2 grid grid-cols-3 gap-1">
-                  {spare.map(s => <button key={s.id} type="button" onClick={() => swap(b.id, s.id)} className="overflow-hidden rounded" style={{ border: '1px solid var(--line)' }} title={`Swap in ${s.id}`}><div style={{ aspectRatio: '16 / 10' }}><Photo src={s.photo.url} className="h-full w-full object-cover" /></div><div className="mono px-1 text-[10px]">{s.id}</div></button>)}
+                  {spare.map(s => <button key={s.id} type="button" onClick={() => swap(b.id, s.id)} className="overflow-hidden rounded" style={{ border: '1px solid var(--line)' }} title={`Swap in ${s.id}`}><div style={{ aspectRatio: '16 / 10' }}><Photo src={s.photo.url} className="h-full w-full object-cover" style={tileFit(s.photo, 16 / 10)} /></div><div className="mono px-1 text-[10px]">{s.id}</div></button>)}
                 </div>
               )}
               <details className="mt-2 text-[11px]">
@@ -113,7 +114,7 @@ export function ComposePanel({ project, neutral, onNeutral, screen }: { project:
           ))}
           {materials.length < 5 && spare.length > 0 && (
             <details className="panel p-2 text-[12px]"><summary className="ink-2 cursor-pointer">Add a brick</summary>
-              <div className="mt-2 grid grid-cols-3 gap-1">{spare.map(s => <button key={s.id} type="button" onClick={() => update(p => ({ brickIds: [...p.brickIds, s.id] }))} className="overflow-hidden rounded" style={{ border: '1px solid var(--line)' }}><div style={{ aspectRatio: '16 / 10' }}><Photo src={s.photo.url} className="h-full w-full object-cover" /></div><div className="mono px-1 text-[10px]">{s.id}</div></button>)}</div>
+              <div className="mt-2 grid grid-cols-3 gap-1">{spare.map(s => <button key={s.id} type="button" onClick={() => update(p => ({ brickIds: [...p.brickIds, s.id] }))} className="overflow-hidden rounded" style={{ border: '1px solid var(--line)' }}><div style={{ aspectRatio: '16 / 10' }}><Photo src={s.photo.url} className="h-full w-full object-cover" style={tileFit(s.photo, 16 / 10)} /></div><div className="mono px-1 text-[10px]">{s.id}</div></button>)}</div>
             </details>
           )}
           <div className="mt-1 flex flex-wrap gap-2">
