@@ -10,7 +10,7 @@ import { PROPOSE_PROMPT } from './proposePrompt.js'
 
 export const MODEL = 'muse-spark-1.3'
 export const EFFORT = 'low'
-/** Reasoning counts against it: with the ranking, twelve bricks took 3,129 output tokens (2,791 reasoning) on 2026-11-03, and an unfinished answer fails the whole proposal. */
+/** Reasoning counts against it: with the ranking, thirteen bricks took 3,129 output tokens (2,791 reasoning) on 2026-11-03, and an unfinished answer fails the whole proposal. */
 export const MAX_OUT = 8000
 /** The ranking names the best ten at most; the swap sheet orders the rest by save date. */
 export const RANKING_MAX = 10
