@@ -1,6 +1,6 @@
 # Demo notes: the forgotten photo and the rule it carries (12_SPEC_v3 §8)
 
-**Shot flow (Malik, Tue 2026-11-03, one-page Make):** type the intent, press Enter, tap the Chicago photo off, tap it on, Share. These notes describe the public version at `bricks-virid-nine.vercel.app`: commit 4010fa2, deployed 2026-11-03 17:03 PT. It has the swap sheet and the ranking sentence in the proposal prompt. If a later deploy changes the proposal prompt or the layout contract, check step 1 and the table again before recording.
+**Shot flow (Malik, Tue 2026-11-03, one-page Make):** type the intent, press Enter, tap the Chicago photo off, tap it on, Share. These notes describe the public version at `bricks-virid-nine.vercel.app`: commit 7768452, deployed 2026-11-03 17:13 PT. It has the swap sheet, and the proposal prompt asks for a ranking of the ten best photos. If a later deploy changes the proposal prompt or the layout contract, check step 1 and the table again before recording.
 
 ## The photo
 
@@ -32,11 +32,12 @@
   - The chips appear once the intent is typed. With the 12 starters and Chicago they are dark, one accent, airy, two colors, big titles and text-heavy.
   - The lean holds while the page stays open. A reload clears it.
 
-**1. Enter.** Two empty frames pulse while the model looks. That took 33 s in the latest call, so plan a cut. Then the project appears: the two screens, and under them the photos that set something.
+**1. Enter.** Two empty frames pulse while the model looks; plan a cut. It took 12.5 s before the ranking, 33 s with the whole-library ranking, and 17 s with the ten-photo ranking (starters only). Then the project appears: the two screens, and under them the photos that set something.
+- **Before recording, check Chicago first once under the ten-photo wording.** The two calls below had Chicago in the library but used earlier wordings. The one ten-photo call had no Chicago.
 - **Expected picks:** two live calls on the public site, both with the lean dark + one accent, proposed Chicago, g2 and secession, in that order.
   - **Before the ranking sentence** (2026-11-03): 12.5 s, $0.0098.
-  - **After it** (2026-11-03 17:05 PT): 33.0 s, $0.0161, 3,129 output tokens, 2,791 of them reasoning. The ranking put the same three first.
-  - **Chicago's reason in the latest call,** quoting r2: "Keeps the log dark like a venue while saving a small pop for show titles so many entries stay scannable."
+  - **With the whole-library ranking** (2026-11-03 17:05 PT): 33.0 s, $0.0161, 3,129 output tokens, 2,791 of them reasoning. The ranking put the same three first.
+  - **Chicago's reason in that call,** quoting r2: "Keeps the log dark like a venue while saving a small pop for show titles so many entries stay scannable."
   - Chicago comes first: "Mostly text", with "Dec 27, 2025" under it.
   - g2, the car, has "One small accent".
   - Secession is in the project but not in the row. With Chicago on, nothing it sets shows, so it is hidden.
@@ -45,7 +46,7 @@
   - The list: each name large and centered, the date and venue under it, no thumbnails.
   - The year review: 2025, the totals in red, months as small labels, text rows, no thumbnails.
 - **Under the row:** "4 things couldn't carry over ▸".
-- **Takes:** every Enter is a fresh model call, about 1.6¢ since the ranking sentence. Record up to three takes and use one with Chicago in the row; otherwise see Fallbacks.
+- **Takes:** every Enter is a fresh model call: about 1¢ with the ten-photo ranking ($0.0108 in its one call). Record up to three takes and use one with Chicago in the row; otherwise see Fallbacks.
 - **The time limit:** the model call is cut off at 55 s, inside the function's 60 s. If a take runs past it, the page says "Nothing came back. Pick them yourself." That one is a retake, not a fallback.
 
 **2. Tap Chicago off.** The project goes v1 → v2. An outline flashes on every region that changed, which is nearly all of both screens.
