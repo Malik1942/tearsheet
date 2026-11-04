@@ -58,8 +58,8 @@ export const CONCERT_CONTENT: ShellContent = {
   feature: 'Show of the year',
 }
 
-/** A project's written content on the screens, or the concert log when it has none. Written content has no places, so its totals are entries, months and tags,
- *  the first named by the list's own title ("8 books"); its action is "Add" and its featured line "Highlight". */
+/** A project's written content on the screens, or the concert log when it has none. Written content has no places, so its totals are entries, months and tags
+ *  ("8 entries", never the list's title, which is not always a plural noun: "My Weekly Shelf"); its action is "Add" and its featured line "Highlight". */
 export function toShellContent(sample: SampleContent | null | undefined): ShellContent {
   if (!sample) return CONCERT_CONTENT
   const [a, b, c] = sample.tabs
@@ -68,7 +68,7 @@ export function toShellContent(sample: SampleContent | null | undefined): ShellC
     tabs: [a, b, c],
     entries: [...sample.entries].sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0)).map((e, i) => ({ id: `e${i + 1}`, title: e.title, subtitle: e.subtitle, date: e.date, tags: e.tags })),
     add: 'Add',
-    stats: [{ count: 'entries', label: sample.screen_titles.list.toLowerCase() }, { count: 'months', label: 'months' }, { count: 'tags', label: 'tags' }],
+    stats: [{ count: 'entries', label: 'entries' }, { count: 'months', label: 'months' }, { count: 'tags', label: 'tags' }],
     feature: 'Highlight',
   }
 }

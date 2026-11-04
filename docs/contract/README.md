@@ -29,6 +29,8 @@ Each phone frame now carries a status bar, a large title on the List, a tab bar 
 
 **Sample content (item 1).** The screens now take every word from the project's content: the propose call's placeholder text, or the concert log when there is none. The contract is run with both: `npm run test:contract` (the concert log, `REPORT.md`) and `CONTRACT_CONTENT=reading npm run test:contract` (the hand-written reading tracker in `src/fixtures/content/reading-tracker.json`, `reading/REPORT.md`). On 2026-11-03 both gave 0 of 1,320. Rule 5 holds for written content too: a tab label that repeats a screen title is refused when the content is read, and the year review names the content's own year once.
 
+**Titles are read whole (rule 4, 2026-11-03).** Written content can bring a longer review title than "Year review", and the bar used to cut it with an ellipsis ("My Year in Books" at a large type scale). The bar title now wraps to a second line at the same size, balanced, and the bar grows with it. No type size, spacing step, tap target or word changes, and a title that fits looks as before. The measure checks it: `.bar-title`, `.large-title` and `.screen-title` may not overflow their box. Before the fix, the reading tracker with the titles the live model wrote ("My Weekly Shelf" / "My Year in Books") broke rule 4 in 492 of 1,320 compositions; after it, 0 with either content. The year review's first total now reads "8 entries" for written content, because a list title is not always a plural noun.
+
 The active tab takes `color_accent` only when `accent_placement` is labels or actions; under none, dividers and one-hero (the first item's alone) it is `color_fg`. Inactive tabs are `color_fg` at half opacity. Under the neutral skin all of it is grey.
 
 ## Measured

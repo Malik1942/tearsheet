@@ -50,6 +50,13 @@ describe('device details inside each phone frame', () => {
     const titles = ['shows', 'year review']
     for (const screen of ['list', 'review'] as const) for (const t of tabs(render(screen))) assert.equal(titles.includes(t.label.trim().toLowerCase()), false, t.label)
   })
+  it('never cuts a title: the bar title wraps to a second line instead of an ellipsis (a written title can be longer than "Year review")', async () => {
+    const { readFileSync } = await import('node:fs')
+    const css = readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+    const rule = /\n\.bar-title \{([^}]*)\}/.exec(css)?.[1] ?? ''
+    assert.ok(rule.includes('overflow-wrap: break-word'), rule)
+    assert.equal(/nowrap|ellipsis|overflow: hidden/.test(rule), false, rule)
+  })
   it('draws the tabs as buttons, and as spans with the same class in a static copy', () => {
     assert.deepEqual(tabs(render('list')).map(t => t.tag), ['button', 'button', 'button'])
     assert.deepEqual(tabs(render('list', true)).map(t => t.tag), ['span', 'span', 'span'])
