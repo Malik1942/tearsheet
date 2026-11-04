@@ -15,6 +15,17 @@
 </p>
 <p align="center"><sub>Muse Spark reads a photo once: what it measured (in blue), the rules it keeps, and a tear made from the photo's own light.</sub></p>
 
+## Try it in 60 seconds
+
+No account and no photos of your own: twelve sample photos are already in the library.
+
+1. Open **[tearsheet.malikzhang.com](https://tearsheet.malikzhang.com)** and click **Make**.
+2. In **What are you making?**, type one sentence, for example "a reading tracker for the books I finish this year", and press Enter. Spark picks the photos in about 10–30 s.
+3. Under **From your photos**, tap a photo to turn it off, then tap it again to turn it back on. A caption says what moved.
+4. Click **Share**, then **Copy link**, for a read-only page with the screens and the reasons behind them.
+
+It works the same on a phone: **Make** is in the bar at the bottom, the photos sit under the screens, and **Share** stays at the top.
+
 ## Why
 
 Designers tear pages out of magazines to keep what they like. Most of us do the same with a phone: a stage at a show, a car in a parking garage, a poster on a wall. We save it because of how it looks.
@@ -78,16 +89,6 @@ We gave the same six photos to Muse Spark as a plain chat, three times, on 2026-
 | What comes back | Advice to read | Two screens, laid out by those rules |
 | Changing one choice | Ask again | Tap a photo off or swap it |
 | The next project | Dig the photos out and describe your taste again | The library is already there |
-
-## Try it in two minutes
-
-1. Open **[tearsheet.malikzhang.com](https://tearsheet.malikzhang.com)** on a laptop. No account. Twelve sample photos are already in the library.
-2. Go to **Make**, type what you're making (for example, "a reading tracker for the books I finish this year") and press Enter. Spark picks in about 10–30 s.
-3. Tap a photo to turn it off, or ⇄ to swap it. Open **Fine-tune** and hover or click a measured value to see the box it came from.
-4. Add your own photo with **Shoot**, or **⋯ → Add from library…**. Reading one takes about 10–40 s.
-5. **Share** gives you a read-only link to the screens and their reasons.
-
-Make works on a phone too, with the photos under the screens; on a wide screen (1180 px and up) they sit beside them.
 
 ## Under the hood
 
