@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "./chrome/tokens.css";
+@import "./chrome/tokens.css" layer(components);   /* in the components layer, so a Tailwind utility on .btn or .chip wins as written; unlayered, the tokens beat every utility */
 
 html, body, #root { height: 100%; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-ui); }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CONCERTS, groupBy, posterFor, shortDate, type Concert } from './content'
+import { CONCERTS, groupBy, shortDate, type Concert } from './content'
 import type { Params } from './params'
 
 /** The minimal top bar inside each phone frame (design pass A3): the screen title at title size, one control on the right, a hairline below. */
@@ -28,7 +28,7 @@ function AddShow({ labelled, staticRender }: { labelled: boolean; staticRender: 
 function Item({ c, hues }: { c: Concert; hues: number }) {
   return (
     <article className="item">
-      <div className="pic"><img src={posterFor(c)} alt="" /></div>
+      <div className="pic" aria-hidden="true" />
       <div className="text">
         <h3 className="title">{c.artist}</h3>
         <p className="meta"><span className="date">{shortDate(c.date)}</span><span className="sep"> · </span><span className="venue">{c.venue}, {c.city}</span></p>
@@ -36,8 +36,8 @@ function Item({ c, hues }: { c: Concert; hues: number }) {
         <p className={hues >= 3 ? 'tags palette-3' : 'tags'}>
           {c.tags.map(t => <span key={t} className="tag">{t}</span>)}
         </p>
+        <Chevron />
       </div>
-      <Chevron />
     </article>
   )
 }

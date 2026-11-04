@@ -2,7 +2,9 @@
 import { originOf } from './starters'
 import type { Brick } from './types'
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** Dates through Intl (Web Interface Guidelines: no hand-built date formats), in the app's English and in UTC, so a date-only value never shifts by the viewer's time zone. */
+const SAME_YEAR = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+const OTHER_YEAR = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 
 /** "Jun 21" for a date in this calendar year, "Jun 21, 2025" for any other year. The date is date-only, `YYYY-MM-DD`, and is read by hand:
  *  `new Date(string)` would read it as UTC midnight and shift the day by the viewer's time zone. Anything that is not a real date is returned as given. */
@@ -12,8 +14,8 @@ function dayLabel(iso: string, today: Date): string {
   const year = Number(m[1]), month = Number(m[2]), day = Number(m[3])
   const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
   if (month < 1 || month > 12 || day < 1 || day > [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]) return iso
-  const date = `${MONTHS[month - 1]} ${day}`
-  return year === today.getFullYear() ? date : `${date}, ${year}`
+  const at = new Date(Date.UTC(year, month - 1, day))
+  return (year === today.getFullYear() ? SAME_YEAR : OTHER_YEAR).format(at)
 }
 
 /** "saved Jun 21" for a brick saved this calendar year, "saved Jun 21, 2025" for any other year (spec v3 P7: the date that makes

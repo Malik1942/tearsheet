@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check:prompts": "tsx scripts/check-prompt-sha.ts",
-    "test": "node --disable-warning=DEP0205 --import tsx --test scripts/*.test.ts"
+    "test": "node --disable-warning=DEP0205 --import tsx --test scripts/*.test.ts",
+    "test:contract": "CONTRACT=1 node --disable-warning=DEP0205 --import tsx --test scripts/shell-contract.test.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.4",
@@ -28,6 +29,7 @@
     "@vercel/node": "^29.0.1",
     "@vitejs/plugin-react": "^6.1.2",
     "oxlint": "^1.89.0",
+    "playwright-core": "1.59.1",
     "typescript": "~7.0.2",
     "vite": "^8.3.5"
   }

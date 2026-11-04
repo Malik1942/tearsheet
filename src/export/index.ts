@@ -1,6 +1,6 @@
 import type { Proposal, Resolved } from '../lib/mapRelations'
 import type { Brick } from '../lib/types'
-import { footnoteOf, isShellDefault, rowHeadline } from '../lib/landing'
+import { contractLine, footnoteOf, isShellDefault, rowHeadline } from '../lib/landing'
 import { standInLine } from '../lib/standIns'
 import { IDB } from '../lib/persist'
 import { PARAMETER_KEYS, RELATIONSHIP_KEYS, SKIN_KEYS, toCssVars } from '../shell/params'
@@ -21,7 +21,7 @@ export function exportJson(intent: string, r: Resolved, proposal?: Proposal, bri
 export function exportCss(r: Resolved, bricks: Brick[]): string {
   const vars = toCssVars(r.params)
   const lines = PARAMETER_KEYS.map(k => {
-    const comment = [rowHeadline(r.values[k], r.params, bricks), isShellDefault(r.values[k]) ? '' : origin(r, k), footnoteOf(r.values[k], bricks)].filter(Boolean).join(' · ')
+    const comment = [rowHeadline(r.values[k], r.params, bricks), contractLine(r.values[k]), isShellDefault(r.values[k]) ? '' : origin(r, k), footnoteOf(r.values[k], bricks)].filter(Boolean).join(' · ')
     return `  --${k.replace(/_/g, '-')}: ${cssValue(String(r.params[k]))}; /* ${comment.replaceAll('*/', '* /')} */`
   })
   const derived = Object.entries(vars).map(([k, v]) => `  ${k}: ${v};`)
@@ -51,7 +51,7 @@ export function exportHandoff(intent: string, bricks: Brick[], r: Resolved, prop
     '## Bricks used', '',
     ...bricks.map(b => `- **${b.id}** saved ${b.saved_at}${b.taken_at && b.taken_at !== b.saved_at ? ` (taken ${b.taken_at})` : ''}${b.prompt_version ? `, prompt ${b.prompt_version}` : ''}: ![${b.id}](${photo(b)}) ${b.photo.width}x${b.photo.height}. Fragile if changed: ${b.fragile_if_changed}${howPicked(b)}`), '',
     '## Parameters and where each came from', '',
-    ...PARAMETER_KEYS.map(k => { const v = r.values[k]; return `- \`${k}\` = **${v.value}** · ${origin(r, k)}${v.source?.relationRule ? `\n  - rule: ${v.source.relationRule}` : ''}${v.source?.note ? `\n  - note: ${v.source.note}` : ''}` }), '',
+    ...PARAMETER_KEYS.map(k => { const v = r.values[k]; const c = contractLine(v); return `- \`${k}\` = **${v.value}** · ${origin(r, k)}${v.source?.relationRule ? `\n  - rule: ${v.source.relationRule}` : ''}${c ? `\n  - ${c}` : v.source?.note ? `\n  - note: ${v.source.note}` : ''}` }), '',
     '## Keep these relations', '',
     ...(kept.length ? kept.map(k => `- \`${k}\` = ${r.values[k].value}${r.values[k].locked ? ' [locked]' : ''}`) : ['- none beyond the shell defaults']), '',
     '## Conflicts and what was chosen', '',

@@ -203,7 +203,7 @@ describe('landsOn: the plain enums', () => {
       1: 'The loosest list: 32 px above and below each item; notes show.',
       2: 'A loose list: 24 px above and below each item; notes show.',
       4: 'A compact list: 16 px above and below each item; notes are hidden.',
-      6: 'The tightest list: 12 px above and below each item; notes are hidden.',
+      6: 'The tightest list: 16 px above and below each item; notes are hidden and a poster is at most a sixth of the screen tall.',
     }],
     ['grouping', {
       none: 'One ungrouped list; the year review still groups by month.',
@@ -262,7 +262,9 @@ describe('landsOn: image_text_dominance', () => {
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'image-led', image_text_dominance: 0.95 })), "Posters run full width above the text, 80% as tall as the room density gives each item; year-review images grow with it. Capped at 80% so the text stays readable.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'balanced', image_text_dominance: 0.1 })), "Posters take up to 15% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it. Raised to 15% so the poster stays visible.")
     assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 1 })), "The poster sits on the right as a square up to 48% of the item's width; year-review rows have no thumbnails. Capped at 80% so the text stays readable.")
-    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0 })), "The poster sits on the right as a square up to 9% of the item's width; year-review rows have no thumbnails. Raised to 15% so the poster stays visible.")
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0.05 })), "The poster sits on the right as a square up to 9% of the item's width; year-review rows have no thumbnails. Raised to 15% so the poster stays visible.")
+    // exactly 0 is the layout contract's "thumbnails hidden", not a share to raise
+    assert.equal(landsOn('image_text_dominance', p({ hierarchy_mode: 'type-led', image_text_dominance: 0 })), 'No posters on the list and no thumbnails on the year review; the names carry each item.')
   })
   it('adds no note exactly at 0.8 and at 0.15', () => {
     assert.equal(landsOn('image_text_dominance', p({ image_text_dominance: 0.8 })), "Posters take up to 80% of each list item's width (less on a narrow screen, so names stay whole, and never under 77 px); year-review thumbnails grow with it.")

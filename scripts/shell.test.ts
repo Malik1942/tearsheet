@@ -58,8 +58,8 @@ describe('A1 type family: the neutral skin sets Inter, a letterform rule overrid
 
 describe('A2 spacing: density pads a list item and never sets its height', () => {
   const css = readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
-  it('pads 4, 3, 2 and 1.5 spacing units as density goes 1, 2, 4, 6 (32 24 16 12 px at 8 px)', () => {
-    assert.deepEqual([1, 2, 4, 6].map(density => toCssVars(p({ density }))['--item-pad']), ['calc(var(--space) * 4)', 'calc(var(--space) * 3)', 'calc(var(--space) * 2)', 'calc(var(--space) * 1.5)'])
+  it('pads 4, 3, 2 and 2 spacing units as density goes 1, 2, 4, 6 (32 24 16 16 px at 8 px: the layout contract keeps item padding within 16–32)', () => {
+    assert.deepEqual([1, 2, 4, 6].map(density => toCssVars(p({ density }))['--item-pad']), ['calc(var(--space) * 4)', 'calc(var(--space) * 3)', 'calc(var(--space) * 2)', 'calc(var(--space) * 2)'])
     assert.equal(toCssVars(p({ density: 5 }))['--item-pad'], 'calc(var(--space) * 2)', 'a value outside the vocabulary pads as the default')
   })
   it('has no --item-h and no min-height on an item', () => {
@@ -68,19 +68,19 @@ describe('A2 spacing: density pads a list item and never sets its height', () =>
     for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) if (/\.item\b/.test(m[1]) && !/\.pic|\.title/.test(m[1])) assert.doesNotMatch(m[2], /min-height/, m[1].trim())
   })
   it('the list item pads by --item-pad and the side margin', () => {
-    assert.match(css, /\.item \{[^}]*padding: var\(--item-pad\) calc\(var\(--side\) \+ 12px \+ var\(--space\)\) var\(--item-pad\) var\(--side\);/)   // the right side also keeps room for the chevron (A3)
-    assert.match(css, /--side: calc\(var\(--space\) \* 2\.5\);/)
+    assert.match(css, /\.item \{[^}]*padding: var\(--item-pad\) var\(--side\);/)   // the chevron's room is the text column's own 24 (contract rule 2: only scale steps)
+    assert.match(css, /--side: calc\(var\(--space\) \* 2\);/)
   })
 })
 
 describe('A2 spacing: landsOn says the padding density sets', () => {
   it('in px when spacing_unit is in px, else as a multiple of it', () => {
     assert.equal(landsOn('density', p({ density: 1, spacing_unit: '12px' })), 'The loosest list: 48 px above and below each item; notes show.')
-    assert.equal(landsOn('density', p({ density: 6, spacing_unit: '0.5rem' })), 'The tightest list: 1.5 × 0.5rem above and below each item; notes are hidden.')
+    assert.equal(landsOn('density', p({ density: 6, spacing_unit: '0.5rem' })), 'The tightest list: 2 × 0.5rem above and below each item; notes are hidden and a poster is at most a sixth of the screen tall.')
   })
   it('spacing_unit names the multiple density picks', () => {
     assert.equal(landsOn('spacing_unit', p({ density: 1 })), 'Padding and gaps step in 8px; list items pad 4×.')
-    assert.equal(landsOn('spacing_unit', p({ density: 6, spacing_unit: '10px' })), 'Padding and gaps step in 10px; list items pad 1.5×.')
+    assert.equal(landsOn('spacing_unit', p({ density: 6, spacing_unit: '10px' })), 'Padding and gaps step in 10px; list items pad 2×.')
   })
 })
 
@@ -125,10 +125,10 @@ describe('A5 alignment fixes', () => {
     assert.match(declsOf('.shell[data-align="center"] .item .tags'), /white-space: nowrap; overflow: hidden; text-overflow: ellipsis/)
   })
   it('the text column stops at 32 characters', () => {
-    assert.match(declsOf('.item .text'), /max-width: 32ch/)
+    assert.match(declsOf('.item .text'), /max-width: calc\(32ch \+ var\(--space\) \* 3\)/)   // 32 characters of text, plus the chevron's 24
   })
   it('the balanced poster column never drops under a 48 px tall 16:10 poster, and the text keeps 9em; the type-led square keeps its 48 px floor', () => {
-    assert.match(declsOf('.item'), /grid-template-columns: minmax\(calc\(48px \* 16 \/ 10\), calc\(var\(--image-share\) \* 100%\)\) minmax\(9em, 1fr\)/)
+    assert.match(declsOf('.item'), /grid-template-columns: minmax\(calc\(48px \* 16 \/ 10\), calc\(var\(--image-share\) \* 100%\)\) minmax\(calc\(9em \+ var\(--space\) \* 3\), 1fr\)/)
     assert.match(declsOf('.shell[data-hierarchy="type-led"] .item'), /grid-template-columns: 1fr minmax\(48px, calc\(var\(--image-share\) \* 60%\)\)/)
   })
 })

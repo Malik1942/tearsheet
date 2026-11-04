@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../lib/store'
-import { Link, navigate } from '../lib/router'
+import { Link } from '../lib/router'
 import { dateLine } from '../lib/brickLabels'
 import { labelsOfBrick } from '../lib/shortLabels'
 import { retryBlocked } from '../lib/queue'
@@ -54,7 +54,7 @@ function SheetBody({ brick, onClose }: { brick: Brick; onClose: () => void }) {
         </section>
       ) : status === 'unparsed' ? <p className="em">{COPY.unparsed}</p> : null}
       <div className="flex">
-        {status === 'ready' && <button type="button" className="btn btn-accent w-full md:w-auto" onClick={() => { onClose(); navigate(`/make?brick=${encodeURIComponent(brick.id)}`) }}>{COPY.use}</button>}
+        {status === 'ready' && <Link href={`/make?brick=${encodeURIComponent(brick.id)}`} className="btn btn-accent w-full text-center no-underline md:w-auto" onClick={onClose}>{COPY.use}</Link>}
         {status === 'unparsed' && <button type="button" className="btn btn-accent w-full md:w-auto" disabled={blocked !== null} title={RETRY_TITLE[blocked ?? 'ok']} onClick={() => { store.retry(brick.id); onClose() }}>{COPY.retry}</button>}
       </div>
       <button type="button" className="btn btn-quiet self-start" style={{ paddingLeft: 0 }} aria-expanded={open} aria-controls={`details-${brick.id}`} onClick={() => setOpen(v => !v)}>{COPY.details} {open ? '▾' : '▸'}</button>
