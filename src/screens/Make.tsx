@@ -8,13 +8,14 @@ import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
 import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
 import { standInLine } from '../lib/standIns'
-import { INTENT_EXAMPLES, NEUTRAL_SKIN, autoName, carryOver, photoLine, photoRow, toggleMuted } from '../lib/makeFlow'
+import { NEUTRAL_SKIN, autoName, photoRow, toggleMuted } from '../lib/makeFlow'
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { Fold, Overlay } from '../make/Steps'
+import type { Unexpressed } from '../lib/types'
 import { ScaledScreens } from '../make/Screens'
 import { toShellContent } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
-import { IntentField, StartPhotos } from '../make/Start'
+import { AnchorThumb, HeadlineField } from '../make/Start'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
 import { cardCaption } from '../lib/brickLabels'
@@ -25,31 +26,33 @@ import { FilesView } from './Export'
 const MAX_BRICKS = 5
 /** Autofocus the field on a desktop only: on a phone the keyboard would open over the page (Web Interface Guidelines). */
 const finePointer = () => typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches
-/** Space kept under the screens for the spread's bottom padding (24), the photo row and its line, so screens + photos fit one 1440x900 viewport. */
-const RESERVE = 260
+/** Space kept under the screens for the spread's bottom padding (24) and the photo row, so screens + photos fit one 1440x900 viewport. */
+const RESERVE = 150
+/** How long a photo's caption stays after a tap (Malik, 2026-11-03). */
+const CAPTION_MS = 2000
 const COPY = {
   field: 'What are you making?',
-  examples: 'Try',
-  placeholder: 'Describe it in one sentence',
   finding: 'Looking through your photos…',
   off: 'Finding is off here. Pick them yourself.',
   noRules: 'Nothing here has a rule to quote yet. Pick them yourself.',
   noProposal: 'Nothing came back. Pick them yourself.',
   edit: 'Edit what you are making',
   fineTune: 'Fine-tune…', style: 'Adjust style…', arrangement: 'Try another arrangement…', neutral: 'Neutral skin', pick: 'Pick photos myself…', rename: 'Rename…',
-  turnOff: 'Turn this photo off', turnOn: 'Turn this photo back on', swap: 'Swap this photo',
-  couldnt: (n: number) => `${n} ${n === 1 ? 'thing' : 'things'} couldn't carry over`,
+  isOn: 'on', isOff: 'off', swap: 'Swap',
+  carryBadge: (n: number, label: string) => `${n} ${n === 1 ? 'thing' : 'things'} from ${label} couldn't carry over`,
+  noSlot: 'No slot on these screens', fragile: 'Would break if changed',
   files: 'Files', versions: 'Versions',
   list: 'List', review: 'Year review', both: 'Both',
   missing: "This project isn't on this device.", projects: 'Projects',
 }
 
-type Dialog = null | 'tune' | 'style' | 'arrange' | 'pick' | 'rename' | { swap: string }
+type Dialog = null | 'tune' | 'style' | 'arrange' | 'pick' | 'rename' | { swap: string } | { carry: string }
 
 /** Make, one page (Malik, 2026-11-03; overrides 15_SIMPLIFY's four steps). One field; Enter asks the model for up to three photos from the library (spec v3 P5,
  *  with the lean and the starting point from Adjust style), creates the project at once (P2 auto-name, the proposal record, the first arrangement) and shows it:
- *  the two screens, and under them the photos that set something, each with one short label. Tapping a photo turns its whole contribution off or on
- *  (`mutedBricks`, a new version, the change highlight). After Enter the intent is the page's headline; clicking it brings the field back (Malik, C+D).
+ *  the two screens, and under them the photos that set something. Tapping a photo turns its whole contribution off or on (`mutedBricks`, a new version, the
+ *  change highlight), and its first short label shows for two seconds. A dot on a photo counts what of it couldn't carry over; ⇄ swaps it. The headline is
+ *  the input (Malik, 2026-11-03: affordance over signifiers); after Enter the intent stays as the page's h1, and tapping it makes it editable again.
  *  The header holds Share (Copy link, E1, and Download) and ⋯, whose first items are this page's: Fine-tune (today's Compose), Adjust style,
  *  Try another arrangement, Neutral skin, Pick photos myself, Rename. `/make` has no project yet; `/project/:id` shows one; `?brick=` sets the starting point. */
 export function MakeScreen({ id, share = false }: { id: string | null; share?: boolean }) {
@@ -67,6 +70,9 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const [neutral, setNeutral] = useState(false)
   const [screen, setScreen] = useState<'both' | 'list' | 'review'>('both')
   const [editing, setEditing] = useState(false)
+  const [caption, setCaption] = useState<{ id: string; text: string } | null>(null)
+  const captionTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(captionTimer.current), [])
   const req = useRef(0)
   useEffect(() => { proposeEnabled().then(setEnabled) }, [])
   // the field holds the project's intent; moving to another project (or to /make) brings its own, and its lean
@@ -89,7 +95,19 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const resolved = useMemo(() => project ? resolveProject(project, store.bricks) : null, [project, store.bricks])
   const flash = useChangeFlash(project)
   const photos = useMemo(() => project ? photoRow(project, store.bricks) : [], [project, store.bricks])
-  const carried = useMemo(() => resolved ? carryOver(resolved.unexpressed) : [], [resolved])
+  // what of each photo couldn't carry over here, for its dot (a photo tapped off contributes nothing, so it has none)
+  const unexpressedBy = useMemo(() => {
+    const by = new Map<string, Unexpressed[]>()
+    for (const u of resolved?.unexpressed ?? []) by.set(u.brickId, [...(by.get(u.brickId) ?? []), u])
+    return by
+  }, [resolved])
+  // a tap turns the photo off or on, and says so next to it for two seconds
+  const toggle = (id: string, label: string, nowOn: boolean) => {
+    update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, id) }))
+    setCaption({ id, text: `${label} · ${nowOn ? COPY.isOn : COPY.isOff}` })
+    window.clearTimeout(captionTimer.current)
+    captionTimer.current = window.setTimeout(() => setCaption(null), CAPTION_MS)
+  }
   const update = (patch: Partial<Project> | ((p: Project) => Partial<Project>)) => { if (project) store.updateProject(project.id, patch) }
 
   const openPick = (line?: string, detail?: string) => { setNote(line ? { line, detail } : null); setDialog('pick') }
@@ -145,25 +163,19 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
       <div className="gutter mx-auto flex w-full max-w-6xl flex-col gap-4 py-4">
         {project && !headline && <h1 className="sr-only">{project.intent}</h1>}
         {!project ? (
-          // before Enter (Malik, 2026-11-03): the question, a large field with its action, examples to tap, and the photos to start from as large blocks
-          <div className="make-start">
-            <h1 className="intent-headline">{COPY.field}</h1>
-            <IntentField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} placeholder={COPY.placeholder} autoFocus={finePointer()} primary />
-            {!busy && (
-              <div className="intent-examples">
-                <span className="ink-2 caption">{COPY.examples}</span>
-                {INTENT_EXAMPLES.map(x => <button key={x} type="button" className="btn" onClick={() => setIntent(x)}>{x}</button>)}
-              </div>
-            )}
-            {!busy && withRules.length > 0 && <StartPhotos bricks={withRules} anchorId={anchorBrick?.id ?? null} onAnchor={setAnchor} onAll={() => setDialog('style')} />}
+          // before Enter: the headline is the input, nothing explains it (Malik, 2026-11-03); a starting point set elsewhere shows as its photo
+          <div className="make-head">
+            <h1 className="sr-only">{COPY.field}</h1>
+            <HeadlineField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} autoFocus={finePointer()} />
+            {anchorBrick && !busy && <AnchorThumb brick={anchorBrick} onClear={() => setAnchor(null)} />}
           </div>
         ) : (
-          <div className="mx-auto flex w-full max-w-[680px] items-center gap-2">
+          <div className="make-head">
             {headline ? (
-              // after Enter the intent is the page's headline; clicking it brings the field back, where Enter proposes again and Escape puts the headline back
+              // after Enter the intent stays as the page's h1; tapping it makes it editable again, Enter proposes again, Escape puts the headline back
               <h1 className="intent-headline"><button type="button" className="intent-edit" title={COPY.edit} onClick={() => setEditing(true)}>{project.intent}<span className="sr-only">{` (${COPY.edit.toLowerCase()})`}</span></button></h1>
             ) : (
-              <IntentField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} placeholder={COPY.placeholder} autoFocus={editing}
+              <HeadlineField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} autoFocus={editing}
                 onEscape={() => { setIntent(project.intent); setEditing(false) }} onLeave={() => { if (intent.trim() === project.intent.trim()) setEditing(false) }} />
             )}
           </div>
@@ -174,7 +186,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
           // while the photos are found: the two frames at their final size and the photo slots, quiet, so the result lands where the eye already is
           <div aria-hidden="true" className="flex flex-col items-center gap-4">
             <div className="finding pulse w-full">
-              <div className="finding-frame" style={{ width: 300, height: 600, maxWidth: '100%' }}>{COPY.finding}</div>
+              <div className="finding-frame" style={{ width: 300, height: 600, maxWidth: '100%' }} />
               <div className="finding-frame" style={{ width: 300, height: 600 }} />
             </div>
             <div className="photo-row pulse">{[0, 1, 2].map(i => <div key={i} className="mx-auto h-16 w-16 rounded" style={{ background: 'color-mix(in oklab, var(--ink) 8%, var(--paper))' }} />)}</div>
@@ -185,47 +197,32 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
           <>
             {/* C+D: the two screens are a spread on paper with crop marks, never on a red block (DESIGN_SYSTEM.md §8, do and don't 4) */}
             <div className="make-spread crop-marks"><ScaledScreens params={params} flash={flash} reserve={RESERVE} content={toShellContent(project.content)} /></div>
-            {/* each photo is one switch: the thumbnail (its ring shows on or off) and its label in one target. The slots are fixed, so a photo never moves when another one appears */}
+            {/* each photo is one switch, its state in the photo itself (off: faded and grey). Its first short label shows for two seconds after a tap, and on hover
+                on a desktop; a dot in one corner counts what couldn't carry over, ⇄ in the other swaps it. The slots are fixed, so a photo never moves. */}
             <div className="photo-dock">
               <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">
                 {photos.map(({ brick, muted, label }) => {
                   const why = project.proposal?.picks.find(p => p.brickId === brick.id)?.why
-                  // the card's two lines (Malik, 2026-11-03): its title, else the label of what it sets here; then its short credit or its date
-                  const cap = cardCaption(brick, label)
+                  const name = label ?? cardCaption(brick, null).title
+                  const missing = unexpressedBy.get(brick.id)?.length ?? 0
+                  const shown = caption?.id === brick.id
                   return (
                     <li key={brick.id} className="photo-cell">
-                      <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={cap.title} title={why || (muted ? COPY.turnOn : COPY.turnOff)}
-                        onClick={() => update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, brick.id) }))}>
+                      <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={name} title={why} onClick={() => toggle(brick.id, name, muted)}>
                         <Photo src={brick.photo.url} alt="" />
-                        <span className="cap-title">{cap.title}</span>
                       </button>
-                      <span className="cap-line tnum">{cap.line}</span>
-                      <button type="button" className="photo-swap icon-btn" aria-label={`${COPY.swap}: ${cap.title}`} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13" /></svg>
+                      <span className={`photo-caption ${shown ? 'is-shown' : ''}`} aria-hidden={!shown} role={shown ? 'status' : undefined}>{shown ? caption.text : name}</span>
+                      {missing > 0 && (
+                        <button type="button" className="photo-badge tnum" aria-label={COPY.carryBadge(missing, name)} title={COPY.carryBadge(missing, name)} onClick={() => setDialog({ carry: brick.id })}>{missing}</button>
+                      )}
+                      <button type="button" className="photo-swap" aria-label={`${COPY.swap}: ${name}`} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13" /></svg>
                       </button>
                     </li>
                   )
                 })}
               </ul>
             </div>
-            {carried.length > 0 && (
-              // C+D §12.6–7: only the rules with no slot couldn't carry over (the fragile notes stay in Fine-tune and the handoff), grouped by photo, one line each
-              <Fold summary={COPY.couldnt(carried.reduce((n, g) => n + g.items.length, 0))} className="w-full text-center">
-                <ul className="mx-auto m-0 flex max-w-2xl list-none flex-col gap-3 p-0 text-left text-[12px]">
-                  {carried.map(({ brickId, items }) => {
-                    const from = store.bricks.find(b => b.id === brickId)
-                    return (
-                      <li key={brickId} className="flex items-start gap-3">
-                        {from && <Link href={`/brick/${brickId}`} className="shrink-0" aria-label={`The photo it comes from, ${photoLine(from)}`}><Photo src={from.photo.url} alt="" className="h-8 w-8 object-cover" /></Link>}
-                        <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                          {items.map((u, i) => <li key={i}>{u.rule}<span className="ink-2 mt-0.5 block text-[11px]">{standInLine(u.rule)}</span></li>)}
-                        </ul>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </Fold>
-            )}
           </>
         )}
       </div>
@@ -252,7 +249,27 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
         <PickMyself pool={ready} max={MAX_BRICKS} note={note} canCreate={!!intent.trim()} onClose={() => setDialog(null)} onDone={pickDone}
           initial={project && intent.trim() === project.intent.trim() ? project.brickIds : anchorBrick ? [anchorBrick.id] : pre ? [pre.id] : []} />
       )}
-      {dialog && typeof dialog === 'object' && project && (
+      {dialog && typeof dialog === 'object' && 'carry' in dialog && project && (() => {
+        // one photo's dot: what of it couldn't carry over, grouped (no slot here; fragile if changed), one line each
+        const items = unexpressedBy.get(dialog.carry) ?? []
+        const row = photos.find(p => p.brick.id === dialog.carry)
+        const groups = [[COPY.noSlot, items.filter(u => u.reason !== 'fragile')], [COPY.fragile, items.filter(u => u.reason === 'fragile')]] as const
+        return (
+          <Overlay title={row?.label ?? (row ? cardCaption(row.brick, null).title : '')} onClose={() => setDialog(null)}>
+            <div className="flex flex-col gap-4 text-[13px]">
+              {groups.filter(([, us]) => us.length > 0).map(([head, us]) => (
+                <section key={head} className="flex flex-col gap-2">
+                  <h3 className="caption ink-2 m-0 font-normal">{head}</h3>
+                  <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {us.map((u, i) => <li key={i}>{u.rule}{u.reason !== 'fragile' && <span className="ink-2 mt-0.5 block text-[12px]">{standInLine(u.rule)}</span>}</li>)}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </Overlay>
+        )
+      })()}
+      {dialog && typeof dialog === 'object' && 'swap' in dialog && project && (
         <SwapPicker groups={swapGroups(project, ready, dialog.swap, store.bricks)} onClose={() => setDialog(null)} onPick={to => {
           const from = dialog.swap
           update(p => ({ brickIds: p.brickIds.map(b => b === from ? to : b), mutedBricks: Object.fromEntries(Object.entries(p.mutedBricks ?? {}).filter(([k]) => k !== from)) as Record<string, true> }))

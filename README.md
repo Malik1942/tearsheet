@@ -110,6 +110,10 @@ Tearsheet is installable (`manifest.webmanifest`, a service worker that caches t
 
 Both end in a sticky footer, `Open on desktop to compose`: each tap first uploads the library and the project under the library's code (a library without one gets a code on its first tap), then offers a link of the form `/open?code=XXXXXX&project=<id>` to copy, or to the system share sheet where there is one. Copy and Share are their own tap because iOS Safari only allows them inside a user gesture. Opening the link on another device adopts the code, merges the library, and lands in that project: Compose on a wide screen, the preview on a phone. A code with nothing stored under it is not adopted. Projects travel with the bricks: the sync manifest holds them next to the bricks, merged by id with the newest `updatedAt` winning.
 
+## Limits and next
+
+- **Card titles.** Card titles are metadata, never extraction: the twelve starters carry hand-set titles (catalogue titles shortened for the licensed works, Malik's own for his five, marked `adapted · by you`). A photo you add has no title yet, so its card leads with its first short label and its date. There is no rename field; that is next.
+
 ## Sample credits
 
 `public/samples/` holds the sample library. `g1`, `g2`, `calmmouse`, `greencar` and `c1` are the author's own photos. The images below were picked by axis, not by looks: type only, image only, all-over pattern, at least 60% negative space, a single accent colour, and black and white, plus one counterpoint. They were downscaled to 2048 px on the long edge, the extraction size, and each file name is its slug. Wherever the product shows one of these images, it carries the line in the Credit column.
