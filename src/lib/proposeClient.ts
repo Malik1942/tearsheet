@@ -4,7 +4,7 @@ import type { LibraryBrick, Pick, ProposeResponse } from './propose'
 import { canonicalChips, type Lean } from './leanFamilies'
 
 export type ProposeOutcome =
-  | { ok: true; picks: Pick[]; dropped: number; latency_ms: number; model: string; effort: string; cost_usd: number }
+  | { ok: true; picks: Pick[]; ranking: string[]; dropped: number; latency_ms: number; model: string; effort: string; cost_usd: number }
   | { ok: false; reason: string; disabled?: boolean; dry?: boolean }
 
 /** Every ready brick with a rule, whatever the lean: the chips and the anchor act on the prompt (src/lib/propose.ts), never on which bricks are offered. */
@@ -43,5 +43,5 @@ export async function propose(intent: string, bricks: Brick[], dry = false, lean
   if (!res.ok) return { ok: false, reason: json.error ?? `HTTP ${res.status}`, disabled: !!json.disabled }
   if (!json.ok) return { ok: false, reason: json.error }
   if (json.picks.length === 0) return { ok: false, reason: json.dropped.length ? 'every pick was dropped: none quoted a rule of a library brick verbatim, once' : 'the model proposed nothing for this intent' }
-  return { ok: true, picks: json.picks, dropped: json.dropped.length, latency_ms: json.latency_ms, model: json.model, effort: json.effort, cost_usd: json.cost_usd }
+  return { ok: true, picks: json.picks, ranking: json.ranking ?? [], dropped: json.dropped.length, latency_ms: json.latency_ms, model: json.model, effort: json.effort, cost_usd: json.cost_usd }
 }

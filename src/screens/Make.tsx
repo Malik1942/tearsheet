@@ -14,6 +14,7 @@ import { Fold, MoreMenu, Overlay } from '../make/Steps'
 import { ScaledScreens } from '../make/Screens'
 import { ShareMenu } from '../make/ShareMenu'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
+import { swapGroups } from '../lib/swapSheet'
 import { ComposePanel } from './Compose'
 import { FilesView } from './Export'
 
@@ -106,7 +107,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
     if (!out.ok) { if (out.disabled) setEnabled(false); return openPick(out.disabled ? COPY.off : COPY.noProposal, out.reason) }
     const first: ProposalPick[] = lean.anchor_id ? [{ brickId: lean.anchor_id, quotedRule: '', why: '', status: 'anchor' }] : []
     const picks = [...first, ...orderOwnFirst(out.picks.map((p): ProposalPick => ({ brickId: p.brickId, quotedRule: p.quotedRule, why: p.why, status: 'proposed' })), ready)].slice(0, MAX_BRICKS)
-    const proposal: Proposal = { at: new Date().toISOString(), model: out.model, effort: out.effort, intent: sent, latency_ms: out.latency_ms, dropped: out.dropped, picks, ...(lean.chips.length || lean.anchor_id ? { lean } : {}) }
+    const proposal: Proposal = { at: new Date().toISOString(), model: out.model, effort: out.effort, intent: sent, latency_ms: out.latency_ms, dropped: out.dropped, picks, ...(lean.chips.length || lean.anchor_id ? { lean } : {}), ...(out.ranking.length ? { ranking: out.ranking } : {}) }
     navigate(`/project/${store.createProject(sent, picks.map(p => p.brickId), autoName(sent) || undefined, { proposal })}`)
   }
   // by hand: on this project's page with its own intent, the picks replace its photos (a new version); otherwise they make a new project
@@ -116,7 +117,6 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
     if (project && sent === project.intent.trim()) update(p => ({ brickIds: ids, mutedBricks: Object.fromEntries(Object.entries(p.mutedBricks ?? {}).filter(([k]) => ids.includes(k))) as Record<string, true> }))
     else navigate(`/project/${store.createProject(sent, ids, autoName(sent) || undefined)}`)
   }
-  const spare = project ? ready.filter(b => !project.brickIds.includes(b.id)) : []
 
   if (id && !project) return <div className="chrome min-h-full"><div className="gutter mx-auto flex max-w-3xl flex-col gap-4 py-8"><p className="ink-2 m-0">{COPY.missing}</p><Link href="/projects" className="btn w-fit no-underline">{COPY.projects}</Link></div></div>
   const params = resolved ? (neutral ? { ...resolved.params, ...NEUTRAL_SKIN } : resolved.params) : null
@@ -207,7 +207,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
           initial={project && intent.trim() === project.intent.trim() ? project.brickIds : anchorBrick ? [anchorBrick.id] : pre ? [pre.id] : []} />
       )}
       {dialog && typeof dialog === 'object' && project && (
-        <SwapPicker spare={spare} onClose={() => setDialog(null)} onPick={to => {
+        <SwapPicker groups={swapGroups(project, ready, dialog.swap, store.bricks)} onClose={() => setDialog(null)} onPick={to => {
           const from = dialog.swap
           update(p => ({ brickIds: p.brickIds.map(b => b === from ? to : b), mutedBricks: Object.fromEntries(Object.entries(p.mutedBricks ?? {}).filter(([k]) => k !== from)) as Record<string, true> }))
           setDialog(null)

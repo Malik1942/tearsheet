@@ -140,8 +140,9 @@ export const relRef = (brickId: string, relationId: string): RelationRef => `${b
 /** P2–P3: the model's picks for an intent, each quoting one rule of the brick verbatim (checked on the server), and what the person did with them.
  *  `anchor` is the brick the person chose as the starting point ("More like this one"): no quote, because the model did not pick it. */
 export type ProposalPick = { brickId: string; quotedRule: string; why: string; status: 'proposed' | 'swapped' | 'anchor'; swappedFrom?: string }
-/** `lean` is what the model was asked to lean on (chip names as the person saw them, and the starting point); recorded only when it had either. */
-export type Proposal = { at: string; model: string; effort: string; intent: string; latency_ms: number; dropped: number; picks: ProposalPick[]; lean?: { chips: string[]; anchor_id?: string } }
+/** `lean` is what the model was asked to lean on (chip names as the person saw them, and the starting point); recorded only when it had either.
+ *  `ranking` is the same call's order of the whole library, best fit first (swap sheet); older projects have none. */
+export type Proposal = { at: string; model: string; effort: string; intent: string; latency_ms: number; dropped: number; picks: ProposalPick[]; lean?: { chips: string[]; anchor_id?: string }; ranking?: string[] }
 
 export type Project = {
   id: string

@@ -23,10 +23,12 @@ const LEAN_TAIL = '. Prefer picks whose quoted rule maps to one of them, when su
 const DARK_PARA = '\n\nAlso prefer these bricks when they serve what they are making: bauhaus-1923-staatliches-bauhaus-weimar, g2, secession-1902-beethoven-catalogue.'
 const anchorPara = (id: string) => `\n\nAnchor. The designer has already chosen brick "${id}" as the starting point. Do not pick it. Pick at most two other bricks whose rules work with it.`
 const ENDS = 'Do not pick the same brick twice.'
-/** What the prompt says between the last instruction line and the library: the {{LEAN}} slot. */
-const leanSlot = (prompt: string) => { const i = prompt.indexOf(ENDS) + ENDS.length; return prompt.slice(i, prompt.indexOf('\n\nLibrary:\n', i)) }
+/** The one sentence added after v1 for the swap sheet's ranking (2026-11-03), between the {{LEAN}} slot and the library. */
+const RANKING = '\n\nAlso return ranking: every brick_id in the library exactly once, best fit first for what they are making, by the same preferences as your picks.'
+/** What the prompt says between the last instruction line and the ranking sentence: the {{LEAN}} slot. */
+const leanSlot = (prompt: string) => { const i = prompt.indexOf(ENDS) + ENDS.length; return prompt.slice(i, prompt.indexOf(RANKING, i)) }
 
-// the v1 template (before {{LEAN}}) and the v1 way of rendering it, kept here as a fixture
+// the v1 template (before {{LEAN}} and the ranking sentence), kept here as a fixture
 const V1_PROMPT = `You are helping a designer choose reference material from their own library.
 
 They are about to make: "{{INTENT}}"
@@ -42,9 +44,11 @@ Prefer picks whose quoted rules map to different parameters. Do not pick the sam
 
 Library:
 {{LIBRARY}}`
-const v1Render = (intent: string, library: LibraryBrick[]) => {
+/** v1 plus the ranking sentence: the base every request now starts from, and the way it is rendered. */
+const BASE_PROMPT = V1_PROMPT.replace('\n\nLibrary:\n', `${RANKING}\n\nLibrary:\n`)
+const baseRender = (intent: string, library: LibraryBrick[]) => {
   const lib = JSON.stringify(library, null, 1), sentence = intent.replace(/"/g, '”')
-  return V1_PROMPT.replace('{{LIBRARY}}', () => lib).replace('{{INTENT}}', () => sentence)
+  return BASE_PROMPT.replace('{{LIBRARY}}', () => lib).replace('{{INTENT}}', () => sentence)
 }
 
 describe('chip table', () => {
@@ -163,17 +167,17 @@ describe('the body the app sends', () => {
 })
 
 describe('the prompt', () => {
-  it('is the v1 text with {{LEAN}} glued to the end of the last instruction line, and nothing else changed', () => {
-    assert.ok(PROPOSE_PROMPT.includes(`${ENDS}{{LEAN}}\n\nLibrary:\n{{LIBRARY}}`))
-    assert.equal(PROPOSE_PROMPT.replace('{{LEAN}}', ''), V1_PROMPT)
+  it('is the v1 text plus the ranking sentence, with {{LEAN}} glued to the end of the last instruction line, and nothing else changed', () => {
+    assert.ok(PROPOSE_PROMPT.includes(`${ENDS}{{LEAN}}${RANKING}\n\nLibrary:\n{{LIBRARY}}`))
+    assert.equal(PROPOSE_PROMPT.replace('{{LEAN}}', ''), BASE_PROMPT)
     assert.equal(PROPOSE_PROMPT.split('{{LEAN}}').length, 2)
   })
-  it('renders without a lean exactly as v1 did', () => {
-    assert.equal(renderPrompt(INTENT, LIB), v1Render(INTENT, LIB))
-    assert.equal(renderPrompt(INTENT, LIB, undefined), v1Render(INTENT, LIB))
-    assert.equal(renderPrompt(INTENT, LIB, { chips: [] }), v1Render(INTENT, LIB))
-    assert.equal(renderPrompt('he said "no" $& $1', LIB), v1Render('he said "no" $& $1', LIB))
-    assert.deepEqual(buildProposeRequest(INTENT, LIB).input[0].content[0].text, v1Render(INTENT, LIB))
+  it('renders without a lean exactly as the base prompt', () => {
+    assert.equal(renderPrompt(INTENT, LIB), baseRender(INTENT, LIB))
+    assert.equal(renderPrompt(INTENT, LIB, undefined), baseRender(INTENT, LIB))
+    assert.equal(renderPrompt(INTENT, LIB, { chips: [] }), baseRender(INTENT, LIB))
+    assert.equal(renderPrompt('he said "no" $& $1', LIB), baseRender('he said "no" $& $1', LIB))
+    assert.deepEqual(buildProposeRequest(INTENT, LIB).input[0].content[0].text, baseRender(INTENT, LIB))
   })
   it('names the parameter families, and never a chip word', () => {
     const out = renderPrompt(INTENT, LIB, { chips: ['dark', 'one accent'] })
@@ -208,7 +212,7 @@ describe('the prompt', () => {
   })
   it('keeps the rest of the prompt as it was, lean or not', () => {
     const lean = renderPrompt(INTENT, LIB, { chips: ['airy'], anchor_id: 'g2' })
-    assert.equal(lean.replace(leanSlot(lean), ''), v1Render(INTENT, LIB))
+    assert.equal(lean.replace(leanSlot(lean), ''), baseRender(INTENT, LIB))
   })
   it('never expands a placeholder typed into the intent', () => {
     const out = renderPrompt('use {{LEAN}} and {{LIBRARY}}', LIB, { chips: ['airy'] })
@@ -244,7 +248,7 @@ describe('handlePropose, dry', () => {
     const out = await handlePropose(body(), undefined, { live: false })
     assert.equal(out.code, 200)
     assert.deepEqual(out.body.request, buildProposeRequest(INTENT, LIB))
-    assert.equal(text(out), v1Render(INTENT, LIB))
+    assert.equal(text(out), baseRender(INTENT, LIB))
   })
   it('treats a lean with neither chips nor an anchor as no lean', async () => {
     const out = await handlePropose(body({ chips: [] }), undefined, { live: false })
@@ -303,7 +307,7 @@ describe('handlePropose, a stubbed model call', () => {
       const plain: string[] = []
       await handlePropose({ intent: INTENT, library: LIB }, 'test-key', { live: true, ip: 'lean-test', log: l => plain.push(l) })
       assert.equal(JSON.parse(plain[0]).lean_chips, 0); assert.equal(JSON.parse(plain[0]).anchor, false)
-      assert.equal(sent.input[0].content[0].text, v1Render(INTENT, LIB))
+      assert.equal(sent.input[0].content[0].text, baseRender(INTENT, LIB))
     } finally { globalThis.fetch = real }
   })
 })

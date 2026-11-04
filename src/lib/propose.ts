@@ -1,6 +1,7 @@
 /** Propose (PRD P2): one Muse Spark TEXT call per project intent. Shared by the Vercel function (api/propose.ts) and the Vite dev
  *  middleware; runs on the server only. Input: the intent and the library's rules (brick id, rule text, parameter), nothing else.
- *  Output: up to three brick ids, each with a rule quoted verbatim; a pick whose quote is not one of that brick's rules is dropped. */
+ *  Output: up to three brick ids, each with a rule quoted verbatim (a pick whose quote is not one of that brick's rules is dropped), and a ranking
+ *  of the whole library for the swap sheet. */
 import { z } from 'zod'
 import { cleanKey } from './extract.js'
 import { reserveCall } from './guard.js'
@@ -17,16 +18,20 @@ export const MAX_INTENT_CHARS = 300
 
 export type LibraryBrick = { brick_id: string; rules: { rule: string; parameter: string }[] }
 
-/** Exactly the schema the model is constrained to (meta-eval/fixtures/schemas/propose.json). */
+/** Exactly the schema the model is constrained to (meta-eval/fixtures/schemas/propose.json). `ranking` orders the whole library for the swap sheet. */
 export const PROPOSE_SCHEMA = {
-  title: 'ProposeResult', type: 'object', additionalProperties: false, required: ['picks'],
-  properties: { picks: { type: 'array', maxItems: 3, items: {
-    type: 'object', additionalProperties: false, required: ['brick_id', 'quoted_rule', 'why'],
-    properties: { brick_id: { type: 'string' }, quoted_rule: { type: 'string' }, why: { type: 'string' } } } } },
+  title: 'ProposeResult', type: 'object', additionalProperties: false, required: ['picks', 'ranking'],
+  properties: {
+    picks: { type: 'array', maxItems: 3, items: {
+      type: 'object', additionalProperties: false, required: ['brick_id', 'quoted_rule', 'why'],
+      properties: { brick_id: { type: 'string' }, quoted_rule: { type: 'string' }, why: { type: 'string' } } } },
+    ranking: { type: 'array', maxItems: 60, items: { type: 'string' } },
+  },
 } as const
 
 const PickSchema = z.object({ brick_id: z.string(), quoted_rule: z.string(), why: z.string() })
-export const ProposeResultSchema = z.object({ picks: z.array(PickSchema) })
+/** `ranking` is read leniently and checked by `validateRanking`: a missing or malformed one costs the ranking, never the proposal. */
+export const ProposeResultSchema = z.object({ picks: z.array(PickSchema), ranking: z.unknown().optional() })
 export type RawPick = z.infer<typeof PickSchema>
 export type Pick = { brickId: string; quotedRule: string; why: string }
 
@@ -87,11 +92,20 @@ export function validatePicks(raw: RawPick[], library: LibraryBrick[], anchorId?
   return { picks, dropped }
 }
 
+/** The swap sheet's order (2026-11-03), from the same call as the picks: library ids only, in the model's order, each once. Anything else is
+ *  dropped, and a missing or malformed ranking is none: it orders photos, it never costs a proposal. */
+export function validateRanking(raw: unknown, library: LibraryBrick[]): string[] {
+  if (!Array.isArray(raw)) return []
+  const ids = new Set(library.map(b => b.brick_id)), kept = new Set<string>()
+  for (const id of raw) if (typeof id === 'string' && ids.has(id)) kept.add(id)
+  return [...kept]
+}
+
 const outputText = (body: any): string =>
   (body?.output ?? []).filter((i: any) => i?.type === 'message').flatMap((i: any) => i.content ?? []).filter((p: any) => p?.type === 'output_text').map((p: any) => p.text ?? '').join('\n')
 
 export type ProposeResponse =
-  | { ok: true; picks: Pick[]; dropped: { brick_id: string; reason: string }[]; status: string; latency_ms: number; usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number }; cost_usd: number; model: string; effort: string }
+  | { ok: true; picks: Pick[]; dropped: { brick_id: string; reason: string }[]; ranking: string[]; status: string; latency_ms: number; usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number }; cost_usd: number; model: string; effort: string }
   | { ok: false; error: string; http?: number; status?: string; latency_ms: number; usage?: { input_tokens: number; output_tokens: number; reasoning_tokens: number }; cost_usd?: number }
 
 /** One call, no retry: a proposal that fails falls back to picking by hand, so a second paid attempt buys nothing. */
@@ -116,7 +130,7 @@ export async function propose(apiKey: string, intent: string, library: LibraryBr
   try {
     const parsed = ProposeResultSchema.parse(JSON.parse(outputText(body)))
     const { picks, dropped } = validatePicks(parsed.picks, library, lean?.anchor_id)
-    return { ok: true, picks, dropped, status, latency_ms, usage, cost_usd, model: MODEL, effort: EFFORT }
+    return { ok: true, picks, dropped, ranking: validateRanking(parsed.ranking, library), status, latency_ms, usage, cost_usd, model: MODEL, effort: EFFORT }
   } catch (e) {
     return { ok: false, error: `unparsed: ${(e as Error).message.slice(0, 200)}`, status, latency_ms, usage, cost_usd }
   }
@@ -158,7 +172,7 @@ export async function handlePropose(bodyJson: any, apiKey: string | undefined, o
   // PRD 10.4: one line per live call in the function log, the product's half of the cost ledger
   const log = opts.log ?? ((l: string) => console.log(l))
   log(JSON.stringify(result.ok
-    ? { call: 'propose', model: MODEL, effort: EFFORT, status: result.status, latency_ms: result.latency_ms, ...result.usage, cost_usd: Number(result.cost_usd.toFixed(6)), picks: result.picks.length, dropped: result.dropped.length, bricks_offered: library.length, lean_chips: lean?.chips.length ?? 0, anchor: !!lean?.anchor_id }
+    ? { call: 'propose', model: MODEL, effort: EFFORT, status: result.status, latency_ms: result.latency_ms, ...result.usage, cost_usd: Number(result.cost_usd.toFixed(6)), picks: result.picks.length, dropped: result.dropped.length, ranked: result.ranking.length, bricks_offered: library.length, lean_chips: lean?.chips.length ?? 0, anchor: !!lean?.anchor_id }
     : { call: 'propose', model: MODEL, effort: EFFORT, error: result.error, http: result.http, status: result.status, latency_ms: result.latency_ms, ...(result.usage ?? {}), ...(result.cost_usd !== undefined ? { cost_usd: Number(result.cost_usd.toFixed(6)) } : {}), bricks_offered: library.length, lean_chips: lean?.chips.length ?? 0, anchor: !!lean?.anchor_id }))
   return { code: 200, body: result }
 }

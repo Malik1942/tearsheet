@@ -37,6 +37,27 @@ export function dateLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' 
 /** The one credit line a starter carries wherever its photo is shown (spec v3 SB2). The licensed works have their own (README, Sample credits); a starter without one is the author's own work. */
 export const creditLine = (b: Pick<Brick, 'credit' | 'saved_at'>): string => b.credit ?? `Malik Zhang, ${b.saved_at.slice(0, 4)}`
 
+/** Institutions with a short name for picker tiles (swap sheet, 2026-11-03); the rest of the credit, its date, is kept. A credit that starts with none of these
+ *  is shown whole: an institution's name is never cut. */
+const SHORT_NAMES: [string, string][] = [
+  ['Minneapolis Institute of Art', 'Mia'],
+  ['The Metropolitan Museum of Art', 'The Met'],
+  ['Courtesy NASA/JPL-Caltech', 'NASA/JPL'],
+  ['Wikimedia Commons', 'Wikimedia'],
+]
+
+export function shortCredit(credit: string): string {
+  const hit = SHORT_NAMES.find(([full]) => credit.startsWith(full))
+  return hit ? hit[1] + credit.slice(hit[0].length) : credit
+}
+
+/** A picker tile's second line (swap sheet): a credited starter's short credit; anything else its date as an own photo shows it ("Dec 27, 2025", else "saved Nov 3").
+ *  The author's own starters carry no credit, so they show their date, never the author's name. */
+export function shortOriginLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {
+  if (originOf(b) === 'starter' && b.credit) return shortCredit(b.credit)
+  return b.taken_at ? dayLabel(b.taken_at, today) : savedLabel(b.saved_at, today)
+}
+
 /** The one origin line every place shows (spec v3 SB2): `saved Jun 21` (or `taken … · saved …`) for a brick of the person's own, `starter · The Metropolitan Museum of Art, 19th century` for a starter.
  *  Origin is not a provenance: the four provenance labels are unchanged. */
 export function originLabel(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {

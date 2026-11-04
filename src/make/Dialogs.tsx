@@ -5,6 +5,7 @@ import { rotations } from '../lib/brickPreview'
 import { shortLabel } from '../lib/shortLabels'
 import { photoLine } from '../lib/makeFlow'
 import { originOf } from '../lib/starters'
+import { tileCaption, type SwapGroup } from '../lib/swapSheet'
 import type { ChipId } from '../lib/leanFamilies'
 import type { Brick } from '../lib/types'
 import { MiniPreview } from '../shell/MiniPreview'
@@ -21,7 +22,7 @@ const COPY = {
   styleNote: 'Press Enter in the field to look again with these.',
   pick: 'Pick photos myself', count: (n: number, max: number) => `${n} of ${max}`, show: 'Show the screens', starter: 'starter',
   empty: 'Nothing to pick from yet. Add photos, or include the starters from ⋯.', needIntent: 'Type what you are making first.',
-  swap: 'Swap this photo', noSpare: 'No other photo to swap in.',
+  swap: 'Swap this photo', noSpare: 'No other photo to swap in.', inProject: 'Already in this project',
 }
 
 /** P8, in Make's ⋯: the same bricks in their (at most three) rotations, each a mini-screen; picking one reorders the project (a new version). */
@@ -152,20 +153,39 @@ export function PickMyself({ pool, initial, max, note, canCreate, onClose, onDon
   )
 }
 
-/** Swap one photo of the project for another from the library (today's Swap). */
-export function SwapPicker({ spare, onClose, onPick }: { spare: Brick[]; onClose: () => void; onPick: (id: string) => void }) {
+/** Swap one photo of the project for another (2026-11-03): Same job, Adds something, Everything else, each in the proposal's ranking and then newest saved
+ *  (src/lib/swapSheet.ts). The photo being replaced is not offered; a photo already in the project shows a check and cannot be chosen. One tap swaps and closes. */
+export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; onClose: () => void; onPick: (id: string) => void }) {
+  const choosable = groups.some(g => g.tiles.some(t => !t.inProject))
   return (
     <Overlay title={COPY.swap} onClose={onClose}>
-      {spare.length === 0 ? <p className="ink-2 m-0 text-[13px]">{COPY.noSpare}</p> : (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-          {spare.map(s => (
-            <button key={s.id} type="button" onClick={() => onPick(s.id)} className="cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: '1px solid var(--line)', background: 'var(--panel)' }} title={photoLine(s)} aria-label={`Swap in: ${photoLine(s)}`}>
-              <div className="overflow-hidden" style={{ aspectRatio: '16 / 10' }}><Photo src={s.photo.url} className="h-full w-full object-cover" /></div>
-              <div className="ink-2 truncate px-1.5 py-1 text-[11px]">{photoLine(s)}</div>
-            </button>
-          ))}
-        </div>
-      )}
+      {!choosable && <p className="ink-2 m-0 mb-3 text-[13px]">{COPY.noSpare}</p>}
+      <div className="flex flex-col gap-4">
+        {groups.map(g => (
+          <section key={g.id} aria-label={g.title}>
+            <h3 className="caption ink-2 m-0 mb-2 font-normal uppercase tracking-wide">{g.title}</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {g.tiles.map(({ brick, inProject }) => {
+                const { label, line } = tileCaption(brick)
+                const name = [label, line].filter(Boolean).join(', ')
+                return (
+                  <button key={brick.id} type="button" disabled={inProject} onClick={() => onPick(brick.id)}
+                    className={`relative overflow-hidden rounded p-0 text-left ${inProject ? 'cursor-default' : 'cursor-pointer'}`} style={{ border: '1px solid var(--line)', background: 'var(--panel)' }}
+                    aria-label={inProject ? `${name}: ${COPY.inProject}` : `Swap in: ${name}`} title={inProject ? COPY.inProject : undefined}>
+                    {/* the hover shows a licensed work's full credit; an uncredited photo has none, so the author's name never shows here */}
+                    <div className="overflow-hidden" style={{ aspectRatio: '16 / 10' }}><Photo src={brick.photo.url} title={brick.credit ?? ''} className="h-full w-full object-cover" /></div>
+                    <div className="flex flex-col px-2 py-1.5">
+                      <span className="truncate text-[13px] font-medium leading-[18px]" style={{ color: 'var(--ink)' }}>{label ?? ' '}</span>
+                      <span className="ink-2 text-[12px] leading-4">{line}</span>
+                    </div>
+                    {inProject && <span aria-hidden="true" className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] leading-none" style={{ background: 'var(--ink)', color: '#fff' }}>✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
     </Overlay>
   )
 }
