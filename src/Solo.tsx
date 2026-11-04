@@ -1,11 +1,12 @@
 import { COMPOSITIONS } from './fixtures/compositions'
 import { resolveParams } from './lib/mapRelations'
 import { Shell } from './shell/Shell'
+import type { ScreenKey } from './shell/content'
 
 /** One shell, full viewport, no chrome: for screenshots, the video, and blind tests.
  *  #/solo/<compositionId>/<list|review>. A single letter instead of an id is looked up in localStorage.blindKey,
  *  so a blind assignment drawn in the browser never has to appear in a URL. */
-export function Solo({ target, screen }: { target: string; screen: 'list' | 'review' }) {
+export function Solo({ target, screen }: { target: string; screen: ScreenKey }) {
   let id = target
   if (target.length === 1) {
     try { id = JSON.parse(localStorage.getItem('blindKey') ?? '{}')[target] ?? target } catch { /* ignore */ }

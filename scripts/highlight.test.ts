@@ -243,8 +243,8 @@ describe('peekPosition', () => {
 /** The mapping from parameter to shell element is CSS, so it is checked as text against the two screens' own markup. */
 describe('shell.css flash rules', () => {
   const css = readFileSync(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
-  // the two screens and the phone around them (item 3: the status bar, tab bar and home indicator in Device.tsx)
-  const markup = ['ListScreen.tsx', 'DetailScreen.tsx', 'Device.tsx'].map(f => readFileSync(new URL(`../src/shell/${f}`, import.meta.url), 'utf8')).join('\n')
+  // the three screens and the phone around them (item 3: the status bar, tab bar and home indicator in Device.tsx)
+  const markup = ['ListScreen.tsx', 'DetailScreen.tsx', 'BoardScreen.tsx', 'Device.tsx'].map(f => readFileSync(new URL(`../src/shell/${f}`, import.meta.url), 'utf8')).join('\n')
   const start = css.indexOf('/* ---------- C11')
   const block = css.slice(start)
   const rules = [...block.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ selector: m[1].replace(/\/\*[\s\S]*?\*\//g, '').trim(), body: m[2] })).filter(r => r.selector.includes('data-flash'))
@@ -316,6 +316,8 @@ describe('shell.css flash rules', () => {
   }
   const PLACEMENTS = ['none', 'labels', 'actions', 'dividers', 'one-hero']
   const FIRST = '.group:first-of-type .item:first-of-type'
+  // the board (2026-11-04): dividers draw a tile's edge, one-hero colors and at 15% fills the first tile
+  const TILE1 = '.board:first-of-type .tile:first-child'
   const under = (key: string, accent: string, coverage = 'le5') => outlined(key, { 'data-accent': accent, 'data-coverage': coverage })
 
   it('the evaluator reads the block: an ungated key outlines on every placement, a key of another family on none', () => {
@@ -330,16 +332,16 @@ describe('shell.css flash rules', () => {
     // item 3: the active tab takes the accent under labels and actions, so it is outlined there too
     assert.deepEqual(under('color_accent', 'labels'), ['.stats strong', '.tab-item[data-active="true"]', '.tag'])
     assert.deepEqual(under('color_accent', 'actions'), ['.action', '.tab-item[data-active="true"]'])
-    assert.deepEqual(under('color_accent', 'dividers'), ['.item', '.row'])
-    assert.deepEqual(under('color_accent', 'one-hero'), [FIRST, '.screen-title'])
-    assert.deepEqual(under('color_accent', 'one-hero', 'le15'), ['.feature', FIRST, '.screen-title'])
+    assert.deepEqual(under('color_accent', 'dividers'), ['.item', '.row', '.tile'])
+    assert.deepEqual(under('color_accent', 'one-hero'), [TILE1, FIRST, '.screen-title'])
+    assert.deepEqual(under('color_accent', 'one-hero', 'le15'), [TILE1, '.feature', FIRST, '.screen-title'])
   })
   it('accent_coverage outlines only what coverage changes: the tags under labels, the buttons under actions, the item line under dividers, the first item and the card under one-hero', () => {
     assert.deepEqual(under('accent_coverage', 'none'), [])
     assert.deepEqual(under('accent_coverage', 'labels'), ['.tag'])
     assert.deepEqual(under('accent_coverage', 'actions'), ['.action'])
-    assert.deepEqual(under('accent_coverage', 'dividers'), ['.item'])
-    assert.deepEqual(under('accent_coverage', 'one-hero'), ['.feature', FIRST])
+    assert.deepEqual(under('accent_coverage', 'dividers'), ['.item', '.tile'])
+    assert.deepEqual(under('accent_coverage', 'one-hero'), [TILE1, '.feature', FIRST])
   })
   it('accent_coverage does not outline the buttons under labels, nor the tags under actions (the fix)', () => {
     assert.ok(!under('accent_coverage', 'labels').includes('.action'))
@@ -350,14 +352,14 @@ describe('shell.css flash rules', () => {
     assert.deepEqual(under('palette_hue_count', 'none'), ['.palette-3 .tag'])
     assert.deepEqual(under('palette_hue_count', 'labels'), ['.palette-3 .tag', '.stats strong', '.tab-item[data-active="true"]', '.tag'])
     assert.deepEqual(under('palette_hue_count', 'actions'), ['.action', '.palette-3 .tag', '.tab-item[data-active="true"]'])
-    assert.deepEqual(under('palette_hue_count', 'dividers'), ['.item', '.palette-3 .tag', '.row'])
-    assert.deepEqual(under('palette_hue_count', 'one-hero'), [FIRST, '.palette-3 .tag', '.screen-title'])
-    assert.deepEqual(under('palette_hue_count', 'one-hero', 'le15'), ['.feature', FIRST, '.palette-3 .tag', '.screen-title'])
+    assert.deepEqual(under('palette_hue_count', 'dividers'), ['.item', '.palette-3 .tag', '.row', '.tile'])
+    assert.deepEqual(under('palette_hue_count', 'one-hero'), [TILE1, FIRST, '.palette-3 .tag', '.screen-title'])
+    assert.deepEqual(under('palette_hue_count', 'one-hero', 'le15'), [TILE1, '.feature', FIRST, '.palette-3 .tag', '.screen-title'])
   })
   it('accent_placement stays an ungated union on every placement, since the previous placement is unknown', () => {
     for (const a of PLACEMENTS) for (const sel of ['.tag', '.action', '.stats strong', '.tab-item[data-active="true"]']) assert.ok(under('accent_placement', a).includes(sel), `${a} ${sel}`)
-    assert.deepEqual(under('accent_placement', 'dividers'), ['.action', '.item', '.row', '.stats strong', '.tab-item[data-active="true"]', '.tag'])
-    assert.deepEqual(under('accent_placement', 'one-hero'), ['.action', FIRST, '.screen-title', '.stats strong', '.tab-item[data-active="true"]', '.tag'])
+    assert.deepEqual(under('accent_placement', 'dividers'), ['.action', '.item', '.row', '.stats strong', '.tab-item[data-active="true"]', '.tag', '.tile'])
+    assert.deepEqual(under('accent_placement', 'one-hero'), ['.action', TILE1, FIRST, '.screen-title', '.stats strong', '.tab-item[data-active="true"]', '.tag'])
   })
 
   /** The selectors of shell.css above the highlight block, one per entry. */

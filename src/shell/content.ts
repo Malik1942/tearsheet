@@ -33,45 +33,76 @@ export const CONCERTS: Concert[] = [
 export type Entry = { id: string; title: string; subtitle: string; date: string; tags: string[]; place?: string; note?: string; rating?: number }
 /** A total on the year review: what it counts, and its word. */
 export type Stat = { count: 'entries' | 'places' | 'months' | 'tags'; label: string }
+/** One tile on a board (2026-11-04): a label, a value (a number with its unit, or a short word), a one-line note and the one tag that names its state. */
+export type Tile = { id: string; label: string; value: string; note: string; tag: string }
+
+/** What the product is shaped like, read from the intent by the propose call: a `log` collects things over time (a list and a year review);
+ *  a `board` shows the current state of things at a glance (an overview of tiles, and the list of items behind it). */
+export type Shape = 'log' | 'board'
+/** The three screens the shell can draw. A content's shape picks two of them (`screensOf`): list + review for a log, board + list for a board. */
+export type ScreenKey = 'list' | 'review' | 'board'
 
 /** Every word the shell writes on its screens: the two screen titles, the three tab labels (list, chart, person, in that order), the entries, the list's one action,
- *  the year review's three totals and its featured line. No tab label repeats a screen title (layout contract rule 5). */
+ *  the year review's three totals and its featured line, and a board's tiles. No tab label repeats a screen title (layout contract rule 5). */
 export type ShellContent = {
+  shape: Shape
   screenTitles: { list: string; review: string }
   tabs: [string, string, string]
   entries: Entry[]
   add: string
   stats: [Stat, Stat, Stat]
   feature: string
+  tiles: Tile[]
 }
 
-/** What the propose call writes (item 1), in the schema's own shape; `toShellContent` lays it onto the screens. Model-written placeholder, never a design decision. */
-export type SampleContent = { screen_titles: { list: string; review: string }; tabs: string[]; entries: { title: string; subtitle: string; date: string; tags: string[] }[] }
+/** What the propose call writes (item 1), in the schema's own shape; `toShellContent` lays it onto the screens. Model-written placeholder, never a design decision.
+ *  `shape` and `tiles` arrived on 2026-11-04: content stored before then has neither and reads as a log. */
+export type SampleContent = {
+  shape?: Shape
+  screen_titles: { list: string; review: string }
+  tabs: string[]
+  entries: { title: string; subtitle: string; date: string; tags: string[] }[]
+  tiles?: { label: string; value: string; note: string; tag: string }[]
+}
 
 /** The fallback: the concert log, word for word as the shell has always shown it. */
 export const CONCERT_CONTENT: ShellContent = {
+  shape: 'log',
   screenTitles: { list: 'Shows', review: 'Year review' },
   tabs: ['Log', 'Stats', 'Profile'],
   entries: CONCERTS.map(c => ({ id: c.id, title: c.artist, subtitle: c.venue, place: c.city, date: c.date, tags: c.tags, note: c.note, rating: c.rating })),
   add: 'Add show',
   stats: [{ count: 'entries', label: 'shows' }, { count: 'places', label: 'cities' }, { count: 'tags', label: 'genres' }],
   feature: 'Show of the year',
+  tiles: [],
 }
 
+/** The fewest tiles a board stands on; content that says `board` with fewer reads as a log. */
+export const MIN_TILES = 3
+
 /** A project's written content on the screens, or the concert log when it has none. Written content has no places, so its totals are entries, months and tags,
- *  the first named by the list's own title ("8 books"); its action is "Add" and its featured line "Highlight". */
+ *  the first named by the list's own title ("8 books"); its action is "Add" and its featured line "Highlight". A board's one control is its period, "Today". */
 export function toShellContent(sample: SampleContent | null | undefined): ShellContent {
   if (!sample) return CONCERT_CONTENT
   const [a, b, c] = sample.tabs
+  const tiles = (sample.tiles ?? []).map((t, i) => ({ id: `t${i + 1}`, label: t.label, value: t.value, note: t.note, tag: t.tag }))
+  const shape: Shape = sample.shape === 'board' && tiles.length >= MIN_TILES ? 'board' : 'log'
   return {
+    shape,
     screenTitles: { list: sample.screen_titles.list, review: sample.screen_titles.review },
     tabs: [a, b, c],
     entries: [...sample.entries].sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0)).map((e, i) => ({ id: `e${i + 1}`, title: e.title, subtitle: e.subtitle, date: e.date, tags: e.tags })),
-    add: 'Add',
+    add: shape === 'board' ? 'Today' : 'Add',
     stats: [{ count: 'entries', label: sample.screen_titles.list.toLowerCase() }, { count: 'months', label: 'months' }, { count: 'tags', label: 'tags' }],
     feature: 'Highlight',
+    tiles: shape === 'board' ? tiles : [],
   }
 }
+
+/** The two screens a content shows, in order: a log's list and year review; a board's overview and then its list. */
+export const screensOf = (content: ShellContent): [ScreenKey, ScreenKey] => content.shape === 'board' ? ['board', 'list'] : ['list', 'review']
+/** What each screen is called where the chrome names it (an aria label, a toggle). */
+export const SCREEN_NAMES: Record<ScreenKey, string> = { list: 'List screen', review: 'Year review screen', board: 'Overview screen' }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 export const monthOf = (iso: string) => MONTHS[Number(iso.slice(5, 7)) - 1]
@@ -102,6 +133,18 @@ export function groupBy(items: Entry[], mode: string): { label: string; items: E
     const k = key(e)
     if (!map.has(k)) map.set(k, [])
     map.get(k)!.push(e)
+  }
+  return [...map.entries()].map(([label, items]) => ({ label, items }))
+}
+
+/** Tiles in groups: under `by-tag` one group per state, in the order the states first appear; every other grouping is one ungrouped board (tiles have no time and no place). */
+export function groupTiles(tiles: Tile[], mode: string): { label: string; items: Tile[] }[] {
+  if (mode !== 'by-tag') return [{ label: '', items: tiles }]
+  const map = new Map<string, Tile[]>()
+  for (const t of tiles) {
+    const k = t.tag || 'other'
+    if (!map.has(k)) map.set(k, [])
+    map.get(k)!.push(t)
   }
   return [...map.entries()].map(([label, items]) => ({ label, items }))
 }

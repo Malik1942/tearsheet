@@ -15,7 +15,7 @@ import { Fold, Overlay } from '../make/Steps'
 import type { Unexpressed } from '../lib/types'
 import { ScaledScreens } from '../make/Screens'
 import { Callouts } from '../make/Callouts'
-import { toShellContent } from '../shell/content'
+import { screensOf, toShellContent, type ScreenKey } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
 import { AnchorThumb, HeadlineField } from '../make/Start'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
@@ -44,7 +44,7 @@ const COPY = {
   carryBadge: (n: number, label: string) => `${n} ${n === 1 ? 'thing' : 'things'} from ${label} couldn't carry over`,
   noSlot: 'No slot on these screens', fragile: 'Would break if changed',
   files: 'Files', versions: 'Versions',
-  list: 'List', review: 'Year review', both: 'Both',
+  list: 'List', review: 'Year review', board: 'Overview', both: 'Both',
   missing: "This project isn't on this device.", projects: 'Projects',
 }
 
@@ -70,7 +70,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [dialog, setDialog] = useState<Dialog>(null)
   const [neutral, setNeutral] = useState(false)
-  const [screen, setScreen] = useState<'both' | 'list' | 'review'>('both')
+  const [screen, setScreen] = useState<'both' | ScreenKey>('both')
   const [editing, setEditing] = useState(false)
   const [caption, setCaption] = useState<{ id: string; text: string } | null>(null)
   const captionTimer = useRef<number | undefined>(undefined)
@@ -239,7 +239,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
       {dialog === 'tune' && project && resolved && (
         <Overlay full title={COPY.fineTune} onClose={() => setDialog(null)} actions={
           <div className="flex overflow-hidden rounded border hairline text-[12px]" role="group" aria-label="Screens">
-            {(['list', 'review', 'both'] as const).map(s => <button key={s} type="button" aria-pressed={screen === s} onClick={() => setScreen(s)} className="cursor-pointer border-0 px-2 py-1" style={screen === s ? { background: 'var(--ink)', color: '#fff' } : { background: 'var(--panel)', color: 'var(--ink)' }}>{COPY[s]}</button>)}
+            {[...screensOf(toShellContent(project.content)), 'both' as const].map(s => <button key={s} type="button" aria-pressed={screen === s} onClick={() => setScreen(s)} className="cursor-pointer border-0 px-2 py-1" style={screen === s ? { background: 'var(--ink)', color: '#fff' } : { background: 'var(--panel)', color: 'var(--ink)' }}>{COPY[s]}</button>)}
           </div>}>
           <ComposePanel project={project} neutral={neutral} onNeutral={() => setNeutral(v => !v)} screen={screen} />
           <div className="flex flex-col gap-4 px-4 pb-8">

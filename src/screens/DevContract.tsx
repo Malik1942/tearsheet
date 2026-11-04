@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Shell } from '../shell/Shell'
 import type { Params } from '../shell/params'
 import { measureShell } from '../shell/contractMeasure'
-import { CONCERT_CONTENT, yearOf, type ShellContent } from '../shell/content'
+import { CONCERT_CONTENT, yearOf, type ScreenKey, type ShellContent } from '../shell/content'
 
-type Shown = { params: Params; screen: 'list' | 'review'; content: ShellContent }
+type Shown = { params: Params; screen: ScreenKey; content: ShellContent }
 declare global {
   interface Window {
     /** Render one screen of the shell full-window, with the given content (the concert log unless given), and resolve after it has painted. */
-    __shell?: (params: Params, screen: 'list' | 'review', content?: ShellContent) => Promise<void>
+    __shell?: (params: Params, screen: ScreenKey, content?: ShellContent) => Promise<void>
     /** Measure the rendered screen against the layout contract (contractMeasure.ts). */
     __measure?: () => ReturnType<typeof measureShell>
   }

@@ -24,6 +24,8 @@ export type LibraryBrick = { brick_id: string; rules: { rule: string; parameter:
 
 /** The sample entries the content asks for. */
 export const CONTENT_ENTRIES = 8
+/** The tiles a board asks for (2026-11-04); a log has none. */
+export const CONTENT_TILES = 6
 
 /** Exactly the schema the model is constrained to (meta-eval/fixtures/schemas/propose.json). `ranking` orders the library for the swap sheet;
  *  `content` is the screens' placeholder text (item 1). */
@@ -35,13 +37,17 @@ export const PROPOSE_SCHEMA = {
       properties: { brick_id: { type: 'string' }, quoted_rule: { type: 'string' }, why: { type: 'string' } } } },
     ranking: { type: 'array', maxItems: RANKING_MAX, items: { type: 'string' } },
     content: {
-      type: 'object', additionalProperties: false, required: ['screen_titles', 'tabs', 'entries'],
+      type: 'object', additionalProperties: false, required: ['shape', 'screen_titles', 'tabs', 'entries', 'tiles'],
       properties: {
+        shape: { type: 'string', enum: ['log', 'board'] },
         screen_titles: { type: 'object', additionalProperties: false, required: ['list', 'review'], properties: { list: { type: 'string' }, review: { type: 'string' } } },
         tabs: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } },
         entries: { type: 'array', minItems: CONTENT_ENTRIES, maxItems: CONTENT_ENTRIES, items: {
           type: 'object', additionalProperties: false, required: ['title', 'subtitle', 'date', 'tags'],
           properties: { title: { type: 'string' }, subtitle: { type: 'string' }, date: { type: 'string' }, tags: { type: 'array', maxItems: 2, items: { type: 'string' } } } } },
+        tiles: { type: 'array', maxItems: CONTENT_TILES, items: {
+          type: 'object', additionalProperties: false, required: ['label', 'value', 'note', 'tag'],
+          properties: { label: { type: 'string' }, value: { type: 'string' }, note: { type: 'string' }, tag: { type: 'string' } } } },
       },
     },
   },
@@ -54,13 +60,16 @@ export const ProposeResultSchema = z.object({ picks: z.array(PickSchema), rankin
 const ISO_DAY = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
 const words = (max: number) => z.string().trim().min(1).max(max)
 const ContentSchema = z.object({
+  shape: z.enum(['log', 'board']).optional(),
   screen_titles: z.object({ list: words(24), review: words(24) }),
   tabs: z.array(words(12)).length(3),
   entries: z.array(z.object({ title: words(60), subtitle: words(60), date: z.string().regex(ISO_DAY), tags: z.array(words(16)).max(2) })).min(3).max(CONTENT_ENTRIES),
+  tiles: z.array(z.object({ label: words(40), value: words(16), note: words(80), tag: words(16) })).max(CONTENT_TILES).optional(),
 })
 
 /** The sample content (item 1), checked on its own: anything malformed, or a tab that repeats a screen title (layout contract rule 5), is none, and the
- *  shell keeps the concert sample. It is placeholder text, never a design decision, so it carries no provenance. */
+ *  shell keeps the concert sample. It is placeholder text, never a design decision, so it carries no provenance. `shape` and `tiles` (2026-11-04) are read
+ *  the same way: a board with fewer than three usable tiles is laid out as a log by `toShellContent`, never dropped. */
 export function validateContent(raw: unknown): SampleContent | null {
   const r = ContentSchema.safeParse(raw)
   if (!r.success) return null

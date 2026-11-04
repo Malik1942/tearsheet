@@ -1,10 +1,10 @@
 # Layout contract report
 
-2026-11-04 06:19 UTC · 1320 compositions (ordered triples of the 12 samples), 554 distinct parameter sets, both screens at 390 × 844, with the concert content.
+2026-11-04 09:35 UTC · 1320 compositions (ordered triples of the 12 samples), 554 distinct parameter sets, both screens (list and review) at 390 × 844, with the concert content.
 
 **0 of 1320 compositions break at least one rule.**
 
-| Rule | Compositions breaking it | List | Year review |
+| Rule | Compositions breaking it | list | review |
 |---|---|---|---|
 | one alignment axis | 0 | 0 | 0 |
 | spacing scale | 0 | 0 | 0 |

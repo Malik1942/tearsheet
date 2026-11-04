@@ -28,13 +28,16 @@ const READING: SampleContent = JSON.parse(readFileSync(new URL('../src/fixtures/
 const INTENT = 'a reading tracker for someone who finishes a book a week'
 const LIB = libraryFor(SAMPLES)
 const firstRule = (id: string) => LIB.find(b => b.brick_id === id)!.rules[0].rule
-const SENTENCE = 'Also return content: placeholder text for the two screens of what they are making, written from the intent alone, never from a photo or a rule. screen_titles: list, the title of the screen that lists the items, and review, the title of the screen that looks back on the year. tabs: three short labels for a list, a chart and a profile tab, none repeating a screen title. entries: eight items, each with a short title, a subtitle, a date in {{YEAR}} (YYYY-MM-DD, spread over the year) and up to two one-word tags.'
+const SENTENCE = 'Also return content: placeholder text for the two screens of what they are making, written from the intent alone, never from a photo or a rule. shape: "log" when what they are making collects things over time (a log, a tracker, a diary, a catalogue), "board" when it shows the current state of things at a glance (a dashboard, a status page, a console). screen_titles: list, the title of the screen that lists the items, and review, the title of the other screen: for a log the one that looks back on the year, for a board the overview. tabs: three short labels for a list, a chart and a profile tab, none repeating a screen title. entries: eight items, each with a short title, a subtitle, a date in {{YEAR}} (YYYY-MM-DD, spread over the year; for a board, when the item last changed) and up to two one-word tags. tiles: for a board, six, each with a short label, a value (a number with its symbol, like 62% or 14:00, or one short word; never a phrase: a unit word belongs in the note), a one-line note and one one-word tag that names its state; for a log, an empty list.'
 
 describe('the propose call also writes sample content', () => {
-  it('requires content with two screen titles, three tabs and eight entries', () => {
+  it('requires content with a shape, two screen titles, three tabs, eight entries and up to six tiles', () => {
     assert.deepEqual(PROPOSE_SCHEMA.required, ['picks', 'ranking', 'content'])
     const c = PROPOSE_SCHEMA.properties.content
-    assert.deepEqual(c.required, ['screen_titles', 'tabs', 'entries'])
+    assert.deepEqual(c.required, ['shape', 'screen_titles', 'tabs', 'entries', 'tiles'])
+    assert.deepEqual(c.properties.shape.enum, ['log', 'board'])
+    assert.equal(c.properties.tiles.maxItems, 6)
+    assert.deepEqual(c.properties.tiles.items.required, ['label', 'value', 'note', 'tag'])
     assert.deepEqual([c.properties.tabs.minItems, c.properties.tabs.maxItems], [3, 3])
     assert.deepEqual([c.properties.entries.minItems, c.properties.entries.maxItems], [8, 8])
     assert.deepEqual(c.properties.entries.items.required, ['title', 'subtitle', 'date', 'tags'])

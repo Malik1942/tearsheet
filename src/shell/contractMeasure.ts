@@ -42,7 +42,7 @@ function edgeOf(el: HTMLElement): 'left' | 'center' | 'right' {
   }
 }
 
-export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year = '2025'): Violation[] {
+export function measureShell(shell: HTMLElement, screen: 'list' | 'review' | 'board', year = '2025'): Violation[] {
   const out: Violation[] = []
   const unit = px(getComputedStyle(shell).getPropertyValue('--space')) || 8
   const scale = [0, ...SCALE_AT_8.map(s => s * unit / 8)]
@@ -52,7 +52,7 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year
   const all = <T extends Element = HTMLElement>(sel: string) => Array.from(shell.querySelectorAll<T & HTMLElement>(sel)).filter(visible)
 
   // 1. one alignment axis: every heading and title on the screen hugs the same edge; under center no list thumbnail sits beside or below its text
-  const heads = all('.bar-title, .large-title, .screen-title, .group-title, .item .title, .row .title, .feature .title')
+  const heads = all('.bar-title, .large-title, .screen-title, .group-title, .item .title, .row .title, .feature .title, .tile .label')
   const edges = new Map<string, string[]>()
   for (const h of heads) { const e = edgeOf(h); edges.set(e, [...(edges.get(e) ?? []), label(h)]) }
   if (edges.size > 1) out.push({ rule: 'one-axis', magnitude: edges.size - 1, detail: [...edges].map(([e, ls]) => `${e}: ${[...new Set(ls)].join(' ')}`).join('; ') })
@@ -77,9 +77,21 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year
     for (const p of props) { const v = px(String(cs[p])); if (!onScale(v)) off.push(`${label(el)} ${String(p)} ${v.toFixed(1)}`) }
   }
   // the device details (item 3) are held to the same scale: the status bar, the large title, the tab bar and the home indicator, and the gaps inside them
-  for (const el of all('.bar, .item, .row, .group-title, .review-head, .feature, .large-title, .status-bar, .tab-bar, .home-indicator')) check(el, ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'])
-  for (const el of all('.item, .row, .stats, .status-icons, .tab-item')) check(el, ['columnGap', 'rowGap'])
+  for (const el of all('.bar, .item, .row, .group-title, .review-head, .feature, .large-title, .status-bar, .tab-bar, .home-indicator, .tiles, .tile')) check(el, ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'])
+  for (const el of all('.item, .row, .stats, .status-icons, .tab-item, .tiles, .tile')) check(el, ['columnGap', 'rowGap'])
   for (const el of all('.item .text')) check(el, ['paddingLeft', 'paddingRight'])
+  // a board's tile is held to the item's padding (16–32) and gaps (label → value 4, then 8)
+  for (const tile of all('.tile')) {
+    const pad = px(getComputedStyle(tile).paddingTop)
+    if (![16, 24, 32].some(s => near(pad, s * unit / 8, 0.6))) off.push(`.tile padding ${pad.toFixed(1)} (not 16–32)`)
+    const kids = ['.label', '.value', '.note', '.tags'].map(s => tile.querySelector<HTMLElement>(s)).filter(visible)
+    for (let i = 1; i < kids.length; i++) {
+      const a = kids[i - 1].getBoundingClientRect(), b = kids[i].getBoundingClientRect()
+      if (Math.min(a.right, b.right) - Math.max(a.left, b.left) <= 0) continue   // side by side (the value at the right of a row or a split tile): no vertical gap to hold to the scale
+      const gap = b.top - a.bottom, want = i === 1 ? 4 : 8
+      if (!near(gap, want * unit / 8)) off.push(`${label(kids[i - 1])} → ${label(kids[i])} ${gap.toFixed(1)} (want ${want * unit / 8})`)
+    }
+  }
   for (const item of all('.item')) {
     const pad = px(getComputedStyle(item).paddingTop)
     if (![16, 24, 32].some(s => near(pad, s * unit / 8, 0.6))) off.push(`.item padding ${pad.toFixed(1)} (not 16–32)`)
@@ -120,6 +132,23 @@ export function measureShell(shell: HTMLElement, screen: 'list' | 'review', year
       if (w < MIN_TEXT_EM * px(tcs.fontSize) - 1) bad.push(`text column ${w.toFixed(0)}px < 9em`)
     }
   }
+  // a tile: no empty band over 24 px between what it holds, a text column of 9em at its label's size (its text is caption-size, the value aside), at least 44 px tall
+  for (const tile of all('.tile')) {
+    const r = tile.getBoundingClientRect(), cs = getComputedStyle(tile)
+    const from = r.top + px(cs.paddingTop) + px(cs.borderTopWidth), to = r.bottom - px(cs.paddingBottom) - px(cs.borderBottomWidth)
+    const spans = ['.pic', '.label', '.value', '.note', '.tags'].map(s => tile.querySelector<HTMLElement>(s)).filter(visible)
+      .map(el => el.getBoundingClientRect()).map(b => [Math.max(from, b.top), Math.min(to, b.bottom)] as const).filter(([a, b]) => b > a).sort((a, b) => a[0] - b[0])
+    let at = from, band = 0
+    for (const [a, b] of spans) { band = Math.max(band, a - at); at = Math.max(at, b) }
+    band = Math.max(band, to - at)
+    if (band > MAX_BAND) { worstBand = Math.max(worstBand, band); bad.push(`tile empty band ${band.toFixed(0)}px`) }
+    const lab = tile.querySelector<HTMLElement>('.label')
+    if (visible(lab)) {
+      const w = tile.clientWidth - px(cs.paddingLeft) - px(cs.paddingRight)
+      if (w < MIN_TEXT_EM * px(getComputedStyle(lab).fontSize) - 1) bad.push(`tile text column ${w.toFixed(0)}px < 9em`)
+    }
+  }
+  for (const el of all('.tile')) if (el.getBoundingClientRect().height < MIN_TARGET - 0.5) bad.push(`${label(el)} ${el.getBoundingClientRect().height.toFixed(0)}px tall`)
   for (const el of all('.item, .row')) if (el.getBoundingClientRect().height < MIN_TARGET - 0.5) bad.push(`${label(el)} ${el.getBoundingClientRect().height.toFixed(0)}px tall`)
   for (const el of all('button, a, [role="button"], .action, .bar-icon')) {
     const b = el.getBoundingClientRect()
