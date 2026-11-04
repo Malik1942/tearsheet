@@ -14,6 +14,7 @@ import { Fold, Overlay } from '../make/Steps'
 import { ScaledScreens } from '../make/Screens'
 import { toShellContent } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
+import { IntentField, StartPhotos } from '../make/Start'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
 import { ComposePanel } from './Compose'
@@ -27,13 +28,12 @@ const finePointer = () => typeof matchMedia === 'function' && matchMedia('(point
 const RESERVE = 260
 const COPY = {
   field: 'What are you making?',
-  examples: 'For example:',
+  examples: 'Try',
+  placeholder: 'Describe it in one sentence',
   finding: 'Looking through your photos…',
   off: 'Finding is off here. Pick them yourself.',
   noRules: 'Nothing here has a rule to quote yet. Pick them yourself.',
   noProposal: 'Nothing came back. Pick them yourself.',
-  startingFrom: 'Starting from',
-  clearAnchor: 'Clear the starting point',
   edit: 'Edit what you are making',
   fineTune: 'Fine-tune…', style: 'Adjust style…', arrangement: 'Try another arrangement…', neutral: 'Neutral skin', pick: 'Pick photos myself…', rename: 'Rename…',
   turnOff: 'Turn this photo off', turnOn: 'Turn this photo back on', swap: 'Swap this photo',
@@ -65,7 +65,6 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const [dialog, setDialog] = useState<Dialog>(null)
   const [neutral, setNeutral] = useState(false)
   const [screen, setScreen] = useState<'both' | 'list' | 'review'>('both')
-  const [example, setExample] = useState(0)
   const [editing, setEditing] = useState(false)
   const req = useRef(0)
   useEffect(() => { proposeEnabled().then(setEnabled) }, [])
@@ -77,11 +76,6 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
     setEditing(false)
     if (project?.proposal?.lean) { setChips(project.proposal.lean.chips as ChipId[]); setAnchor(project.proposal.lean.anchor_id ?? null) }
   }
-  useEffect(() => {
-    if (project || intent) return
-    const t = window.setInterval(() => setExample(i => (i + 1) % INTENT_EXAMPLES.length), 3500)
-    return () => window.clearInterval(t)
-  }, [project, intent])
 
   // SB3: one pool feeds the chips, the proposal, the swap list and the hand-picked grid; Include starters is in the header's ⋯
   const pool = useMemo(() => proposalPool(store.bricks, store.showStarters), [store.bricks, store.showStarters])
@@ -148,30 +142,32 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   return (
     <div className="chrome min-h-full">
       <div className="gutter mx-auto flex w-full max-w-6xl flex-col gap-4 py-4">
-        {!headline && <h1 className="sr-only">{project ? project.intent : COPY.field}</h1>}
-        <div className="mx-auto flex w-full max-w-[680px] items-center gap-2">
-          {project && headline ? (
-            // after Enter the intent is the page's headline; clicking it brings the field back, where Enter proposes again and Escape puts the headline back
-            <h1 className="intent-headline"><button type="button" className="intent-edit" title={COPY.edit} onClick={() => setEditing(true)}>{project.intent}<span className="sr-only">{` (${COPY.edit.toLowerCase()})`}</span></button></h1>
-          ) : (
-            <input value={intent} disabled={busy} maxLength={300} autoFocus={editing || (!project && finePointer())} aria-label={COPY.field} placeholder={COPY.field}
-              onChange={e => setIntent(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.nativeEvent.isComposing) void run()
-                if (e.key === 'Escape' && project) { setIntent(project.intent); setEditing(false) }
-              }}
-              onBlur={() => { if (project && intent.trim() === project.intent.trim()) setEditing(false) }}
-              className="min-w-0 flex-1 rounded border px-3 py-2.5 text-[15px] hairline" style={{ color: 'var(--ink)', background: 'var(--panel)' }} />
-          )}
-        </div>
-        {(busy || (!project && (anchorBrick || !intent))) && (
-          <div className="ink-2 mx-auto flex min-h-5 w-full max-w-[680px] flex-wrap items-center gap-x-4 gap-y-1 text-[13px]" aria-live="polite">
-            {busy ? <span className="sr-only">{COPY.finding}</span> : !intent && !project && <span>{COPY.examples} <span style={{ color: 'var(--ink)' }}>{INTENT_EXAMPLES[example]}</span></span>}
-            {anchorBrick && !project && (
-              <span className="inline-flex items-center gap-1.5">{COPY.startingFrom} <Photo src={anchorBrick.photo.url} className="h-5 w-5 rounded object-cover" /><button type="button" className="btn btn-quiet icon-btn text-[14px]" aria-label={COPY.clearAnchor} title={COPY.clearAnchor} onClick={() => setAnchor(null)}>×</button></span>
+        {project && !headline && <h1 className="sr-only">{project.intent}</h1>}
+        {!project ? (
+          // before Enter (Malik, 2026-11-03): the question, a large field with its action, examples to tap, and the photos to start from as large blocks
+          <div className="make-start">
+            <h1 className="intent-headline">{COPY.field}</h1>
+            <IntentField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} placeholder={COPY.placeholder} autoFocus={finePointer()} primary />
+            {!busy && (
+              <div className="intent-examples">
+                <span className="ink-2 caption">{COPY.examples}</span>
+                {INTENT_EXAMPLES.map(x => <button key={x} type="button" className="btn" onClick={() => setIntent(x)}>{x}</button>)}
+              </div>
+            )}
+            {!busy && withRules.length > 0 && <StartPhotos bricks={withRules} anchorId={anchorBrick?.id ?? null} onAnchor={setAnchor} onAll={() => setDialog('style')} />}
+          </div>
+        ) : (
+          <div className="mx-auto flex w-full max-w-[680px] items-center gap-2">
+            {headline ? (
+              // after Enter the intent is the page's headline; clicking it brings the field back, where Enter proposes again and Escape puts the headline back
+              <h1 className="intent-headline"><button type="button" className="intent-edit" title={COPY.edit} onClick={() => setEditing(true)}>{project.intent}<span className="sr-only">{` (${COPY.edit.toLowerCase()})`}</span></button></h1>
+            ) : (
+              <IntentField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} placeholder={COPY.placeholder} autoFocus={editing}
+                onEscape={() => { setIntent(project.intent); setEditing(false) }} onLeave={() => { if (intent.trim() === project.intent.trim()) setEditing(false) }} />
             )}
           </div>
         )}
+        <div className="sr-only" aria-live="polite">{busy ? COPY.finding : ''}</div>
 
         {busy && (
           // while the photos are found: the two frames at their final size and the photo slots, quiet, so the result lands where the eye already is
