@@ -22,7 +22,7 @@ const COPY = {
   styleNote: 'Press Enter in the field to look again with these.',
   pick: 'Pick photos myself', count: (n: number, max: number) => `${n} of ${max}`, show: 'Show the screens', starter: 'starter',
   empty: 'Nothing to pick from yet. Add photos, or include the starters from ⋯.', needIntent: 'Type what you are making first.',
-  swap: 'Swap this photo', noSpare: 'No other photo to swap in.', inProject: 'Already in this project',
+  swap: 'Swap', noSpare: 'No other photo to swap in.', inProject: 'Already in this project',
 }
 
 /** P8, in Make's ⋯: the same bricks in their (at most three) rotations, each a mini-screen; picking one reorders the project (a new version). */

@@ -1,42 +1,66 @@
-/* App chrome: one quiet identity. The shell never inherits any of this, and the chrome never inherits a shell color. */
+/* App chrome: C+D. Loud at the edges, quiet in the middle; the shell is always the most important thing on the page.
+   Drop-in for src/chrome/tokens.css (based on 0de3a09, where tokens.css last changed in 7930991). The shell never inherits any of this, and the chrome never
+   inherits a shell color: no variable here shares a name with the shell's own (--font-display, --font-family, --color-*).
+   Rules: DESIGN_SYSTEM.md. */
+
+/* Fonts: the Google Fonts <link> in index.html loads Archivo and IBM Plex Mono (display=swap). An @import here, inside the layered
+   import of this file, is an unknown at-rule to the CSS optimizer, so the link does it. */
+
+/* Self-hosted fallback: the same OFL files served from public/fonts/ (Archivo: github.com/Omnibus-Type/Archivo, IBM Plex Mono:
+   github.com/IBM/plex). Used when Google Fonts is unreachable; a missing file is skipped and the system stack takes over. */
+@font-face { font-family: "Archivo Self"; src: local("Archivo"), url("/fonts/Archivo-Variable.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono Self"; src: local("IBM Plex Mono"), url("/fonts/IBMPlexMono-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono Self"; src: local("IBM Plex Mono Medium"), url("/fonts/IBMPlexMono-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+
 :root {
-  --paper: #F4F2EE;        /* app background */
-  --ink: #1A1917;          /* primary text */
-  --ink-2: #6B6861;        /* secondary text */
-  --line: #DAD6CE;         /* hairlines */
-  --panel: #FFFFFF;        /* cards, panels */
-  --accent: #C8502A;       /* one accent: actions, selected state, "today" */
-  --measured: #1A1917;     /* provenance: measured chip, filled */
-  --interpreted: #6B6861;  /* provenance: dotted outline */
-  --adapted: #9A958C;      /* provenance: outline + "by you" */
-  --font-ui: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --radius: 6px;
+  --paper: #F2EFE8;        /* app background, every zone */
+  --ink: #141414;          /* primary text, display type, rules at full strength */
+  --ink-2: #6D6C69;        /* muted: ink at 60% on paper, 4.55:1 */
+  --line: rgba(20, 20, 20, 0.12);   /* rules: ink at 12%, 1 px */
+  --panel: #F2EFE8;        /* raised surfaces are paper too; elevation is a 1 px rule, never a shadow */
+  --accent: #C8331F;       /* the working red: primary button, selected tab, photo ring, change highlight (and any red under 24 px) */
+  --measured: #141414;     /* provenance: measured chip, filled */
+  --interpreted: #6D6C69;  /* provenance: dotted outline */
+  --adapted: #888682;      /* provenance: outline + "by you" (3.16:1 on paper, a UI boundary) */
+  --font-ui: "Archivo", "Archivo Self", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "IBM Plex Mono Self", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 6px;           /* controls only */
   --space: 8px;
+
+  /* new in C+D */
+  --red-display: #E03C31;  /* NEW: display type and large fills in loud zones only (3.76:1 on paper: large text and fills only) */
+  --red-ui: #C8331F;       /* NEW: same as --accent, by name: button fills and red under 24 px (white on it 5.32:1, on paper 4.63:1) */
+  --rule: rgba(20, 20, 20, 0.12);   /* NEW: alias of --line for new markup */
+  --focus: #141414;        /* NEW: focus rings are ink, so red stays on its four uses */
+  --font-poster: "Archivo", "Archivo Self", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;   /* NEW: display family (Archivo at width 62, weight 900) */
+  --radius-brand: 0px;     /* NEW: masthead, red blocks, photos, cards in loud zones */
+  --type-display: clamp(56px, 11vw, 160px);   /* NEW: the fifth size, display only */
+  --space-4: 4px; --space-8: 8px; --space-12: 12px; --space-16: 16px; --space-24: 24px; --space-32: 32px; --space-48: 48px; --space-64: 64px;   /* NEW: the spacing scale */
+  --crop: 8px;             /* NEW: crop-mark arm length */
 }
 
-.chrome { background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: 13px; line-height: 1.4; min-height: 100%; }
-.chrome h1, .chrome h2 { font-size: 18px; line-height: 22px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+.chrome { background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: 13px; line-height: 1.45; min-height: 100%; font-variant-numeric: tabular-nums; }
+.chrome h1, .chrome h2 { font-size: 15px; line-height: 20px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
 .chrome .mono { font-family: var(--font-mono); font-size: 12px; }
 .chrome .ink-2 { color: var(--ink-2); }
 .chrome .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
 .chrome .hairline { border-color: var(--line); }
 
-.btn { font: inherit; font-weight: 500; border-radius: var(--radius); padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; line-height: 1.2; }
+.btn { font: inherit; font-weight: 600; border-radius: var(--radius); padding: 6px 12px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; line-height: 1.2; }
 .btn:hover { border-color: var(--ink-2); }
-.btn:focus-visible, .chrome a:focus-visible, .chrome input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn-accent:hover { filter: brightness(0.95); }
+.btn:focus-visible, .chrome a:focus-visible, .chrome input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn-accent { background: var(--red-ui); border-color: var(--red-ui); color: #fff; }   /* the one primary per view */
+.btn-accent:hover { filter: brightness(0.94); }
 .btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
 .btn-quiet:hover { color: var(--ink); border-color: transparent; }
 .btn:disabled { opacity: 0.5; cursor: default; }
 
-/* provenance chips, used everywhere a value appears */
-.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 16px; border: 1px solid transparent; white-space: nowrap; max-width: 100%; min-width: 0; overflow: hidden; }
+/* provenance chips, used everywhere a value appears (Fine-tune). No pills: controls get the control radius */
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius); padding: 2px 8px; font-size: 12px; line-height: 16px; border: 1px solid transparent; white-space: nowrap; max-width: 100%; min-width: 0; overflow: hidden; }
 .chip > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .chip > span:first-child { flex-shrink: 0; }
 .chip .mono { font-size: 11.5px; }
-.chip-measured { background: var(--measured); color: #fff; }
+.chip-measured { background: var(--measured); color: var(--paper); }
 .chip-interpreted { border: 1px dotted var(--interpreted); color: var(--ink); }
 .chip-adapted { border: 1px solid var(--adapted); color: var(--ink-2); }
 .chip-proposed { border: 1px solid var(--ink-2); color: var(--ink); background: var(--paper); } /* P3: how a brick got into a project, not a value */
@@ -45,97 +69,99 @@
 
 /* library card states */
 .card-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--line); overflow: hidden; }
-.card-progress::after { content: ''; position: absolute; left: -40%; width: 40%; height: 100%; background: var(--accent); animation: card-progress 1.6s linear infinite; }
+.card-progress::after { content: ''; position: absolute; left: -40%; width: 40%; height: 100%; background: var(--ink); animation: card-progress 1.6s linear infinite; }
 @keyframes card-progress { to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .card-progress::after { animation: none; left: 0; } }
 
-/* 15_SIMPLIFY §1 and §5: one header for every screen, the type scale, the gutters. */
+/* the type scale (five sizes in the chrome: 12 / 13 / 15 / 24 / display), the gutters */
 :root {
-  --type-title: 24px;      /* one page or step title */
-  --type-em: 15px;         /* emphasis */
-  --type-body: 13px;
-  --type-caption: 12px;
+  --type-title: 24px;      /* the intent headline on Make; one per page */
+  --type-em: 15px;         /* labels, sheet titles */
+  --type-body: 13px;       /* body, buttons, tabs */
+  --type-caption: 12px;    /* meta: issue line, dates, credits, links (mono) */
   --gutter: 32px;          /* page gutter, desktop */
   --section-gap: 32px;
   --bar-h: 64px;           /* the phone's bottom bar */
 }
 @media (max-width: 767.98px) { :root { --gutter: 20px; } }
 
-.chrome .title { font-size: var(--type-title); line-height: 30px; font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.chrome .title { font-size: var(--type-title); line-height: 30px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
 .chrome .em { font-size: var(--type-em); line-height: 20px; font-weight: 600; margin: 0; }
 .chrome .caption { font-size: var(--type-caption); line-height: 16px; }
 .gutter { padding-left: var(--gutter); padding-right: var(--gutter); }
 
-.app-header { display: flex; align-items: center; gap: 24px; height: 56px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
+.app-header { display: flex; align-items: center; gap: 24px; height: 56px; background: var(--paper); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
 .wordmark { font-size: var(--type-em); font-weight: 600; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
-.tab { position: relative; display: inline-flex; align-items: center; height: 56px; padding: 0 2px; font-weight: 500; color: var(--ink-2); text-decoration: none; }
+.tab { position: relative; display: inline-flex; align-items: center; height: 56px; padding: 0 2px; font-weight: 600; color: var(--ink-2); text-decoration: none; }
 .tab:hover { color: var(--ink); }
-.tab[aria-current="page"] { color: var(--accent); }
-.tab[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent); }
+.tab[aria-current="page"] { color: var(--ink); }   /* the text stays ink; the red is the 2 px bar */
+.tab[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--red-ui); }
 .shoot { position: relative; }
-.count-badge { position: absolute; top: -8px; right: -8px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-size: 11px; line-height: 16px; font-weight: 600; text-align: center; }
-.status-pill { border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font: inherit; font-size: var(--type-caption); line-height: 16px; color: var(--ink-2); background: var(--paper); cursor: pointer; }
+.count-badge { position: absolute; top: -8px; right: -8px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--radius); background: var(--ink); color: var(--paper); border: 0; font-size: 11px; line-height: 18px; font-weight: 600; text-align: center; }
+.status-pill { border: 1px solid var(--line); border-radius: var(--radius); padding: 1px 8px; font: inherit; font-size: var(--type-caption); line-height: 16px; color: var(--ink-2); background: var(--paper); cursor: pointer; }
 
-.menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(26, 25, 23, 0.12); padding: 4px; z-index: 40; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; background: var(--paper); border: 1px solid var(--ink); border-radius: var(--radius); padding: 4px; z-index: 40; }
 .menu-item { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 4px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
-.menu-item:hover, .menu-item:focus-visible { background: var(--paper); }
-.menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }   /* a visible ring, like every other control; the paper tint alone was 1.1:1 */
+.menu-item:hover, .menu-item:focus-visible { background: rgba(20, 20, 20, 0.06); }
+.menu-item:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .menu-sep { height: 1px; background: var(--line); margin: 4px 6px; }
 
-.bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding: 0 var(--gutter) env(safe-area-inset-bottom); background: var(--panel); border-top: 1px solid var(--line); }
+.bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding: 0 var(--gutter) env(safe-area-inset-bottom); background: var(--paper); border-top: 1px solid var(--line); }
 .bottom-bar .tab { height: var(--bar-h); justify-content: center; }
 .bottom-bar .tab[aria-current="page"]::after { top: -1px; bottom: auto; }
-.bottom-bar .shoot { padding: 11px 28px; border-radius: 999px; font-size: var(--type-em); }
+.bottom-bar .shoot { padding: 11px 28px; border-radius: var(--radius); font-size: var(--type-em); }
 @media (min-width: 768px) { .bottom-bar { display: none; } }
 
-/* a toggle switch: accent only when on (§5) */
-.switch { position: relative; flex-shrink: 0; width: 30px; height: 18px; border-radius: 999px; background: var(--line); transition: background 0.15s; }
-.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 0.15s; }
-.switch[data-on] { background: var(--accent); }
+/* a toggle switch (Fine-tune): red only when on; a rounded rectangle, not a pill */
+.switch { position: relative; flex-shrink: 0; width: 30px; height: 18px; border-radius: 4px; background: var(--ink-2); transition: background 0.15s; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 3px; background: var(--paper); transition: transform 0.15s; }
+.switch[data-on] { background: var(--red-ui); }
 .switch[data-on]::after { transform: translateX(12px); }
 @media (max-width: 767.98px) { .with-bar { padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); } }
 
-.notice { display: flex; align-items: center; gap: 8px; padding-top: 8px; padding-bottom: 8px; font-size: var(--type-caption); background: var(--panel); border-bottom: 1px solid var(--line); }
+.notice { display: flex; align-items: center; gap: 8px; padding-top: 8px; padding-bottom: 8px; font-size: var(--type-caption); background: var(--paper); border-bottom: 1px solid var(--line); }
 
-/* the Brick sheet (side panel on desktop, bottom sheet on a phone) and the About sheet: native <dialog>, opened modal */
-.sheet { position: fixed; margin: 0; padding: 0; border: 0; background: var(--panel); color: var(--ink); max-width: none; max-height: none; overflow: auto; overscroll-behavior: contain; }
-.sheet::backdrop { background: rgba(26, 25, 23, 0.28); }
-.sheet-side { inset: 0 0 0 auto; width: min(480px, 100vw); height: 100dvh; border-left: 1px solid var(--line); }
-@media (max-width: 767.98px) { .sheet-side { inset: auto 0 0 0; width: 100vw; height: auto; max-height: 88dvh; border-left: 0; border-radius: 12px 12px 0 0; } }
-.sheet-center { inset: 0; margin: auto; width: min(400px, calc(100vw - 40px)); height: fit-content; border-radius: var(--radius); border: 1px solid var(--line); }
+/* the Brick sheet (side panel on desktop, bottom sheet on a phone) and the About sheet: native <dialog>, opened modal. A 1 px ink rule, no shadow */
+.sheet { position: fixed; margin: 0; padding: 0; border: 0; background: var(--paper); color: var(--ink); max-width: none; max-height: none; overflow: auto; overscroll-behavior: contain; }
+.sheet::backdrop { background: rgba(20, 20, 20, 0.28); }
+.sheet-side { inset: 0 0 0 auto; width: min(480px, 100vw); height: 100dvh; border-left: 1px solid var(--ink); }
+@media (max-width: 767.98px) { .sheet-side { inset: auto 0 0 0; width: 100vw; height: auto; max-height: 88dvh; border-left: 0; border-top: 1px solid var(--ink); border-radius: 0; } }
+.sheet-center { inset: 0; margin: auto; width: min(400px, calc(100vw - 40px)); height: fit-content; border-radius: var(--radius); border: 1px solid var(--ink); }
 
-/* Library cards: the photo, one date line, and the state on the photo itself */
-.card-tile { position: relative; display: block; overflow: hidden; border-radius: var(--radius); background: #2a2a2a; aspect-ratio: 4 / 5; }
-.card-tile .card-progress::after { background: var(--ink); }
+/* Library cards: the photo, one date line, and the state on the photo itself. Photos are square-cornered */
+.card-tile { position: relative; display: block; overflow: hidden; border-radius: var(--radius-brand); background: #2a2a2a; aspect-ratio: 4 / 5; }
+.card-tile .card-progress::after { background: var(--paper); }
 .card-tile .card-progress[data-held]::after { animation: none; left: 0; background: var(--ink-2); }
-.alert-badge { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 999px; border: 1px solid var(--panel); background: var(--ink); color: #fff; font: inherit; font-weight: 700; font-size: 13px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-.alert-pop { position: absolute; top: 40px; right: 8px; left: 8px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 18px rgba(26, 25, 23, 0.14); font-size: var(--type-caption); }
+.alert-badge { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: var(--radius); border: 1px solid var(--paper); background: var(--ink); color: var(--paper); font: inherit; font-weight: 700; font-size: 13px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.alert-pop { position: absolute; top: 40px; right: 8px; left: 8px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 8px 10px; background: var(--paper); border: 1px solid var(--ink); border-radius: var(--radius); font-size: var(--type-caption); }
 
-/* ---------- Library and Make, after the Impeccable passes (critique → distill → layout → typeset → polish) and the Web Interface Guidelines MUST items ---------- */
-.chrome input::placeholder, .chrome textarea::placeholder { color: var(--ink-2); opacity: 1; }   /* 5.3:1 on the panel; Tailwind's default placeholder was 3.4:1 */
+/* ---------- Library and Make (spec-v2 f005279), re-skinned ---------- */
+.chrome input::placeholder, .chrome textarea::placeholder { color: var(--ink-2); opacity: 1; }   /* 4.57:1 on paper */
+.chrome :is(input, textarea, select).hairline { border-color: var(--ink-2); }   /* a field's edge is a UI boundary: 4.57:1, where the 12% rule is 1.28:1 */
 .chrome input:disabled { color: var(--ink); cursor: progress; }   /* the typed intent stays legible while the photos are found */
 @media (max-width: 767.98px) { .chrome input, .chrome textarea, .chrome select { font-size: 16px; } }   /* under 16 px iOS Safari zooms the page on focus */
-.chrome :is(h1, h2, .title, .em) { text-wrap: balance; }
+.chrome :is(h1, h2, .title, .em):not(.shell *) { text-wrap: balance; }   /* not inside the shell: its titles wrap as they do everywhere it renders */
 .chrome :is(button, a, summary) { touch-action: manipulation; }
 .chrome .tnum { font-variant-numeric: tabular-nums; }
 /* an icon-only control keeps a 44 px target on touch; the drawn glyph stays small */
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; padding: 0; }
 @media (pointer: coarse) { .icon-btn { min-width: 44px; min-height: 44px; } }
 
-/* Make: the photo row. Each photo is a switch (the thumbnail, its label and a switch in one target), its date under it, Swap a quiet text button.
-   The slots are fixed, so a photo never moves when another one appears or goes */
+/* Make: the photo row. Each photo is a switch (the thumbnail and its one label in one target), its date under it, Swap a quiet icon.
+   On = a 2 px red ring; off = dimmed with a 1 px rule. The slots are fixed, so a photo never moves when another one appears or goes */
 .photo-row { display: grid; grid-template-columns: repeat(var(--slots, 3), 136px); justify-content: center; gap: 16px; margin: 0; padding: 0; list-style: none; }
 .photo-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .photo-switch { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 4px 0; border: 0; background: transparent; color: var(--ink); font: inherit; cursor: pointer; border-radius: var(--radius); }
-.photo-switch img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius); box-shadow: 0 0 0 2px var(--ink); transition: opacity 0.15s, box-shadow 0.15s; }
-.photo-switch[aria-pressed="false"] img { opacity: 0.35; box-shadow: 0 0 0 1px var(--line); }
-.photo-switch .photo-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--type-caption); line-height: 16px; white-space: nowrap; }
-.photo-switch[aria-pressed="false"] .photo-label { color: var(--ink-2); }
-.photo-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.photo-meta { font-size: 11px; line-height: 14px; color: var(--ink-2); text-align: center; }
+.photo-switch img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-brand); outline: 2px solid var(--red-ui); outline-offset: 3px; transition: opacity 0.15s, outline-color 0.15s; }
+.photo-switch[aria-pressed="false"] img { opacity: 0.35; outline: 1px solid var(--line); outline-offset: 0; }
+.photo-switch .photo-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--type-caption); line-height: 16px; font-weight: 600; white-space: nowrap; }
+.photo-switch[aria-pressed="false"] .photo-label { color: var(--ink-2); font-weight: 400; }
+.photo-switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.photo-meta { font: 400 11px/14px var(--font-mono); color: var(--ink-2); text-align: center; }
 .photo-swap { border: 0; background: transparent; color: var(--ink-2); cursor: pointer; border-radius: 4px; }
-@media (hover: hover) and (pointer: fine) { .photo-cell .photo-swap { min-width: 28px; min-height: 24px; opacity: 0; transition: opacity 0.15s; } .photo-cell:is(:hover, :focus-within) .photo-swap { opacity: 1; } }   /* the spec's "hover shows a small Swap icon"; always there on touch */
+@media (hover: hover) and (pointer: fine) { .photo-cell .photo-swap { min-width: 28px; min-height: 24px; opacity: 0; transition: opacity 0.15s; } .photo-cell:is(:hover, :focus-within) .photo-swap { opacity: 1; } }   /* hover shows a small Swap icon; always there on touch */
 .photo-swap:hover { color: var(--ink); }
-.photo-swap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.photo-swap:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 /* on a phone the row rides above the bottom bar, so the screens and their switches stay on screen together */
 @media (max-width: 767.98px) {
   .photo-dock { position: sticky; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); z-index: 20; margin: 0 calc(-1 * var(--gutter)); padding: 8px var(--gutter); background: var(--paper); border-top: 1px solid var(--line); }
@@ -147,9 +173,9 @@
   .photo-cell .photo-meta { display: none; }
 }
 /* Make on a phone: the bar's Shoot is the Library's job, so it goes quiet here */
-.bottom-bar .shoot-quiet { background: var(--panel); border-color: var(--line); color: var(--ink); }
+.bottom-bar .shoot-quiet { background: transparent; border-color: var(--line); color: var(--ink); }
 
-/* while the photos are found: the frames at their final size, a quiet pulse, the status inside them */
+/* while the photos are found: the frames at their final size, a quiet pulse, the status inside them (the frames stand where the shell will be) */
 .finding { display: flex; justify-content: center; gap: 32px; }
 .finding-frame { display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; border-radius: 22px; background: color-mix(in oklab, var(--ink) 6%, var(--paper)); border: 1px solid var(--line); color: var(--ink); font-size: var(--type-em); line-height: 20px; }
 .pulse { animation: pulse 1.6s ease-in-out infinite alternate; }
@@ -165,5 +191,60 @@
 }
 
 /* skip link: the first stop for a keyboard, hidden until it has focus */
-.skip-link { position: absolute; left: 8px; top: -48px; z-index: 50; padding: 8px 12px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; }
-.skip-link:focus-visible { top: 8px; outline: 2px solid var(--accent); outline-offset: 2px; }
+.skip-link { position: absolute; left: 8px; top: -48px; z-index: 50; padding: 8px 12px; background: var(--paper); color: var(--ink); border: 1px solid var(--ink); border-radius: var(--radius); text-decoration: none; }
+.skip-link:focus-visible { top: 8px; outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- NEW in C+D: volumes, display type, masthead, blocks, crop marks, issue line ---------- */
+/* data-volume sits on the app root for the whole view, header included. "loud" (C): Library, empty Library, Share complete.
+   "quiet" (D): Make and everything else. One red block per view: on a loud view it is the masthead (or SHARED) block, so the
+   primary button turns ink; on a quiet view it is the primary button. Thin red (tab bar, photo ring, change highlight) is not a block. */
+[data-volume="quiet"] { --red-display: var(--red-ui); }   /* a quiet zone never shows the display red, even by mistake */
+[data-volume="loud"] .btn-accent { background: var(--ink); border-color: var(--ink); color: var(--paper); }   /* Shoot, Copy: ink on a loud view */
+[data-volume="loud"] .btn-accent:hover { filter: none; background: #2A2A2A; border-color: #2A2A2A; }
+[data-volume="loud"] .count-badge { background: var(--paper); color: var(--ink); border: 1px solid var(--ink); line-height: 16px; }
+
+.display, .chrome .display { font-family: var(--font-poster); font-weight: 900; font-stretch: 62%; text-transform: uppercase; line-height: 0.84; letter-spacing: -0.005em; font-size: var(--type-display); color: var(--ink); margin: 0; }
+[data-volume="quiet"] .display, .chrome[data-volume="quiet"] .display { font-size: var(--type-title); font-weight: 600; font-stretch: 100%; text-transform: none; line-height: 30px; }   /* display type is loud-zone only */
+
+/* the Library masthead: LIBRARY in display ink, the count in display on a red block, full bleed, cropped at the right edge.
+   It sits in the same .gutter container as the grid. The word starts at the gutter, then moves left by the L's side bearing
+   (0.0405 em in Archivo 900 at width 62), so its ink and the grid's first column share one left edge at every width */
+.masthead { display: flex; align-items: stretch; height: calc(var(--type-display) * 1.08); margin: 0 calc(-1 * var(--gutter)); overflow: hidden; border-bottom: 1px solid var(--ink); border-radius: var(--radius-brand); }
+.masthead .display { align-self: flex-end; padding: 0; margin-left: calc(var(--gutter) - 0.0405em); white-space: nowrap; }
+.masthead .count-block { position: relative; margin-left: auto; flex: 0 0 min(28%, 360px); background: var(--red-display); overflow: hidden; }
+.masthead .count-block .display { position: absolute; left: var(--space-24); bottom: -0.12em; padding: 0; }
+@media (max-width: 767.98px) { .masthead .count-block { flex-basis: 36%; } }
+
+/* a red block in a loud zone (Share complete): display type in ink on #E03C31 (4.25:1, large) */
+.red-block { position: relative; background: var(--red-display); color: var(--ink); padding: var(--space-16) var(--space-24) 0; border-radius: var(--radius-brand); }   /* only display type sits on it; links and buttons go on paper below */
+
+/* the empty Library's line under the masthead: 24 / 400, not display */
+.empty-line { font: 400 var(--type-title)/30px var(--font-ui); color: var(--ink); margin: var(--space-24) 0 var(--space-16); }
+
+/* the mono issue line: "14 photos · since Dec 27, 2025" (only real counts; no issue number) */
+.issue-line { display: flex; justify-content: space-between; gap: var(--space-16); padding: var(--space-8) 0 var(--space-24); font: 400 var(--type-caption)/16px var(--font-mono); color: var(--ink-2); }
+
+/* crop marks: 8 px, 1 px ink, outside the four corners of the Make spread and of every card in a loud zone */
+.crop-marks { position: relative; }
+.crop-marks::before { content: ''; position: absolute; inset: calc(-1 * (var(--crop) + 4px)); pointer-events: none;
+  background:
+    linear-gradient(var(--ink), var(--ink)) left 0 top calc(var(--crop) + 4px) / var(--crop) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) left calc(var(--crop) + 4px) top 0 / 1px var(--crop) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) right 0 top calc(var(--crop) + 4px) / var(--crop) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) right calc(var(--crop) + 4px) top 0 / 1px var(--crop) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) left 0 bottom calc(var(--crop) + 4px) / var(--crop) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) left calc(var(--crop) + 4px) bottom 0 / 1px var(--crop) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) right 0 bottom calc(var(--crop) + 4px) / var(--crop) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) right calc(var(--crop) + 4px) bottom 0 / 1px var(--crop) no-repeat; }
+
+/* Make: the intent becomes the headline at 24 / 600 ink; the two screens sit as a spread on paper */
+.intent-headline { font: 600 var(--type-title)/30px var(--font-ui); color: var(--ink); margin: 0; max-width: 40ch; text-wrap: balance; }
+.make-spread { margin: var(--space-32) auto 0; width: fit-content; padding: var(--space-24) var(--space-32); display: flex; gap: var(--space-32); }
+@media (max-width: 767.98px) { .make-spread { display: block; width: auto; margin: var(--space-16) 0 0; padding: 0; } .make-spread.crop-marks::before { display: none; } }   /* phone: a full-width block (auto side margins would shrink it to both screens side by side), so the swipe pager takes the width */
+.carry-line { display: block; margin: var(--space-16) auto 0; text-align: center; font-size: var(--type-body); color: var(--ink-2); background: none; border: 0; cursor: pointer; }
+
+/* the change highlight: the one moving red in a quiet zone */
+.change-highlight { outline: 2px solid var(--red-ui); outline-offset: -2px; }
+
+/* toast: ink on paper inverted, square to the system */
+.toast { display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-16); border-radius: var(--radius); background: var(--ink); color: var(--paper); font-weight: 600; }

@@ -4,7 +4,7 @@ import { labelsOf, labelsOfBrick } from './shortLabels'
 import { creditLine, savedLabel } from './brickLabels'
 import { originOf, ownBricks } from './starters'
 import { PARAMETER_KEYS } from '../shell/params'
-import type { Brick } from './types'
+import type { Brick, Unexpressed } from './types'
 
 /** Spec v3 P2: three examples of the expected granularity, shown under the empty field. */
 export const INTENT_EXAMPLES = ['a concert log for someone who goes to a lot of shows', 'a reading tracker', 'a ride stats screen for sunlight'] as const
@@ -51,6 +51,19 @@ export function oneLabel(brick: Brick, resolved: Resolved): string | null {
   const rank = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length : i }
   const sets = PARAMETER_KEYS.filter(k => resolved.values[k].source?.brickId === brick.id).sort((a, b) => rank(a) - rank(b)).map(k => resolved.values[k])
   return labelsOf(sets)[0]?.label ?? labelsOfBrick(brick, 1)[0]?.label ?? null
+}
+
+/** C+D (DESIGN_SYSTEM.md §12.6–7): what Make's "couldn't carry over" line counts and its fold lists. Only the rules with no slot, grouped by the photo they
+ *  come from, in the order they appear. A fragile note did carry over (it says what would break the effect), so it stays in Fine-tune and the handoff. */
+export function carryOver(unexpressed: Unexpressed[]): { brickId: string; items: Unexpressed[] }[] {
+  const groups: { brickId: string; items: Unexpressed[] }[] = []
+  for (const u of unexpressed) {
+    if (u.reason === 'fragile') continue
+    const group = groups.find(g => g.brickId === u.brickId)
+    if (group) group.items.push(u)
+    else groups.push({ brickId: u.brickId, items: [u] })
+  }
+  return groups
 }
 
 /** `mutedBricks` with one photo flipped: off if it was on, on if it was off. */

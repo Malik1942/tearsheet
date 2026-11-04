@@ -1,20 +1,16 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useStore } from './lib/store'
-import { useAddPhotos } from './bricks/AddPhotos'
 import { retryBlocked } from './lib/queue'
 import { Photo } from './bricks/Photo'
 import { BrickSheet } from './bricks/BrickSheet'
 import { RETRY_TITLE } from './bricks/retryCopy'
-import { dateLine } from './lib/brickLabels'
+import { dateLine, issueLine } from './lib/brickLabels'
 import { originOf } from './lib/starters'
 import type { Brick } from './lib/types'
 
 const COPY = {
   title: 'Library',
   empty: 'Nothing saved yet.',
-  /** 15_SIMPLIFY: one short line, no paragraph. */
-  hint: 'Add anything you like the look of.',
-  addMany: 'Add from library',
   /** The card's state is on the photo (a thin line, a `!`); these words are its tooltip and its name for a screen reader. */
   extracting: 'Reading… usually 15–25 s. Measuring ratios, shares and hues. Not tagging.',
   queued: 'Queued',
@@ -34,7 +30,6 @@ const COPY = {
  *  `Shoot` is in the header (PRD L2), `Add from library` takes several photos at once (L3), and the store's queue sends them two at a time (L5). */
 export function Library() {
   const store = useStore()
-  const add = useAddPhotos()
   const [openId, setOpenId] = useState<string | null>(null)
   // L7: the Library is the person's own bricks; the starters show only while there are none (below)
   const live = store.bricks.filter(b => originOf(b) === 'own' && !b.superseded_by)
@@ -44,36 +39,44 @@ export function Library() {
   // a removed brick closes its sheet; so does a retry, which supersedes it
   const selected = openId ? store.bricks.find(b => b.id === openId && !b.superseded_by) ?? null : null
 
+  // C+D (DESIGN_SYSTEM.md §7, §12.3–4): the masthead sits in the same .gutter as the grid, so LIBRARY's ink and the grid share one left edge
   return (
     <div className="chrome min-h-full">
-      <h1 className="sr-only">{COPY.title}</h1>
-      {bricks.length === 0 ? (
-        <>
-          <div className="gutter mx-auto max-w-md pt-12 text-center">
-            <h2 className="title">{COPY.empty}</h2>
-            <p className="ink-2 mt-2">{COPY.hint}</p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              {/* Shoot is in the header (the bottom bar on a phone); several photos at once is here and in ⋯ */}
-              <button type="button" className="btn" onClick={add.pickMany}>{COPY.addMany}</button>
-            </div>
-          </div>
-          {store.showStarters ? (
-            <section className="gutter pb-8 pt-10" aria-label="Starters">
-              <p className="ink-2 mb-4 text-center">{COPY.starters}</p>
-              <Grid bricks={starters} onOpen={setOpenId} />
-            </section>
-          ) : (
-            <div className="gutter mx-auto max-w-md pt-8 text-center">
-              <p className="ink-2">{COPY.startersHidden}</p>
-              <button type="button" className="btn mt-2" onClick={() => store.setShowStarters(true)}>{COPY.showStarters}</button>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="gutter py-8"><Grid bricks={bricks} onOpen={setOpenId} /></div>
-      )}
+      <div className="gutter pb-8">
+        <Masthead bricks={bricks} />
+        {bricks.length === 0 ? (
+          <>
+            <p className="empty-line">{COPY.empty}</p>
+            {store.showStarters ? (
+              <section aria-label="Starters">
+                <p className="ink-2 mb-4">{COPY.starters}</p>
+                <Grid bricks={starters} onOpen={setOpenId} />
+              </section>
+            ) : (
+              <div>
+                <p className="ink-2">{COPY.startersHidden}</p>
+                <button type="button" className="btn mt-2" onClick={() => store.setShowStarters(true)}>{COPY.showStarters}</button>
+              </div>
+            )}
+          </>
+        ) : (
+          <Grid bricks={bricks} onOpen={setOpenId} />
+        )}
+      </div>
       <BrickSheet brick={selected} onClose={() => setOpenId(null)} />
     </div>
+  )
+}
+
+/** The loud Library's masthead (C+D §12.3): LIBRARY in display type, the count on the one red block, and the issue line under it with real counts only:
+ *  how many photos are the person's own, and since when (the earliest date a card shows, so a photo's EXIF date counts). */
+function Masthead({ bricks }: { bricks: Brick[] }) {
+  const first = bricks.map(b => b.taken_at ?? b.saved_at).sort()[0]
+  return (
+    <section aria-label={COPY.title}>
+      <div className="masthead"><h1 className="display">{COPY.title}</h1><div className="count-block"><span className="display tnum" aria-hidden="true">{bricks.length}</span></div></div>
+      <p className="issue-line"><span>{issueLine(bricks.length, first)}</span></p>
+    </section>
   )
 }
 

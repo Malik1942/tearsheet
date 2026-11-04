@@ -8,7 +8,7 @@ const OTHER_YEAR = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'nume
 
 /** "Jun 21" for a date in this calendar year, "Jun 21, 2025" for any other year. The date is date-only, `YYYY-MM-DD`, and is read by hand:
  *  `new Date(string)` would read it as UTC midnight and shift the day by the viewer's time zone. Anything that is not a real date is returned as given. */
-function dayLabel(iso: string, today: Date): string {
+export function dayLabel(iso: string, today: Date): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
   if (!m) return iso
   const year = Number(m[1]), month = Number(m[2]), day = Number(m[3])
@@ -35,6 +35,10 @@ export function dateLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' 
   if (originOf(b) === 'starter') return creditLine(b)
   return b.taken_at ? dayLabel(b.taken_at, today) : savedLabel(b.saved_at, today)
 }
+
+/** The loud Library's issue line (C+D §8), real counts only: "14 photos · since Dec 27, 2025", the date being the earliest a card shows; "0 photos" when empty. */
+export const issueLine = (n: number, first: string | undefined, today: Date = new Date()): string =>
+  `${n} ${n === 1 ? 'photo' : 'photos'}${n > 0 && first ? ` · since ${dayLabel(first, today)}` : ''}`
 
 /** The one credit line a starter carries wherever its photo is shown (spec v3 SB2). The licensed works have their own (README, Sample credits); a starter without one is the author's own work. */
 export const creditLine = (b: Pick<Brick, 'credit' | 'saved_at'>): string => b.credit ?? `Malik Zhang, ${b.saved_at.slice(0, 4)}`

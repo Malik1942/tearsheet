@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
+import { autoName, carryOver, makeRoute, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleMuted } from '../src/lib/makeFlow.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
 
@@ -172,5 +172,24 @@ describe('/open (a library on another device of your own): where it lands', () =
     assert.equal(openDestination('p_1', true, null), '/project/p_1')
     assert.equal(openDestination('p_1', false, 'instructions'), '/projects')
     assert.equal(openDestination(null, false, null), '/')
+  })
+})
+
+describe("C+D: what couldn't carry over on Make", () => {
+  it('counts only the rules with no slot, grouped by photo in the order they appear; fragile notes stay out', () => {
+    const groups = carryOver([
+      { brickId: 'chicago', rule: 'brighten the field and it collapses', reason: 'fragile' },
+      { brickId: 'secession', rule: 'link two focal elements with one curve', reason: 'unsupported-target' },
+      { brickId: 'g2', rule: 'daylight would flatten it', reason: 'fragile' },
+      { brickId: 'secession', rule: 'a second rule with no slot', reason: 'no-slot' },
+      { brickId: 'g2', rule: 'a rule with no parameter', reason: 'parameter-none' },
+    ])
+    assert.deepEqual(groups.map(g => [g.brickId, g.items.map(u => u.rule)]), [
+      ['secession', ['link two focal elements with one curve', 'a second rule with no slot']],
+      ['g2', ['a rule with no parameter']],
+    ])
+  })
+  it('only fragile notes: nothing to show', () => {
+    assert.deepEqual(carryOver([{ brickId: 'g2', rule: 'daylight would flatten it', reason: 'fragile' }]), [])
   })
 })

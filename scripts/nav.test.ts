@@ -1,10 +1,17 @@
 /** 15_SIMPLIFY §1: the shared header's two tabs, where the header and the phone's bottom bar show, and the one way photos come in. Run: npm test */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { hasHeader, tabOf } from '../src/lib/nav.ts'
+import { hasHeader, tabOf, volumeOf } from '../src/lib/nav.ts'
 import { brickFromPhoto, readingCount } from '../src/lib/addPhotos.ts'
 import { originOf } from '../src/lib/starters.ts'
 import type { Brick } from '../src/lib/types.ts'
+
+describe('volumeOf (C+D)', () => {
+  it('the Library is loud; Make, a project, a brick, Projects and a shared page are quiet', () => {
+    assert.equal(volumeOf('/'), 'loud')
+    for (const path of ['/make', '/project/p_1', '/brick/b_1', '/projects', '/shared', '/sync']) assert.equal(volumeOf(path), 'quiet', path)
+  })
+})
 
 describe('tabOf', () => {
   it('selects Make for the make flow and anything inside a project', () => {
