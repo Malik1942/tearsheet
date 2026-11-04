@@ -1,6 +1,7 @@
 import { DEFAULT_PARAMS, PARAMETER_KEYS, PARAM_SPEC, RELATIONSHIP_KEYS, normalize, type ParameterKey, type ParamValue, type Params } from '../shell/params'
 import type { Brick, Composition, ParameterValue, Provenance, Relation, Unexpressed } from './types'
 import type { VersionEntry } from './versions'
+import type { SampleContent } from '../shell/content'
 import { isShellDefault } from './landing'
 import { applyContract, type Adjustment } from '../shell/contract'
 
@@ -162,6 +163,8 @@ export type Project = {
   brickIds: string[]
   /** How the bricks got here (P3). Accepted picks are `proposed · model`; a swapped card is `adapted · by you`. Picking by hand records nothing. */
   proposal?: Proposal
+  /** Shell item 1: placeholder text for the screens, written by the same propose call from the intent alone and kept with the project; a new intent is a new project. Absent: the concert log. */
+  content?: SampleContent
   /** Per-brick lock (spec): a locked brick keeps its values through Swap and Rotate and wins conflicts. */
   lockedBricks?: Record<string, true>
   /** Make (one page): a photo tapped off. A muted brick stays in the project and contributes nothing: no candidates, no skin, nothing unexpressed. Older projects have none. */

@@ -17,6 +17,7 @@ import { download, exportCss, exportHandoff, exportJson } from '../export'
 import { originLabel } from '../lib/brickLabels'
 import { originOf } from '../lib/starters'
 import { NEUTRAL_SKIN } from '../lib/makeFlow'
+import { toShellContent } from '../shell/content'
 
 const NEUTRAL = NEUTRAL_SKIN
 const CONFLICT_W = 130   // C6: width of each mini-screen in a conflict tile
@@ -125,7 +126,7 @@ export function ComposePanel({ project, neutral, onNeutral, screen }: { project:
         <div className="flex flex-wrap justify-center gap-4 self-start">
           {(screen === 'both' ? (['list', 'review'] as const) : [screen]).map(s => (
             <div key={s} className="w-full max-w-[320px] overflow-hidden rounded-[20px]" style={{ border: '1px solid var(--line)', background: '#111', padding: 6, height: 652 }}>
-              <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} flash={flash} /></div>
+              <div className="h-full overflow-hidden rounded-[14px]"><Shell params={params} screen={s} height={640} flash={flash} content={toShellContent(project.content)} /></div>
             </div>
           ))}
           <p className="w-full text-center text-[11px] ink-2">Renders locally from one parameters.json; no model call. Edits happen through materials and the sheet.</p>

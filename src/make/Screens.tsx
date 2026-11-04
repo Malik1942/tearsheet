@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ParameterKey, Params } from '../shell/params'
 import { Shell } from '../shell/Shell'
+import type { ShellContent } from '../shell/content'
 
 /** The shells render at their usual size inside a phone frame and are scaled, as MiniPreview does: one renderer, any size. */
 const SHELL_W = 320, SHELL_H = 640, PAD = 6
@@ -19,7 +20,7 @@ const useMedia = (q: string) => {
 
 /** The two screens. On a wide screen side by side, scaled by a factor from the height left under them once `reserve` px are kept for what follows
  *  (the photo row and its line), so the page fits one viewport (1440x900). On a phone one at a time in a swipe pager with two dots, scaled to the width. */
-export function ScaledScreens({ params, flash, reserve }: { params: Params; flash: ParameterKey[]; reserve: number }) {
+export function ScaledScreens({ params, flash, reserve, content }: { params: Params; flash: ParameterKey[]; reserve: number; content?: ShellContent }) {
   const wide = useMedia('(min-width: 768px)')
   const box = useRef<HTMLDivElement>(null)
   const pane = useRef<HTMLDivElement>(null)
@@ -55,7 +56,7 @@ export function ScaledScreens({ params, flash, reserve }: { params: Params; flas
             <div className="relative" style={{ width: FRAME_W * scale, height: FRAME_H * scale }}>
               {/* inert: the preview's own controls ("Add show", its Share) are a picture of the user's product, not this page's; they leave the tab order and the page outline */}
               <div inert className="absolute left-0 top-0 overflow-hidden rounded-[22px]" style={{ width: FRAME_W, height: FRAME_H, padding: PAD, background: '#111', border: '1px solid var(--line)', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-                <div className="h-full overflow-hidden rounded-[16px]"><Shell params={params} screen={key} height={SHELL_H} flash={flash} /></div>
+                <div className="h-full overflow-hidden rounded-[16px]"><Shell params={params} screen={key} height={SHELL_H} flash={flash} content={content} /></div>
               </div>
             </div>
           </div>

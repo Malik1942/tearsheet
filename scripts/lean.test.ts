@@ -44,11 +44,13 @@ Prefer picks whose quoted rules map to different parameters. Do not pick the sam
 
 Library:
 {{LIBRARY}}`
-/** v1 plus the ranking sentence: the base every request now starts from, and the way it is rendered. */
-const BASE_PROMPT = V1_PROMPT.replace('\n\nLibrary:\n', `${RANKING}\n\nLibrary:\n`)
+/** The sentence added after the ranking for the screens' sample content (shell item 1, 2026-11-03), with its year slot. */
+const CONTENT = '\n\nAlso return content: placeholder text for the two screens of what they are making, written from the intent alone, never from a photo or a rule. screen_titles: list, the title of the screen that lists the items, and review, the title of the screen that looks back on the year. tabs: three short labels for a list, a chart and a profile tab, none repeating a screen title. entries: eight items, each with a short title, a subtitle, a date in {{YEAR}} (YYYY-MM-DD, spread over the year) and up to two one-word tags.'
+/** v1 plus the ranking and content sentences: the base every request now starts from, and the way it is rendered (the year is the current one). */
+const BASE_PROMPT = V1_PROMPT.replace('\n\nLibrary:\n', `${RANKING}${CONTENT}\n\nLibrary:\n`)
 const baseRender = (intent: string, library: LibraryBrick[]) => {
   const lib = JSON.stringify(library, null, 1), sentence = intent.replace(/"/g, '”')
-  return BASE_PROMPT.replace('{{LIBRARY}}', () => lib).replace('{{INTENT}}', () => sentence)
+  return BASE_PROMPT.replace('{{LIBRARY}}', () => lib).replace('{{YEAR}}', () => String(new Date().getFullYear())).replace('{{INTENT}}', () => sentence)
 }
 
 describe('chip table', () => {
@@ -167,8 +169,8 @@ describe('the body the app sends', () => {
 })
 
 describe('the prompt', () => {
-  it('is the v1 text plus the ranking sentence, with {{LEAN}} glued to the end of the last instruction line, and nothing else changed', () => {
-    assert.ok(PROPOSE_PROMPT.includes(`${ENDS}{{LEAN}}${RANKING}\n\nLibrary:\n{{LIBRARY}}`))
+  it('is the v1 text plus the ranking and content sentences, with {{LEAN}} glued to the end of the last instruction line, and nothing else changed', () => {
+    assert.ok(PROPOSE_PROMPT.includes(`${ENDS}{{LEAN}}${RANKING}${CONTENT}\n\nLibrary:\n{{LIBRARY}}`))
     assert.equal(PROPOSE_PROMPT.replace('{{LEAN}}', ''), BASE_PROMPT)
     assert.equal(PROPOSE_PROMPT.split('{{LEAN}}').length, 2)
   })
