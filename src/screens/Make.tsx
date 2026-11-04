@@ -16,6 +16,7 @@ import { toShellContent } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
+import { cardCaption } from '../lib/brickLabels'
 import { ComposePanel } from './Compose'
 import { usePageActions } from '../chrome/pageActions'
 import { FilesView } from './Export'
@@ -193,15 +194,17 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
               <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">
                 {photos.map(({ brick, muted, label }) => {
                   const why = project.proposal?.picks.find(p => p.brickId === brick.id)?.why
+                  // the card's two lines (Malik, 2026-11-03): its title, else the label of what it sets here; then its short credit or its date
+                  const cap = cardCaption(brick, label)
                   return (
                     <li key={brick.id} className="photo-cell">
-                      <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={label ?? photoLine(brick)} title={why || (muted ? COPY.turnOn : COPY.turnOff)}
+                      <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={cap.title} title={why || (muted ? COPY.turnOn : COPY.turnOff)}
                         onClick={() => update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, brick.id) }))}>
                         <Photo src={brick.photo.url} alt="" />
-                        <span className="photo-label">{label}</span>
+                        <span className="cap-title">{cap.title}</span>
                       </button>
-                      <span className="photo-meta tnum">{photoLine(brick)}</span>
-                      <button type="button" className="photo-swap icon-btn" aria-label={`${COPY.swap}: ${label ?? photoLine(brick)}`} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>
+                      <span className="cap-line tnum">{cap.line}</span>
+                      <button type="button" className="photo-swap icon-btn" aria-label={`${COPY.swap}: ${cap.title}`} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13" /></svg>
                       </button>
                     </li>

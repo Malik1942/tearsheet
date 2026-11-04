@@ -109,12 +109,15 @@ export function AdjustStyle({ offered, active, onChip, anchor, anchorable, onAnc
       </div>
       {picking && (
         <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
-          {anchorable.map(b => (
-            <button key={b.id} type="button" onClick={() => { onAnchor(b.id); setPicking(false) }} aria-pressed={b.id === anchor?.id} className="cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: `2px solid ${b.id === anchor?.id ? 'var(--ink)' : 'var(--line)'}`, background: 'var(--panel)' }} title={`Start from ${b.id}`}>
-              <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" /></div>
-              <div className="ink-2 truncate px-1.5 py-1 text-[11px]">{photoLine(b)}</div>
-            </button>
-          ))}
+          {anchorable.map(b => {
+            const cap = tileCaption(b)
+            return (
+              <button key={b.id} type="button" onClick={() => { onAnchor(b.id); setPicking(false) }} aria-pressed={b.id === anchor?.id} className="cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: `2px solid ${b.id === anchor?.id ? 'var(--ink)' : 'var(--line)'}`, background: 'var(--panel)' }} title={`Start from ${cap.title}`}>
+                <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" /></div>
+                <div className="flex flex-col px-1.5 py-1"><span className="cap-title">{cap.title}</span><span className="cap-line tnum">{cap.line}</span></div>
+              </button>
+            )
+          })}
         </div>
       )}
       <p className="ink-2 m-0 mt-4 text-[12px]">{COPY.styleNote}</p>
@@ -131,13 +134,15 @@ export function PickMyself({ pool, initial, max, note, canCreate, onClose, onDon
       {note && <p className="ink-2 m-0 mb-3 text-[13px]" role="status" title={note.detail}>{note.line}</p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {pool.map(b => {
-          const on = picked.includes(b.id)
+          const on = picked.includes(b.id), cap = tileCaption(b)
           return (
-            <button key={b.id} type="button" onClick={() => toggle(b.id)} aria-pressed={on} aria-label={photoLine(b)} className="relative cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: `2px solid ${on ? 'var(--ink)' : 'var(--line)'}`, background: 'var(--panel)' }}>
+            <button key={b.id} type="button" onClick={() => toggle(b.id)} aria-pressed={on} aria-label={`${cap.title}, ${cap.line}`} className="relative cursor-pointer overflow-hidden rounded p-0 text-left" style={{ border: `2px solid ${on ? 'var(--ink)' : 'var(--line)'}`, background: 'var(--panel)' }}>
               <div className="overflow-hidden" style={{ aspectRatio: '16 / 10', background: '#2a2a2a' }}><Photo src={b.photo.url} className="h-full w-full object-cover" /></div>
-              <div className="flex items-center justify-between gap-1 px-2 py-1.5 text-[12px]">
-                <span className="ink-2 truncate" title={photoLine(b)}>{photoLine(b)}</span>
-                {originOf(b) === 'starter' && <span className="chip chip-adapted shrink-0 px-1.5 text-[10px]">{COPY.starter}</span>}
+              {/* the starter mark sits on the photo, opposite the check, so the two caption lines keep the tile's width */}
+              {originOf(b) === 'starter' && <span className="chip chip-adapted absolute left-1.5 top-1.5 px-1.5 text-[10px]" style={{ background: 'var(--panel)' }}>{COPY.starter}</span>}
+              <div className="flex flex-col px-2 py-1.5">
+                <span className="cap-title">{cap.title}</span>
+                <span className="cap-line tnum">{cap.line}</span>
               </div>
               {on && <span aria-hidden="true" className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[12px]" style={{ background: 'var(--ink)', color: '#fff' }}>✓</span>}
             </button>
@@ -166,8 +171,8 @@ export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; o
             <h3 className="caption ink-2 m-0 mb-2 font-normal uppercase tracking-wide">{g.title}</h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {g.tiles.map(({ brick, inProject }) => {
-                const { label, line } = tileCaption(brick)
-                const name = [label, line].filter(Boolean).join(', ')
+                const { title, line } = tileCaption(brick)
+                const name = `${title}, ${line}`
                 return (
                   <button key={brick.id} type="button" disabled={inProject} onClick={() => onPick(brick.id)}
                     className={`relative overflow-hidden rounded p-0 text-left ${inProject ? 'cursor-default' : 'cursor-pointer'}`} style={{ border: '1px solid var(--line)', background: 'var(--panel)' }}
@@ -175,8 +180,8 @@ export function SwapPicker({ groups, onClose, onPick }: { groups: SwapGroup[]; o
                     {/* the hover shows a licensed work's full credit; an uncredited photo has none, so the author's name never shows here */}
                     <div className="overflow-hidden" style={{ aspectRatio: '16 / 10' }}><Photo src={brick.photo.url} title={brick.credit ?? ''} className="h-full w-full object-cover" /></div>
                     <div className="flex flex-col px-2 py-1.5">
-                      <span className="truncate text-[13px] font-medium leading-[18px]" style={{ color: 'var(--ink)' }}>{label ?? ' '}</span>
-                      <span className="ink-2 text-[12px] leading-4">{line}</span>
+                      <span className="cap-title">{title}</span>
+                      <span className="cap-line tnum">{line}</span>
                     </div>
                     {inProject && <span aria-hidden="true" className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] leading-none" style={{ background: 'var(--ink)', color: '#fff' }}>✓</span>}
                   </button>

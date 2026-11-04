@@ -64,22 +64,17 @@ export function shortCredit(credit: string): string {
   return hit ? hit[1] + credit.slice(hit[0].length) : credit
 }
 
-/** A picker tile's second line (swap sheet): a credited starter's short credit; anything else its date as an own photo shows it ("Dec 27, 2025", else "saved Nov 3").
- *  The author's own starters carry no credit, so they show their date, never the author's name. */
-export function shortOriginLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {
-  if (originOf(b) === 'starter' && b.credit) return shortCredit(b.credit)
-  return b.taken_at ? dayLabel(b.taken_at, today) : savedLabel(b.saved_at, today)
+/** A card's two lines wherever a photo is shown as a card: the Library, Make's photo row, the swap sheet (Malik, 2026-11-03: a card said only "saved" and a date).
+ *  Line 1 its title, else `label` (the caller's first short label for it), else "Untitled" while it has neither; line 2 a credited starter's short credit ("Mia, 1923"),
+ *  else the day the photo was taken ("Dec 27, 2025"), else the day it was saved. The author's own starters carry no credit, so they show their date, never the author's name;
+ *  the full credit and "saved" stay on the Brick sheet (`dateLine`). */
+export function cardCaption(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at' | 'title'>, label: string | null, today: Date = new Date()): { title: string; line: string } {
+  const line = originOf(b) === 'starter' && b.credit ? shortCredit(b.credit) : dayLabel(b.taken_at ?? b.saved_at, today)
+  return { title: b.title ?? label ?? 'Untitled', line }
 }
 
-/** A Library card's caption in two parts (Malik, 2026-11-03: who leads, when follows): a credited starter's short institution and its date ("Mia" and "1923";
- *  an institution with no short name stays whole), or an own photo's date, after a quiet "saved" when the photo gave no EXIF date. The same words as the swap sheet's line. */
-export function originParts(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): { lead: string; note: string; noteFirst: boolean } {
-  if (originOf(b) === 'starter' && b.credit) {
-    const short = shortCredit(b.credit), at = short.indexOf(', ')
-    return at === -1 ? { lead: short, note: '', noteFirst: false } : { lead: short.slice(0, at), note: short.slice(at + 2), noteFirst: false }
-  }
-  return b.taken_at ? { lead: dayLabel(b.taken_at, today), note: '', noteFirst: false } : { lead: dayLabel(b.saved_at, today), note: 'saved', noteFirst: true }
-}
+/** Where a title came from: a licensed work's is its catalogue's and travels with its credit, so it carries no label of its own; any other was written by hand. */
+export const titleProvenance = (b: Pick<Brick, 'credit' | 'title'>): 'adapted · by you' | null => (b.title && !b.credit ? 'adapted · by you' : null)
 
 /** The one origin line every place shows (spec v3 SB2): `saved Jun 21` (or `taken … · saved …`) for a brick of the person's own, `starter · The Metropolitan Museum of Art, 19th century` for a starter.
  *  Origin is not a provenance: the four provenance labels are unchanged. */

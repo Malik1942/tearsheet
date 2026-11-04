@@ -95,16 +95,17 @@ describe('swap sheet groups', () => {
 describe('tile captions', () => {
   const today = new Date(2026, 10, 3)   // 3 Nov 2026, local time
   const sample = (id: string) => SAMPLES.find(b => b.id === id)!
-  it('line 1 is the first short label from the label table', () => {
-    assert.equal(tileCaption(brick('t', [LEADS]), today).label, 'Title leads')
-    assert.equal(tileCaption(brick('s', [SCALE, RHYTHM]), today).label, 'Big type contrast')
+  it('line 1 is the title, else the first short label from the label table', () => {
+    assert.equal(tileCaption(sample('jpl-2016-visions-mars'), today).title, 'Visions of the Future: Mars')
+    assert.equal(tileCaption(brick('t', [LEADS]), today).title, 'Title leads')
+    assert.equal(tileCaption(brick('s', [SCALE, RHYTHM]), today).title, 'Big type contrast')
   })
-  it('line 1 is empty when the table has nothing for the photo', () => {
-    assert.equal(tileCaption(brick('n', []), today).label, null)
+  it('line 1 says Untitled when there is no title and the table has nothing for the photo', () => {
+    assert.equal(tileCaption(brick('n', []), today).title, 'Untitled')
   })
   it('line 2 of an own photo is the day it was taken, else the day it was saved', () => {
     assert.equal(tileCaption(brick('o', [], '2026-11-03', { taken_at: '2025-12-27' }), today).line, 'Dec 27, 2025')
-    assert.equal(tileCaption(brick('o', [], '2026-11-03'), today).line, 'saved Nov 3')
+    assert.equal(tileCaption(brick('o', [], '2026-11-03'), today).line, 'Nov 3')
   })
   it('line 2 of a credited starter is its short credit', () => {
     assert.equal(tileCaption(sample('bauhaus-1923-staatliches-bauhaus-weimar'), today).line, 'Mia, 1923')
@@ -115,7 +116,7 @@ describe('tile captions', () => {
     assert.equal(tileCaption(sample('haeckel-1904-trochilidae-plate-99'), today).line, 'Wikimedia, 1904')
   })
   it("line 2 of the author's own starters is their date, never the author's name", () => {
-    assert.equal(tileCaption(sample('g1'), today).line, 'saved Apr 6, 2025')
+    assert.equal(tileCaption(sample('g1'), today).line, 'Apr 6, 2025')
     for (const id of ['g1', 'g2', 'c1', 'calmmouse', 'greencar']) assert.equal(tileCaption(sample(id), today).line.includes('Malik'), false, id)
   })
 })
