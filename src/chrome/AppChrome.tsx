@@ -5,7 +5,7 @@ import { useStore } from '../lib/store'
 import { useAddPhotos } from '../bricks/AddPhotos'
 import { originOf } from '../lib/starters'
 import { readingCount } from '../lib/addPhotos'
-import { tabOf, type Tab } from '../lib/nav'
+import { tabOf, volumeOf, type Tab } from '../lib/nav'
 import { useModal } from './useModal'
 
 const COPY = {
@@ -43,7 +43,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const path = usePath()
   const tab = tabOf(path)
   return (
-    <div className="chrome flex min-h-full flex-col">
+    <div className="chrome flex min-h-full flex-col" data-volume={volumeOf(path)}>
       <a href="#content" className="skip-link">Skip to content</a>
       <AppHeader tab={tab} />
       <AddNotice />

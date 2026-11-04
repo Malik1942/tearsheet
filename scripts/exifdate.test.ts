@@ -3,7 +3,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { exifTakenAt } from '../src/lib/exifDate.ts'
-import { dateLine, datesLabel, originLabel } from '../src/lib/brickLabels.ts'
+import { dateLine, datesLabel, issueLine, originLabel } from '../src/lib/brickLabels.ts'
 
 /** SOI, an optional APP0, APP1 "Exif" with IFD0 → Exif IFD → DateTimeOriginal (ASCII, 20 bytes), then SOS and EOI. */
 function jpeg(date: string | null, le: boolean, { app0 = false, tag = 0x9003 } = {}): ArrayBuffer {
@@ -73,5 +73,16 @@ describe('the Library card date line (15_SIMPLIFY §2)', () => {
   it('is the credit line for a starter', () => {
     assert.equal(dateLine({ id: 'g2', origin: 'starter', saved_at: '2025-06-21', taken_at: '2025-06-01' }, today), 'Malik Zhang, 2025')
     assert.equal(dateLine({ id: 'x', origin: 'starter', saved_at: '2025-06-21', credit: 'Courtesy NASA/JPL-Caltech' }, today), 'Courtesy NASA/JPL-Caltech')
+  })
+})
+
+describe('the loud Library issue line (C+D §8): real counts only', () => {
+  const today = new Date(2026, 10, 3)
+  it('counts the photos and dates the earliest, in the card date format', () => {
+    assert.equal(issueLine(14, '2025-12-27', today), '14 photos · since Dec 27, 2025')
+    assert.equal(issueLine(1, '2025-12-27', today), '1 photo · since Dec 27, 2025')
+  })
+  it('an empty library is 0 photos, with no date', () => {
+    assert.equal(issueLine(0, undefined, today), '0 photos')
   })
 })

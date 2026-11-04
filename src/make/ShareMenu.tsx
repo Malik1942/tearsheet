@@ -63,7 +63,7 @@ export function ShareMenu({ project, resolved, initialOpen = false }: { project:
 
   return (
     <div ref={root} className="relative">
-      <button type="button" className="btn flex min-h-9 items-center gap-1.5 max-md:min-h-11 max-md:min-w-11 max-md:justify-center" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(v => !v)}>
+      <button type="button" className="btn btn-accent flex min-h-9 items-center gap-1.5 max-md:min-h-11 max-md:min-w-11 max-md:justify-center" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(v => !v)}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3" /><path d="M7 8l5-5 5 5" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" /></svg>
         <span className="max-md:sr-only">{COPY.share}</span>
       </button>
@@ -71,7 +71,7 @@ export function ShareMenu({ project, resolved, initialOpen = false }: { project:
         <div role="dialog" aria-label={COPY.share} className="menu flex w-[min(320px,calc(100vw-40px))] flex-col gap-1 p-2">
           {SHARE_LINK && (
             <>
-              <button type="button" className="btn btn-accent min-h-9 w-full" disabled={!link} aria-busy={busy && !link} onClick={onCopy}>{note === COPY.copied ? COPY.copied : link ? COPY.copy : busy ? COPY.making : COPY.copy}</button>
+              <button type="button" className="btn min-h-9 w-full" disabled={!link} aria-busy={busy && !link} onClick={onCopy}>{note === COPY.copied ? COPY.copied : link ? COPY.copy : busy ? COPY.making : COPY.copy}</button>
               <span className="ink-2 px-1 text-[12px]" role="status" aria-live="polite">
                 {(note && note !== COPY.copied ? note : null) ?? (error && !link ? <>{COPY.noLink} <button type="button" className="cursor-pointer border-0 bg-transparent p-0 underline" style={{ color: 'inherit', font: 'inherit' }} disabled={busy} title={error} onClick={() => void prepare()}>{COPY.retry}</button></> : COPY.line)}
               </span>

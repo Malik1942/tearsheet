@@ -8,7 +8,7 @@ import { chipsFor, type Lean } from '../lib/lean'
 import type { ChipId } from '../lib/leanFamilies'
 import { resolveProject, type Project, type Proposal, type ProposalPick } from '../lib/mapRelations'
 import { standInLine } from '../lib/standIns'
-import { INTENT_EXAMPLES, NEUTRAL_SKIN, autoName, photoLine, photoRow, toggleMuted } from '../lib/makeFlow'
+import { INTENT_EXAMPLES, NEUTRAL_SKIN, autoName, carryOver, photoLine, photoRow, toggleMuted } from '../lib/makeFlow'
 import { useChangeFlash } from '../compose/useChangeFlash'
 import { Fold, MoreMenu, Overlay } from '../make/Steps'
 import { ScaledScreens } from '../make/Screens'
@@ -21,8 +21,8 @@ import { FilesView } from './Export'
 const MAX_BRICKS = 5
 /** Autofocus the field on a desktop only: on a phone the keyboard would open over the page (Web Interface Guidelines). */
 const finePointer = () => typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches
-/** Space kept under the screens for the photo row and its line, so screens + photos fit one 1440x900 viewport. */
-const RESERVE = 236
+/** Space kept under the screens for the spread's bottom padding (24), the photo row and its line, so screens + photos fit one 1440x900 viewport. */
+const RESERVE = 260
 const COPY = {
   field: 'What are you making?',
   examples: 'For example:',
@@ -89,6 +89,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const resolved = useMemo(() => project ? resolveProject(project, store.bricks) : null, [project, store.bricks])
   const flash = useChangeFlash(project)
   const photos = useMemo(() => project ? photoRow(project, store.bricks) : [], [project, store.bricks])
+  const carried = useMemo(() => resolved ? carryOver(resolved.unexpressed) : [], [resolved])
   const update = (patch: Partial<Project> | ((p: Project) => Partial<Project>)) => { if (project) store.updateProject(project.id, patch) }
 
   const openPick = (line?: string, detail?: string) => { setNote(line ? { line, detail } : null); setDialog('pick') }
@@ -170,8 +171,9 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
 
         {!busy && project && resolved && params && (
           <>
-            <ScaledScreens params={params} flash={flash} reserve={RESERVE} />
-            {/* each photo is one switch: the thumbnail, its label and a switch in one target. The slots are fixed, so a photo never moves when another one appears */}
+            {/* C+D: the two screens are a spread on paper with crop marks, never on a red block (DESIGN_SYSTEM.md §8, do and don't 4) */}
+            <div className="make-spread crop-marks"><ScaledScreens params={params} flash={flash} reserve={RESERVE} /></div>
+            {/* each photo is one switch: the thumbnail (its ring shows on or off) and its label in one target. The slots are fixed, so a photo never moves when another one appears */}
             <div className="photo-dock">
               <ul className="photo-row" style={{ '--slots': Math.max(3, photos.length) } as CSSProperties} aria-label="Photos">
                 {photos.map(({ brick, muted, label }) => {
@@ -181,7 +183,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
                       <button type="button" className="photo-switch" aria-pressed={!muted} aria-label={label ?? photoLine(brick)} title={why || (muted ? COPY.turnOn : COPY.turnOff)}
                         onClick={() => update(p => ({ mutedBricks: toggleMuted(p.mutedBricks, brick.id) }))}>
                         <Photo src={brick.photo.url} alt="" />
-                        <span className="photo-label"><span className="switch" data-on={!muted || undefined} aria-hidden="true" />{label}</span>
+                        <span className="photo-label">{label}</span>
                       </button>
                       <span className="photo-meta tnum">{photoLine(brick)}</span>
                       <button type="button" className="photo-swap icon-btn" aria-label={`${COPY.swap}: ${label ?? photoLine(brick)}`} title={COPY.swap} onClick={() => setDialog({ swap: brick.id })}>
@@ -192,16 +194,18 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
                 })}
               </ul>
             </div>
-            {resolved.unexpressed.length > 0 && (
-              <Fold summary={COPY.couldnt(resolved.unexpressed.length)} className="w-full text-center">
-                <ul className="mx-auto m-0 flex max-w-2xl list-none flex-col gap-2 p-0 text-left text-[12px]">
-                  {resolved.unexpressed.map((u, i) => {
-                    const from = store.bricks.find(b => b.id === u.brickId)
+            {carried.length > 0 && (
+              // C+D §12.6–7: only the rules with no slot couldn't carry over (the fragile notes stay in Fine-tune and the handoff), grouped by photo, one line each
+              <Fold summary={COPY.couldnt(carried.reduce((n, g) => n + g.items.length, 0))} className="w-full text-center">
+                <ul className="mx-auto m-0 flex max-w-2xl list-none flex-col gap-3 p-0 text-left text-[12px]">
+                  {carried.map(({ brickId, items }) => {
+                    const from = store.bricks.find(b => b.id === brickId)
                     return (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="chip chip-adapted shrink-0 self-start px-1.5 text-[10px]">{u.reason === 'fragile' ? 'fragile if changed' : 'no slot'}</span>
-                        {from && <Link href={`/brick/${u.brickId}`} className="shrink-0" aria-label={`The photo it comes from, ${photoLine(from)}`}><Photo src={from.photo.url} alt="" className="h-5 w-5 rounded object-cover" /></Link>}
-                        <span>{u.rule}<span className="ink-2 mt-0.5 block text-[11px]">{standInLine(u.rule)}</span></span>
+                      <li key={brickId} className="flex items-start gap-3">
+                        {from && <Link href={`/brick/${brickId}`} className="shrink-0" aria-label={`The photo it comes from, ${photoLine(from)}`}><Photo src={from.photo.url} alt="" className="h-8 w-8 object-cover" /></Link>}
+                        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                          {items.map((u, i) => <li key={i}>{u.rule}<span className="ink-2 mt-0.5 block text-[11px]">{standInLine(u.rule)}</span></li>)}
+                        </ul>
                       </li>
                     )
                   })}

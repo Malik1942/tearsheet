@@ -8,6 +8,9 @@ export function tabOf(path: string): Tab {
   return path === '/make' || path.startsWith('/make/') || path.startsWith('/project/') ? 'make' : 'library'
 }
 
+/** C+D (DESIGN_SYSTEM.md §2): the Library is loud (display type, the red masthead), every other view quiet. Set on the app root, header included. */
+export const volumeOf = (path: string): 'loud' | 'quiet' => (path === '/' || path === '' ? 'loud' : 'quiet')
+
 /** Every route has the shared header except the solo shell renders (`/solo/*`) and the contract test's page (`/dev/contract`), which are bare screens for capture. */
 export const hasHeader = (path: string): boolean => !path.startsWith('/solo/') && path !== '/dev/contract'
 
