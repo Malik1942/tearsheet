@@ -59,9 +59,9 @@ const svgs: Record<string, string> = {
   'public/brand/lockup-on-paper.svg': lockupSvg(GROUNDS.paper.page, GROUNDS.paper.rim),
   'public/brand/lockup-on-ultramarine.svg': lockupSvg(GROUNDS.ultramarine.page, GROUNDS.ultramarine.rim),
   'public/brand/lockup-on-ink.svg': lockupSvg(GROUNDS.ink.page, GROUNDS.ink.rim),
-  // the board's ultramarine banner (600 x 120, lockup 420 wide, 36 in) at twice the size
+  // the board's ultramarine banner (600 x 120, lockup 420 wide) at twice the size, the lockup centered both ways (it was 36 in from the left, 2026-11-04)
   'public/brand/readme-banner.svg': `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240" role="img" aria-label="Tearsheet"><rect width="1200" height="240" fill="${BRAND.ultramarine}"/>` +
-    `<svg x="72" y="${(240 - (840 * VBH) / VBW) / 2}" width="840" height="${(840 * VBH) / VBW}" viewBox="${LOCKUP_VIEWBOX}"><path d="${pathOf(lockupRim)} ${LOCKUP_NAME_RIM}" fill="${BRAND.rimOnUltramarine}"/><path d="${pathOf(lockupPage)} ${LOCKUP_LETTERS}" fill="${BRAND.paper}"/></svg></svg>`,
+    `<svg x="${(1200 - 840) / 2}" y="${(240 - (840 * VBH) / VBW) / 2}" width="840" height="${(840 * VBH) / VBW}" viewBox="${LOCKUP_VIEWBOX}"><path d="${pathOf(lockupRim)} ${LOCKUP_NAME_RIM}" fill="${BRAND.rimOnUltramarine}"/><path d="${pathOf(lockupPage)} ${LOCKUP_LETTERS}" fill="${BRAND.paper}"/></svg></svg>`,
   'public/favicon.svg': mark32(BRAND.ink, true),
 }
 for (const [p, s] of Object.entries(svgs)) writeFileSync(out(p), s + '\n')
