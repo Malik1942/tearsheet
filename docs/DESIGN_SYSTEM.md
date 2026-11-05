@@ -41,7 +41,7 @@ Same as C+D:
 Malik's direction (2026-11-04): a newspaper front page on the desktop, clear and direct, no text that says nothing; a simpler version on the phone.
 
 **Header.**
-- **From the tablet up**, the header is a nameplate. The lockup (the Data tear mark and TEARSHEET) is centered, the sections (Library, Make) sit at the left, and the page's actions sit at the right.
+- **From the tablet up**, the header is a nameplate. The lockup (the Data tear mark and TEARSHEET) is centered, the sections (Library, Make; the Projects page counts as Make) sit at the left, and the page's actions sit at the right.
 - **On every page alike**, the header keeps its 1 px line, the Library included (Malik, 2026-11-04: Library and Make did not match; the line stays).
 - **On a phone**, the lockup sits at the left and the actions at the right.
 - **The lockup** is the Claude Design board's primary lockup, drawn as the board draws it: its mark is the board's own tear, and TEARSHEET's letters have their bottoms bitten by the board's own bite line, set 35 units (0.035 em) nearer the baseline so the letters keep a little more. It is drawn without the rim (no brown line), at every size (Malik, 2026-11-04).
@@ -135,6 +135,12 @@ Kept from C+D. The masthead sits in the same `.gutter` as the grid. LIBRARY move
 - **No dimension lines and no title block.** There is no 390 × 844. On Make, PROJECT would repeat the h1 and FRAMES would repeat the photo row. The title block is for exported sheets only, which are not built.
 - **Callouts 1 and 2 stay.** They are the numbers on the photos that are on, with their leaders to the List screen.
 - **Paper, not a block.** The two screens are a spread on paper with crop marks, never on a block.
+- **Your projects, under the empty field.** Added 2026-11-04: Projects sat too deep in ⋯, and a phone had no way back to a project once you left it.
+  - **What shows:** Make's empty page lists the four most recently edited projects under the field. It is gone while the photos are found.
+  - **The label row** is the photo dock's: PROJECTS at the left; at the right, once there are more than four, "All 12 ›", which is the dock's carry link and opens the Projects page.
+  - **Each row** is hairline-ruled. The project's photos sit in three fixed slots (40 px, 32 px on a phone), framed as the photo row frames them, so every title starts at one edge. Then comes its heading: the intent, or a name a person gave with the intent under it. Dates are left out.
+  - **On a phone** the list takes the ghost frame's place. Before the first project, the ghost stays.
+  - **The Projects page** uses the same rows for every project, and the Make section stays selected there. ⋯ → Projects stays too.
 
 ## 9. Details
 

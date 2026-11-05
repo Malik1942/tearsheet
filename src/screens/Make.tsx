@@ -17,6 +17,7 @@ import { Callouts } from '../make/Callouts'
 import { screensOf, toShellContent, type ScreenKey } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
 import { AnchorThumb, HeadlineField } from '../make/Start'
+import { RecentProjects } from '../make/Recent'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
 import { cardCaption } from '../lib/brickLabels'
@@ -125,7 +126,7 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
 
   const openPick = (line?: string, detail?: string) => { setNote(line ? { line, detail } : null); setDialog('pick') }
   // Enter: propose, then create the project at once with the proposal record (picks `proposed`, the starting point first) in the first arrangement.
-  // A new intent on a project's page is a new project; the old one stays under Projects.
+  // A new intent on a project's page is a new project; the old one stays under Projects (Make's empty page and the Projects page).
   const run = async () => {
     const sent = intent.trim()
     if (!sent || busy) return
@@ -182,8 +183,9 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
             <h1 className="sr-only">{COPY.field}</h1>
             <HeadlineField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} autoFocus={finePointer()} />
             {anchorBrick && !busy && <AnchorThumb brick={anchorBrick} onClear={() => setAnchor(null)} />}
-            {/* phone: where the screens will land, still and faint, so the empty page is not three quarters blank; never a pulse (tokens.css) */}
-            {!busy && <div className="make-ghost crop-marks" aria-hidden="true"><div className="finding-frame" /></div>}
+            {/* phone, before the first project: where the screens will land, still and faint, so the empty page is not three quarters blank; never a pulse (tokens.css).
+                Once there are projects, they fill that room instead (below) */}
+            {!busy && store.projects.length === 0 && <div className="make-ghost crop-marks" aria-hidden="true"><div className="finding-frame" /></div>}
           </div>
         ) : (
           <div className="make-head make-head-result">
@@ -196,6 +198,8 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
             )}
           </div>
         )}
+        {/* the way back to what was made here (Malik, 2026-11-04), on the phone and the desktop alike; gone while proposing */}
+        {!project && !busy && <RecentProjects projects={store.projects} bricks={store.bricks} />}
         <div className="sr-only" aria-live="polite">{busy ? COPY.finding : ''}</div>
 
         {busy && (

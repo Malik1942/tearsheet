@@ -1,11 +1,11 @@
 /** 15_SIMPLIFY §1: which of the two tabs a path belongs to, and where the shared header and the phone's bottom bar show. Pure, so it is tested without a DOM. */
 export type Tab = 'library' | 'make' | 'none'
 
-/** `Make` for the make flow and anything inside a project; `none` for a project someone shared with you (/shared, read-only: it is in neither of your tabs);
- *  `Library` for everything else (the Library, a brick, Sync, Projects, Open). */
+/** `Make` for the make flow, the list of projects and anything inside a project; `none` for a project someone shared with you (/shared, read-only: it is in neither of your tabs);
+ *  `Library` for everything else (the Library, a brick, Sync, Open). The list of projects is Make's too (Malik, 2026-11-04: Make is where projects are made and found). */
 export function tabOf(path: string): Tab {
   if (path === '/shared') return 'none'
-  return path === '/make' || path.startsWith('/make/') || path.startsWith('/project/') ? 'make' : 'library'
+  return path === '/make' || path.startsWith('/make/') || path === '/projects' || path.startsWith('/project/') ? 'make' : 'library'
 }
 
 /** C+D (DESIGN_SYSTEM.md §2): the Library is loud (display type, the masthead and its count block), every other view quiet. Set on the app root, header included. */

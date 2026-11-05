@@ -14,11 +14,11 @@ describe('volumeOf (C+D)', () => {
 })
 
 describe('tabOf', () => {
-  it('selects Make for the make flow and anything inside a project', () => {
-    for (const p of ['/make', '/make/picks', '/project/p_1', '/project/p_1/export', '/project/p_1/share', '/project/p_1/preview']) assert.equal(tabOf(p), 'make', p)
+  it('selects Make for the make flow, the list of projects and anything inside a project', () => {
+    for (const p of ['/make', '/make/picks', '/projects', '/project/p_1', '/project/p_1/export', '/project/p_1/share', '/project/p_1/preview']) assert.equal(tabOf(p), 'make', p)
   })
   it('selects Library everywhere else', () => {
-    for (const p of ['/', '/brick/b_1', '/sync', '/projects', '/open', '/compare', '/maker', '/projects/x']) assert.equal(tabOf(p), 'library', p)
+    for (const p of ['/', '/brick/b_1', '/sync', '/open', '/compare', '/maker', '/projects/x']) assert.equal(tabOf(p), 'library', p)
     assert.equal(tabOf('/shared'), 'none', 'a project shared with you is in neither of your tabs')
   })
 })
