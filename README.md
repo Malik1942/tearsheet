@@ -6,12 +6,12 @@
 
 <p align="center">
   <a href="https://tearsheet.malikzhang.com"><b>Try it live</b></a> &nbsp;·&nbsp;
-  <a href="VIDEO_URL"><b>Watch the video</b></a> &nbsp;·&nbsp;
+  <a href="https://youtu.be/_TyiYuu7dOM"><b>Watch the video</b></a> &nbsp;·&nbsp;
   Built with Muse Spark on the Meta Model API
 </p>
 
 <p align="center">
-  <a href="VIDEO_URL"><img src="docs/readme/hero.webp" alt="Muse Spark reads a photo of a stage: blue boxes mark what it measured, three rules point back at them, and the photo tears into a tile in the library." width="840"></a>
+  <a href="https://youtu.be/_TyiYuu7dOM"><img src="docs/readme/hero.webp" alt="Muse Spark reads a photo of a stage: blue boxes mark what it measured, three rules point back at them, and the photo tears into a tile in the library." width="840"></a>
 </p>
 <p align="center"><sub>Muse Spark reads a photo once: what it measured (in blue), the rules it keeps, and a tear made from the photo's own light.</sub></p>
 
