@@ -4,8 +4,9 @@
 import { originOf } from './starters'
 import type { Brick } from './types'
 
-/** Each was run live once against the twelve starters alone (2026-11-04): three picks, every quote verbatim, three different labels. */
-export const EXAMPLE_INTENTS = ['A concert log for the shows I go to', 'A reading log for the books I finish'] as const
+/** One of each shape, so the two give different screens: a log (list and year review) and a board (overview and list). Each was run live once against
+ *  the twelve starters alone (2026-11-04): three picks, every quote verbatim, three different labels, and the dashboard's content came back as a board. */
+export const EXAMPLE_INTENTS = ['A concert log for the shows I go to', "A dashboard for my home's energy use"] as const
 
 export const isColdStart = (bricks: Pick<Brick, 'id' | 'origin'>[], showStarters: boolean): boolean =>
   showStarters && !bricks.some(b => originOf(b) === 'own')

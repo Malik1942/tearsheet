@@ -98,12 +98,12 @@ describe('the Library\'s starter line', () => {
 describe('Make\'s example intents', () => {
   it('are two, each a plain answer to "What are you making?", with no em dash', () => {
     assert.equal(EXAMPLE_INTENTS.length, 2)
-    for (const x of EXAMPLE_INTENTS) { assert.match(x, /^A [a-z ]+$/i); assert.doesNotMatch(x, /—/) }
+    for (const x of EXAMPLE_INTENTS) { assert.match(x, /^A [a-z' ]+$/i); assert.doesNotMatch(x, /—/) }
   })
   it('render as two buttons under an empty field on a cold start', () => {
     const html = examples(cold)
     assert.match(html, /^<div class="[^"]*" role="group" aria-label="Examples">/)
-    assert.deepEqual([...html.matchAll(/<button type="button"[^>]*>([^<]+)<\/button>/g)].map(m => m[1]), [...EXAMPLE_INTENTS])
+    assert.deepEqual([...html.matchAll(/<button type="button"[^>]*>([^<]+)<\/button>/g)].map(m => text(m[1])), [...EXAMPLE_INTENTS])
   })
   it('render nothing once the field holds text', () => {
     assert.equal(examples(cold, EXAMPLE_INTENTS[0]), '')
