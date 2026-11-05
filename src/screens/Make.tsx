@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
+import { flushSync } from 'react-dom'
 import { useStore } from '../lib/store'
 import { Link, navigate } from '../lib/router'
 import { Photo } from '../bricks/Photo'
@@ -17,6 +18,7 @@ import { Callouts } from '../make/Callouts'
 import { screensOf, toShellContent, type ScreenKey } from '../shell/content'
 import { ShareMenu } from '../make/ShareMenu'
 import { AnchorThumb, HeadlineField } from '../make/Start'
+import { ExampleIntents } from '../make/Examples'
 import { RecentProjects } from '../make/Recent'
 import { AdjustStyle, Arrangements, PickMyself, Rename, SwapPicker, VersionList } from '../make/Dialogs'
 import { swapGroups } from '../lib/swapSheet'
@@ -83,6 +85,13 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
   const captionTimer = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(captionTimer.current), [])
   const req = useRef(0)
+  // a cold start's example intent (make/Examples.tsx) fills the field and focuses it, caret at the end; nothing is sent until Enter
+  const head = useRef<HTMLDivElement>(null)
+  const pickExample = (x: string) => {
+    flushSync(() => setIntent(x))
+    const t = head.current?.querySelector('textarea')
+    t?.focus(); t?.setSelectionRange(x.length, x.length)
+  }
   useEffect(() => { proposeEnabled().then(setEnabled) }, [])
   // the field holds the project's intent; moving to another project (or to /make) brings its own, and its lean
   const [shownId, setShownId] = useState(id)
@@ -179,9 +188,10 @@ export function MakeScreen({ id, share = false }: { id: string | null; share?: b
         {project && !headline && <h1 className="sr-only">{project.intent}</h1>}
         {!project ? (
           // before Enter: the headline is the input, nothing explains it (Malik, 2026-11-03); a starting point set elsewhere shows as its photo
-          <div className="make-head">
+          <div ref={head} className="make-head">
             <h1 className="sr-only">{COPY.field}</h1>
             <HeadlineField value={intent} onChange={setIntent} onSubmit={() => void run()} busy={busy} label={COPY.field} autoFocus={finePointer()} />
+            {!busy && <ExampleIntents bricks={store.bricks} showStarters={store.showStarters} intent={intent} onPick={pickExample} />}
             {anchorBrick && !busy && <AnchorThumb brick={anchorBrick} onClear={() => setAnchor(null)} />}
             {/* phone, before the first project: where the screens will land, still and faint, so the empty page is not three quarters blank; never a pulse (tokens.css).
                 Once there are projects, they fill that room instead (below) */}
