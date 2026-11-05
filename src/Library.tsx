@@ -9,6 +9,7 @@ import { cardCaption, dateLine, issueParts } from './lib/brickLabels'
 import { labelsOfBrick } from './lib/shortLabels'
 import { originOf } from './lib/starters'
 import { Reseau } from './bricks/Reseau'
+import { StarterNote } from './bricks/StarterNote'
 import { TITLE_TEAR } from './brand/tornEdge'
 import type { Brick } from './lib/types'
 
@@ -66,7 +67,7 @@ export function Library() {
         {bricks.length === 0 ? (
           store.showStarters ? (
             // the masthead already says what these are and how many (Malik, 2026-11-03: no bare "0 photos")
-            <section aria-label="Starters"><Grid bricks={starters} onOpen={setOpenId} /></section>
+            <section aria-label="Starters"><StarterNote bricks={store.bricks} showStarters={store.showStarters} /><Grid bricks={starters} onOpen={setOpenId} /></section>
           ) : (
             <div>
               <p className="empty-line">{COPY.empty}</p>
