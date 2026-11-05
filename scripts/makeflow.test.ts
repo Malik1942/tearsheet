@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { SAMPLES } from '../src/fixtures/samples/index.ts'
 import { resolveProject, type Project } from '../src/lib/mapRelations.ts'
-import { autoName, carryByBrick, sharedHeading, carryOver, changeCaption, effectOf, leadKey, makeRoute, NEUTRAL_KEYS, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleCaption, toggleMuted } from '../src/lib/makeFlow.ts'
+import { autoName, byRecent, carryByBrick, sharedHeading, carryOver, changeCaption, effectOf, leadKey, makeRoute, NEUTRAL_KEYS, oneLabel, openDestination, photoLine, photoRow, shareCodeFor, shareContent, sharedLink, sharedView, toggleCaption, toggleMuted } from '../src/lib/makeFlow.ts'
 import { PARAMETER_KEYS } from '../src/shell/params.ts'
 import { changedSincePrevious, firstVersion, withNextVersion } from '../src/lib/versions.ts'
 import type { Brick, Relation } from '../src/lib/types.ts'
@@ -229,6 +229,18 @@ describe('the read-only page heading', () => {
   })
   it('a name a person gave goes first, with the intent under it', () => {
     assert.deepEqual(sharedHeading({ intent, name: 'Gig diary' }), { title: 'Gig diary', sub: intent })
+  })
+})
+
+describe('projects, most recently edited first', () => {
+  it('orders by the last edit, else by creation, and leaves the list given as it was', () => {
+    const list = [
+      { id: 'a', createdAt: '2026-11-01T10:00:00Z' },
+      { id: 'b', createdAt: '2026-11-02T10:00:00Z' },
+      { id: 'c', createdAt: '2026-10-30T10:00:00Z', updatedAt: '2026-11-03T09:00:00Z' },
+    ]
+    assert.deepEqual(byRecent(list).map(p => p.id), ['c', 'b', 'a'])
+    assert.deepEqual(list.map(p => p.id), ['a', 'b', 'c'])
   })
 })
 

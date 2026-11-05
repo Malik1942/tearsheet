@@ -338,6 +338,23 @@
   border: 1px solid var(--ink-2); border-radius: 50%; background: var(--paper); color: var(--ink); font: 600 13px/1 var(--font-ui); cursor: pointer; }
 .make-anchor-clear::before { content: ''; position: absolute; inset: -12px; }   /* a 44 px target round a 20 px mark */
 .make-anchor-clear:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Make's empty page, once something is made (Malik, 2026-11-04: Projects sat too deep in ⋯, and the phone had no way back): the projects under the field, most
+   recent first, in the intent's column. Hairline-ruled rows, each its photos in three fixed slots (so every title starts at one edge) and its heading. The label
+   row is the photo dock's, and its "All 12 ›" is the dock's carry link (.dock-carry). The photos are framed as the photo row's; a row's hover underlines its
+   title as the intent headline's does; a press gives a little (motion, below). On a phone the list takes the ghost frame's place */
+.make-recent { width: 100%; max-width: 680px; margin: var(--space-64) auto 0; }
+.chrome .make-recent h2 { font: inherit; letter-spacing: inherit; text-wrap: nowrap; }   /* the dock label's mono caps, not the h2 size */
+.make-recent-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.make-recent-list > li { border-bottom: 1px solid var(--line); }
+.make-recent-row { --thumb: 40px; display: flex; align-items: center; gap: var(--space-16); padding: var(--space-12) 0; color: var(--ink); text-decoration: none; }
+.make-recent-row:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.make-recent-thumbs { flex: none; display: grid; grid-template-columns: repeat(3, var(--thumb)); gap: var(--space-4); }
+.make-recent-thumbs > * { display: block; width: var(--thumb); height: var(--thumb); object-fit: cover; border-radius: var(--radius-brand); outline: 1px solid var(--line); }
+.make-recent-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.make-recent-title { font-size: var(--type-em); line-height: 20px; font-weight: 600; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.make-recent-sub { font-size: var(--type-body); line-height: 18px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (hover: hover) and (pointer: fine) { .make-recent-row:hover .make-recent-title { text-decoration: underline 1px var(--ink-2); text-underline-offset: 4px; } }
+@media (max-width: 767.98px) { .make-recent { margin-top: var(--space-32); } .make-recent-row { --thumb: 32px; gap: var(--space-12); } }
 @media (max-width: 767.98px) { .make-head { margin-top: var(--space-16); } }
 .make-spread { margin: var(--space-32) auto 0; width: fit-content; padding: var(--space-24) var(--space-32); display: flex; gap: var(--space-32); }
 @media (max-width: 767.98px) { .make-spread { display: block; width: auto; margin: var(--space-16) 0 0; padding: 0; } .make-spread.crop-marks::before { display: none; } }   /* phone: a full-width block (auto side margins would shrink it to both screens side by side), so the swipe pager takes the width */
@@ -503,8 +520,8 @@ a.idtag:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .callouts .num, .callouts .end, .callouts text { animation: 240ms 340ms var(--ease) both rise; }
 
   /* a press gives a little; a card's photo leans in under the pointer */
-  .btn, .bar-item > svg, .bar-shoot .shutter, .photo-switch img { transition: scale var(--t-press) var(--ease); }
-  .btn:active:not(:disabled), .bar-item:active > svg, .photo-switch:active img { scale: 0.96; }
+  .btn, .bar-item > svg, .bar-shoot .shutter, .photo-switch img, .make-recent-thumbs > * { transition: scale var(--t-press) var(--ease); }
+  .btn:active:not(:disabled), .bar-item:active > svg, .photo-switch:active img, .make-recent-row:active .make-recent-thumbs > * { scale: 0.96; }
   .bar-shoot:active .shutter { scale: 0.94; }
   .card-tile img { transition: scale var(--t-reveal) var(--ease); }
   @media (hover: hover) and (pointer: fine) { a.card-tile:hover img { scale: 1.02; } }

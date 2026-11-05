@@ -34,6 +34,11 @@ export function sharedHeading(project: { name?: string; intent: string }): { tit
   return named ? { title: project.name!, sub: project.intent } : { title: project.intent, sub: null }
 }
 
+/** Projects, most recently edited first (the Projects page, and the list under Make's empty field). Pure: the list given is not changed. */
+export function byRecent<T extends Pick<Project, 'createdAt' | 'updatedAt'>>(projects: readonly T[]): T[] {
+  return [...projects].sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt))
+}
+
 /** The line under a photo in a picker: the day it was taken ("Dec 27, 2025") when the photo said, else "saved Nov 3"; a starter carries its credit line (SB2). */
 export function photoLine(b: Pick<Brick, 'id' | 'origin' | 'credit' | 'saved_at' | 'taken_at'>, today: Date = new Date()): string {
   if (originOf(b) === 'starter') return creditLine(b)
