@@ -2,7 +2,7 @@
 
 <p align="center"><b>Taste you can trace.</b></p>
 
-<p align="center">Tearsheet turns the photos you already take into design rules, then lays out product screens from them, with every choice traced back to a spot on a photo.</p>
+<p align="center">Tearsheet takes the photos you already save and pulls out what makes each one look the way it does: not the objects or the colors, but the relationships between them, like proportion, contrast, and where the one bright thing sits. Then it carries those relationships into product screens, with every choice traced back to a spot on a photo.</p>
 
 <p align="center">
   <a href="https://tearsheet.malikzhang.com"><b>Try it live</b></a> &nbsp;·&nbsp;
@@ -34,6 +34,8 @@ Then a new project starts, and none of it makes it into the design. The photos s
 
 Tearsheet keeps what you saved as material you can build with.
 
+What we like about a photo is rarely the thing in it. The Chicago stage photo works because the sign spans about 0.4 of the frame's width, the field is about 70% dark, and one warm color covers about 5% of it. None of that belongs to a stage. It belongs to any surface, including a screen. Tearsheet reads those relationships out of the photo and sets them again in a layout, so a stage from last winter becomes the hierarchy of a list you're building now.
+
 ## Who it's for
 
 - **Product designers and indie developers** who build their own apps and want them to look like their taste, not a template.
@@ -59,7 +61,7 @@ One sentence, like "a concert log for someone who goes to a lot of shows." Spark
 Each photo is a block. Turn one off and what it set comes out. Swap it and only what it carries changes. Lock any value you want to keep.
 
 ![Turning the Chicago photo off and on, then swapping the Porsche for a BMW M4: the layout changes, then the accent turns teal.](docs/readme/change.webp)
-<p align="center"><sub>Chicago off: type and layout come out, images come in. Back on. Then the Porsche is swapped for a BMW M4, and the accent turns from red to teal.</sub></p>
+<p align="center"><sub>Chicago off: the title shrinks and the images come in. That's a relationship changing, not a color. Then the Porsche is swapped for a BMW M4, and only the accent moves, from red to teal.</sub></p>
 
 Every value says where it came from, with a chip: **measured**, **interpreted**, or **adapted**. A measured value points back to the box on the photo it was read from.
 
@@ -71,7 +73,7 @@ Share one read-only link with the screens and the reasons behind them, or export
 
 ## What makes it different
 
-- **Built from your taste.** The library is the photos you already saved, not a style picked from a menu.
+- **Relationships, not styles.** It doesn't copy a look; it reads how a photo's parts relate and sets them again in a layout you can inspect.
 - **Read once, reused everywhere.** A photo is measured when you save it. Every project after that reuses its rules.
 - **Traceable.** Every value says where it came from. A measured one points back to a box on a photo.
 - **Changeable.** One photo is one block. Turning it off or swapping it changes only what it carries.
